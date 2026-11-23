@@ -1,14 +1,10 @@
-"""Vulnerability scan of every package: OSV-Scanner (offline DB) + Grype (on the Syft SBOM), merged.
-
-Two independent databases cross-check each other: an advisory found by both is stronger evidence,
-and either one alone still counts. Advisories are merged per package version when their IDs or
-aliases overlap (GHSA / CVE / MAL). Nothing here talks to the network: both DBs are local.
+"""OSV-Scanner on the offline DB (npm fallback when the OSV.dev API is unreachable) and the merge of
+advisory lists from several scanners: records for the same package version are merged when their IDs or
+aliases overlap (GHSA / CVE / MAL); an advisory found by two scanners is stronger evidence.
 """
 from __future__ import annotations
 
 import json
-import os
-import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -30,11 +26,17 @@ def _max(a: str, b: str) -> str:
 
 
 def run_osv(lockfile: Path) -> list[dict]:
-    env = {**os.environ, "OSV_SCANNER_LOCAL_DB_CACHE_DIRECTORY": str(OSV_DB)}
-    r = subprocess.run(["osv-scanner", "scan", "source", "--offline", "--format", "json", "-L", str(lockfile)],
-                       capture_output=True, text=True, env=env, timeout=600)
-    if r.returncode not in (0, 1):  # 1 = vulnerabilities found
-        raise RuntimeError(f"osv-scanner failed ({r.returncode}): {r.stderr[-400:]}")
+    """OSV-Scanner on one lockfile, in the sandbox, against the offline DB in .cache/osv (no network)."""
+    from guardian import sandbox
+
+    if not OSV_DB.exists():
+        raise RuntimeError("offline OSV DB missing (.cache/osv)")
+    # mounted under its own file name: osv-scanner picks the lockfile parser from it
+    r = sandbox.run("osv-scanner", ["scan", "source", "--offline", "--format", "json", "-L", "{" + lockfile.name + "}"],
+                    inputs={lockfile.name: lockfile, "db": OSV_DB}, env={"OSV_SCANNER_LOCAL_DB_CACHE_DIRECTORY": "{db}"},
+                    timeout=600)
+    if r.error or r.returncode not in (0, 1):  # 1 = vulnerabilities found
+        raise RuntimeError(r.error or f"osv-scanner failed ({r.returncode}): {r.stderr[-400:]}")
     data = json.loads(r.stdout or "{}")
     out = []
     for res in data.get("results", []):
@@ -63,24 +65,6 @@ def run_osv(lockfile: Path) -> list[dict]:
     return out
 
 
-def run_grype(sbom: Path) -> list[dict]:
-    env = {**os.environ, "GRYPE_DB_AUTO_UPDATE": "false", "GRYPE_CHECK_FOR_APP_UPDATE": "false"}
-    r = subprocess.run(["grype", f"sbom:{sbom}", "-o", "json", "-q"], capture_output=True, text=True, env=env, timeout=600)
-    if r.returncode != 0:
-        raise RuntimeError(f"grype failed ({r.returncode}): {r.stderr[-400:]}")
-    out = []
-    for m in json.loads(r.stdout or "{}").get("matches", []):
-        v, a = m["vulnerability"], m["artifact"]
-        if a.get("type") not in (None, "npm"):
-            continue
-        ids = [v["id"]] + [x["id"] for x in m.get("relatedVulnerabilities", [])]
-        out.append({"name": a["name"], "version": a["version"], "ids": list(dict.fromkeys(ids)),
-                    "summary": (v.get("description") or "")[:200],
-                    "severity": GHSA_WORDS.get(str(v.get("severity", "")).upper(), "medium"),
-                    "fixed": (v.get("fix") or {}).get("versions", []), "malicious": False,
-                    "url": v.get("dataSource"), "source": "grype"})
-    return out
-
 
 def merge(*lists: list[dict]) -> list[dict]:
     merged: list[dict] = []
@@ -105,36 +89,3 @@ def merge(*lists: list[dict]) -> list[dict]:
         m["key"] = f"{m['name']}@{m['version']}#{m['id']}"
     return sorted(merged, key=lambda m: (-LEVELS.index(m["severity"]), m["name"]))
 
-
-def scan(lockfile: Path, sbom: Path | None, inventory: list[dict] | None = None) -> dict:
-    errors = {}
-    osv, grype = [], []
-    try:
-        osv = run_osv(lockfile)
-    except Exception as e:  # report, don't hide: the UI shows which scanner failed
-        errors["osv"] = str(e)
-    if sbom:
-        try:
-            grype = run_grype(sbom)
-        except Exception as e:
-            errors["grype"] = str(e)
-    vulns = merge(osv, grype)
-    if inventory:
-        idx = {(p["name"], p["version"]): p for p in inventory}
-        for v in vulns:
-            p = idx.get((v["name"], v["version"]), {})
-            v["direct"], v["runtime"] = bool(p.get("direct")), bool(p.get("runtime"))
-    return {"vulnerabilities": vulns, "errors": errors,
-            "counts": {"osv": len(osv), "grype": len(grype), "merged": len(vulns),
-                       "both": sum(1 for v in vulns if len(v["sources"]) == 2),
-                       "packages": len({(v["name"], v["version"]) for v in vulns}),
-                       "by_severity": {lv: sum(1 for v in vulns if v["severity"] == lv) for lv in LEVELS[::-1]}}}
-
-
-def label(base: list[dict], head: list[dict]) -> list[dict]:
-    """introduced / pre_existing for head findings; fixed for base-only findings."""
-    bkeys = {v["key"] for v in base}
-    hkeys = {v["key"] for v in head}
-    out = [{**v, "label": "pre_existing" if v["key"] in bkeys else "introduced"} for v in head]
-    out += [{**v, "label": "fixed"} for v in base if v["key"] not in hkeys]
-    return out

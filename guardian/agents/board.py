@@ -49,9 +49,6 @@ class Board:
             self.feed.append({"seq": len(self.feed), "ts": time.time(), "type": "message", **msg.model_dump(exclude_none=True)})
         return msg
 
-    def inbox(self, agent: str, after: int = 0) -> list[AgentMessage]:
-        return [m for m in self.messages[after:] if m.recipient == agent]
-
     def log(self, **event) -> None:
         with self._lock:
             self.audit.append(event)

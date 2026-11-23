@@ -7,6 +7,7 @@ ScriptedBackend replays recorded agent turns: lets the full loop run and be test
 """
 from __future__ import annotations
 
+import itertools
 import json
 import re
 from dataclasses import dataclass, field
@@ -80,7 +81,6 @@ class OpenRouterBackend:
         self.key = os.environ["OPENROUTER_API_KEY"]
         self.model = model or os.environ.get("GUARDIAN_MODEL", self.MODEL)
         self.timeout = timeout
-        self.usage = {"calls": 0, "prompt_tokens": 0, "completion_tokens": 0}
 
     @staticmethod
     def _to_openai(system: str, messages: list) -> list:
@@ -133,10 +133,6 @@ class OpenRouterBackend:
         else:
             raise RuntimeError(f"OpenRouter error after retries: {last_err}")
         data = r.json()
-        u = data.get("usage") or {}
-        self.usage["calls"] += 1
-        self.usage["prompt_tokens"] += u.get("prompt_tokens", 0)
-        self.usage["completion_tokens"] += u.get("completion_tokens", 0)
         choice = data["choices"][0]
         msg = choice["message"]
         calls = []
@@ -159,7 +155,7 @@ class GeminiBackend(OpenRouterBackend):
     """Google Gemini through its OpenAI-compatible endpoint (same message translation as OpenRouter).
 
     Tries GUARDIAN_MODEL first (default gemini-3.5-flash), then the fallback models in order when Google
-    reports overload (503) or quota (429). The model that answered each step is recorded in `self.used`.
+    reports overload (503) or quota (429).
     """
 
     URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
@@ -180,8 +176,7 @@ class GeminiBackend(OpenRouterBackend):
         extra = [m.strip() for m in os.environ.get("GUARDIAN_FALLBACK_MODELS", "").split(",") if m.strip()]
         self.models = [self.model] + [m for m in (extra or list(self.FALLBACKS)) if m != self.model]
         self.timeout = timeout
-        self.usage = {"calls": 0, "prompt_tokens": 0, "completion_tokens": 0}
-        self.used: dict[str, int] = {}
+        self._call_ids = itertools.count(1)
         self.sticky: dict[str, str] = {}
 
     # Gemini 3 requires a thought signature on function calls in the history. Calls produced by a model that
@@ -217,7 +212,6 @@ class GeminiBackend(OpenRouterBackend):
                     last_err = f"{model}: {type(e).__name__}"
                     break
                 if r.status_code == 200:
-                    self.used[model] = self.used.get(model, 0) + 1
                     if model != self.models[0]:
                         self.sticky[agent] = model
                     return self._parse(r.json())
@@ -249,15 +243,11 @@ class GeminiBackend(OpenRouterBackend):
         return None
 
     def _parse(self, data: dict) -> Turn:
-        u = data.get("usage") or {}
-        self.usage["calls"] += 1
-        self.usage["prompt_tokens"] += u.get("prompt_tokens", 0)
-        self.usage["completion_tokens"] += u.get("completion_tokens", 0)
         choice = data["choices"][0]
         msg = choice["message"]
         calls = []
-        for i, tc in enumerate(msg.get("tool_calls") or []):
-            tc.setdefault("id", f"call_{self.usage['calls']}_{i}")
+        for tc in msg.get("tool_calls") or []:
+            tc.setdefault("id", f"call_{next(self._call_ids)}")
             try:
                 args = json.loads(tc["function"].get("arguments") or "{}")
             except json.JSONDecodeError:

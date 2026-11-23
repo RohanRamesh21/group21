@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 
 from guardian.adapters.npm import parse_lockfile
-from guardian.snapshot.snapshot import open_view
+from guardian.universal import git_show
 
 REPO = Path(__file__).resolve().parents[1] / "sandbox" / "uptime-kuma"
 
@@ -31,18 +31,18 @@ def _npm_edges(tree: dict, parent: str = "ROOT") -> set[tuple[str, str]]:
 @pytest.mark.skipif(not REPO.exists() or not shutil.which("npm"), reason="sandbox repo or npm missing")
 @pytest.mark.parametrize("ref", ["2.5.12", "scenario/s3-s9"])
 def test_edges_match_npm_ls(ref):
-    try:
-        view = open_view(REPO, ref)
-    except Exception:
+    files = {f: git_show(REPO, ref, f) for f in ("package.json", "package-lock.json")}
+    if None in files.values():
         pytest.skip(f"{ref} not available")
     with tempfile.TemporaryDirectory() as tmp:
-        view.export(Path(tmp), ["package.json", "package-lock.json"])
+        for f, text in files.items():
+            (Path(tmp) / f).write_text(text)
         res = subprocess.run(["npm", "ls", "--all", "--json", "--package-lock-only"],
                              cwd=tmp, capture_output=True, text=True, timeout=300)
         tree = json.loads(res.stdout)
     npm_edges = _npm_edges(tree)
 
-    pkgs, edges = parse_lockfile(view.text("package-lock.json"))
+    pkgs, edges = parse_lockfile(files["package-lock.json"])
     # npm ls labels aliased packages by the alias ("string-width-cjs"), we keep the real name.
     label = {k: f"{p.alias or p.name}@{p.version}" for k, p in pkgs.items()}
     aliases = sorted({f"{p.alias} -> {p.name}" for p in pkgs.values() if p.alias})

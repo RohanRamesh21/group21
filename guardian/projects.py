@@ -1,8 +1,9 @@
 """Scan any project the user brings (any language / package manager): a ZIP upload or a public Git URL.
 
 Safety rules (the analysed project is untrusted):
-  * Nothing from the project is installed or executed. If a lockfile is missing we only *resolve* one with
-    `npm install --package-lock-only --ignore-scripts` (registry metadata, no package code runs).
+  * Nothing from the project is installed or executed. Every tool that reads it runs in the podman sandbox
+    (guardian/sandbox: no network, read-only, pinned images, resource limits). If an npm lockfile is missing we
+    only *resolve* one from the package.json files (never the project's .npmrc), with registry access only.
   * ZIP: no absolute paths, no `..`, no symlinks, size and file-count limits.
   * Git: https only, host allow-list, read-only shallow clone, hooks disabled, no submodules, no credential prompts.
   * Everything stays under guardian-out/projects/<id>/.

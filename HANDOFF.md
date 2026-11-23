@@ -21,16 +21,21 @@ Written 23 Nov 2026 to continue in a new session. Read this first, then `docs/FI
 ## 3. How to run (all verified)
 ```bash
 cd /Users/kirankishorev/Documents/BOSCH/guardian
+.venv/bin/guardian sandbox setup                                 # once per machine: pinned tool images + Grype DB (docs/SETUP.md)
+.venv/bin/guardian sandbox status                                # exit 0 = every sandboxed tool can run
 .venv/bin/uvicorn guardian.server:app --port 8765          # dashboard at http://localhost:8765
-.venv/bin/guardian check sandbox/uptime-kuma --base scenario/base --head scenario/s3-s9   # no-AI Day 1 check (~30 s)
-.venv/bin/guardian scan sandbox/uptime-kuma --ref scenario/s3-s9 --out guardian-out/day1  # one commit
+.venv/bin/guardian check sandbox/uptime-kuma --base scenario/base --head scenario/s3-s9   # no-AI Day 1 check (universal pipeline)
+.venv/bin/guardian scan sandbox/uptime-kuma --ref scenario/s3-s9                          # full scan of one commit
 .venv/bin/guardian investigate --backend replay --out guardian-out/agents                # recorded agent run (CLI)
-.venv/bin/python -m pytest -q                                                            # 22 tests pass
+.venv/bin/python -m pytest -q                                                            # 64 pass, 4 skip without scenario/s3-s9 / Verdaccio (24 Nov, this machine)
 cd guardian/dashboard && npx vite build                                                  # rebuild UI after edits
 ```
 - **"Address already in use" on 8765** means a server is already running (possibly the Claude browser-pane preview). Open the page, stop that server, or use `--port 8766`.
 - The dashboard reads `guardian-out/check/latest.json`. Re-run `guardian check` after changing the scenario.
 - **Local registry (Verdaccio)** must be running for the suspicious-change detectors and the "real" agent world: `curl http://localhost:4873/-/ping`. It serves two hostnames: `localhost:4873` plays the approved public registry (allow-listed in `guardian.yaml`); `127.0.0.1:4873` plays the attacker's registry.
+- **Sandbox (23 Nov):** every tool that reads a scanned repo (npm resolution, Syft, Grype, OSV-Scanner, zizmor) runs in rootless podman: `--network=none`, read-only, pinned images, limits. npm resolution reaches only `registry.npmjs.org` through an in-process allow-list proxy on a Unix socket. If podman is missing, those steps are reported as `tool_error` ("not checked") and NOT run on the host. Details: `docs/SETUP.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`.
+- **More languages (23 Nov):** C/C++ (vcpkg, conan, CMake FetchContent, meson, submodules), Java (Gradle/Maven repositories, wrappers, dynamic versions) and Go (replace, go.sum, checksum switches) are read statically: detectors D15-D19 in `docs/DETECTORS.md`. Synthetic sample apps with ground truth: `testbed/apps/` (`tests/test_sample_apps.py`).
+- **Real-app corpus (24 Nov):** CLAUDE.md §3.1 now allows pinned, read-only test clones (`testbed/corpus.yaml`: 12 apps across npm, Python, Go, Maven, Gradle, C++ and Rust). Run `testbed/corpus.py fetch` then `testbed/corpus.py scan`. The first run found 211 duplicate or false-positive findings and a D10 line-number bug, all fixed with regression tests. Results: `docs/TESTING.md`.
 - **Rebuild the attack scenario:** `.venv/bin/python testbed/injector/build_s3_s9.py`. It creates `scenario/base` and `scenario/s3-s9` (commit "fix typo") in the sandbox fork. Lockfile only, scripts ignored, nothing pushed. A canary file in the temp folder proves the install script never ran.
 
 ## 4. What is done (verified on real data)
@@ -72,7 +77,9 @@ cd guardian/dashboard && npx vite build                                         
 4. **Dashboard views for the vulnerability list and the CI/image risks.** The data is already in `/api/depgraph` (`nodes[].vulns`, `ci`, `ci_stats`). The user said to leave the *vulnerability graph* out for now; confirm before building.
 5. **More attack scenarios.** Only S3 (registry hijack) + S9 (typosquat with install script) are built. Others planned in FINAL_PLAN §4 (S1–S9), e.g. CI action tag drift and image change.
 6. **Day 2, not started:** prioritisation (EPSS/KEV planned), deep non-CVE investigation, Fixer agent, sandbox validation, verify + report, human approval of the fix.
-7. **Housekeeping:**
+7. **Sandbox follow-ups:** allow-list for approved extra Maven repositories (D19); read Gradle version catalogs; move D1-D14 docs into `docs/DETECTORS.md`; the remaining CLAUDE.md §7 docs (`README` is minimal; `AGENTS.md`, `RISK_SCORING.md`, `EVIDENCE_AND_REPORT.md`, `CHAOS_SCENARIOS.md`, `SAMPLE_APP.md`, `RESPONSIBLE_AI.md`, `TESTING.md`, `CHANGELOG.md` do not exist yet).
+8. **CLAUDE.md vs reality:** its §4 layout (`pipeline/`, `detectors/`, `referee/`, `risk.py`, `llm.py`, Streamlit `ui/`, `chaos/`) and §5 commands (`uv sync --frozen`, `guardian chaos`) do not match this repo. Decide which one changes.
+9. **Housekeeping:**
    - commit when the user asks
    - the published architecture page (`https://claude.ai/artifact/Qt8VSW5P5drXaXrtZStaz6`) is outdated: Juice Shop, 12 agents
    - ask the user to delete the old OpenRouter key (it was pasted in chat)
@@ -80,12 +87,15 @@ cd guardian/dashboard && npx vite build                                         
 ## 6. Key files
 | Path | What |
 |---|---|
-| `guardian/cli.py` | `scan`, `check`, `investigate` commands |
-| `guardian/check.py` | Pre-merge check: scan base + head, label, suspicious detectors (D1/D2/D3/D4/D7), report |
-| `guardian/vuln/scan.py` | OSV (offline) + Grype, merged per package version by ID/alias overlap |
+| `guardian/cli.py` | `scan`, `check`, `investigate` commands (`scan` and `check` both run `universal.check_any`) |
+| `guardian/universal.py` | The Day 1 pipeline for any repo: components, SBOM, graph, vulns (OSV.dev + Grype), detectors, base vs head labels, report |
+| `guardian/vuln/scan.py` | Offline OSV-Scanner fallback and the merge of advisories by ID/alias overlap |
+| `guardian/sandbox/` | podman runner (`__init__.py`), egress allow-list proxy (`egress.py`), in-container bridge (`bridge.js`), `setup.py` |
+| `guardian/adapters/build_files.py` | C/C++, Java, Go, pip build-file readers and detectors D15-D19 |
+| `testbed/apps/` | Synthetic sample apps per ecosystem + `expected.json` ground truth |
+| `testbed/corpus.yaml`, `testbed/corpus.py` | Real open-source apps at pinned commits; fetch + scan runner |
 | `guardian/inventory/ci_risk.py` | D8 image not digest-pinned, D9 zizmor (offline), D10 action not SHA-pinned |
 | `guardian/adapters/npm.py` | Lockfile v3 parser, aliases, optional peers, runtime set |
-| `guardian/graph/` | Graph build + tools (paths to root, blast radius) |
 | `guardian/agents/` | protocol, board (+ ordered `feed`), constitution, tools, llm backends, agents, orchestrator, run, realworld, fakeworld |
 | `guardian/server.py` | FastAPI: `/api/meta`, `/api/runs` (+ SSE events, human answer, evidence), `/api/depgraph` |
 | `guardian/dashboard/src/` | `App.tsx`, `components/` (TopBar, Overview, AgentLanes, GraphView, Debate, CaseBoard, HumanModal, EvidenceDrawer, DepGraph) |

@@ -10,8 +10,12 @@ Where components come from (each one records the file it was found in):
   * vendored third-party JavaScript copied into the repo (recognised by file name or licence banner)
   * scripts loaded from a CDN in HTML files
   * browser-extension manifests (the extension itself, its permissions and network destinations)
+  * C/C++, Java and Go build files (vcpkg, conan, CMake FetchContent, meson wraps, submodules, Gradle/Maven
+    wrappers and repositories, go.mod replaces and checksum switches): guardian/adapters/build_files.py
 Vulnerabilities: OSV.dev API (all ecosystems) + Grype (local DB) on the SBOM; offline OSV DB as fallback.
-Nothing from the repository is installed or executed. Missing data is reported, never guessed.
+Nothing from the repository is installed or executed. Every tool that reads the repository (npm, Syft, Grype,
+OSV-Scanner, zizmor) runs in the podman sandbox (guardian/sandbox): no network unless allow-listed, read-only
+inputs, resource limits. A tool that cannot run is reported as a `tool_error`. Missing data is reported, never guessed.
 """
 from __future__ import annotations
 
@@ -55,9 +59,17 @@ MANIFESTS = {  # file name -> (ecosystem, role)
     "composer.json": ("composer", "manifest"), "composer.lock": ("composer", "lockfile"),
     "packages.lock.json": ("nuget", "lockfile"), "Package.swift": ("swift", "manifest"), "Package.resolved": ("swift", "lockfile"),
     "pubspec.yaml": ("pub", "manifest"), "pubspec.lock": ("pub", "lockfile"), "mix.exs": ("hex", "manifest"), "mix.lock": ("hex", "lockfile"),
+    # C / C++ (read by guardian/adapters/build_files.py; conanfile.py is listed but never executed or parsed)
+    "vcpkg.json": ("vcpkg", "manifest"), "conanfile.txt": ("conan", "manifest"), "conanfile.py": ("conan", "manifest"),
+    "conan.lock": ("conan", "lockfile"), "CMakeLists.txt": ("cmake", "build-script"), ".gitmodules": ("git", "submodules"),
+    # build tools downloaded by wrappers
+    "gradle-wrapper.properties": ("maven", "build-tool"), "maven-wrapper.properties": ("maven", "build-tool"),
+    # scripts checked for Go checksum switches (GOSUMDB=off, GOINSECURE ...)
+    "Makefile": ("config", "script"), "GNUmakefile": ("config", "script"), ".envrc": ("config", "script"),
 }
 PURL_ECO = {"npm": "npm", "pypi": "PyPI", "golang": "Go", "cargo": "crates.io", "maven": "Maven", "gem": "RubyGems",
-            "composer": "Packagist", "nuget": "NuGet", "pub": "Pub", "hex": "Hex", "swift": "SwiftURL", "github": "GitHub Actions"}
+            "composer": "Packagist", "nuget": "NuGet", "pub": "Pub", "hex": "Hex", "swift": "SwiftURL", "github": "GitHub Actions",
+            "conan": "ConanCenter"}
 
 # Well-known browser libraries people copy into repos: banner/file name -> npm package (so advisories match).
 VENDORED = {"jquery": "jquery", "jquery-ui": "jquery-ui", "jquery ui": "jquery-ui", "bootstrap": "bootstrap", "lodash": "lodash",
@@ -178,7 +190,7 @@ def find_manifests(src: Path) -> list[dict]:
         if n in MANIFESTS:
             eco, role = MANIFESTS[n]
             out.append({"path": rel, "ecosystem": eco, "role": role})
-        elif re.match(r"^requirements.*\.(txt|in)$", n, re.I):
+        elif re.match(r"^requirements.*\.(txt|in)$", n, re.I) or (p.parent.name == "requirements" and n.endswith((".txt", ".in"))):
             out.append({"path": rel, "ecosystem": "pypi", "role": "lockfile" if "==" in _read(p, 500_000) else "manifest"})
         elif n.endswith((".csproj", ".fsproj")):
             out.append({"path": rel, "ecosystem": "nuget", "role": "manifest"})
@@ -190,17 +202,28 @@ def find_manifests(src: Path) -> list[dict]:
             out.append({"path": rel, "ecosystem": "ci", "role": "ci"})
         elif n in (".npmrc", ".yarnrc", ".yarnrc.yml", "pip.conf", ".pypirc"):
             out.append({"path": rel, "ecosystem": "config", "role": "registry-config"})
+        elif n.endswith(".cmake"):
+            out.append({"path": rel, "ecosystem": "cmake", "role": "build-script"})
+        elif n.endswith(".wrap") and "subprojects" in Path(rel).parts:
+            out.append({"path": rel, "ecosystem": "meson", "role": "manifest"})
+        elif n.endswith((".sh", ".mk")):
+            out.append({"path": rel, "ecosystem": "config", "role": "script"})
     return sorted(out, key=lambda m: (m["role"], m["path"]))
 
 
-def resolve_npm_lockfiles(src: Path, manifests: list[dict], log) -> tuple[list[str], dict[str, str]]:
-    """package.json without any lockfile: resolve one from registry metadata only (--ignore-scripts, nothing runs).
-    Always against the public registry: the repository's own .npmrc is untrusted and is not followed."""
+def resolve_npm_lockfiles(src: Path, manifests: list[dict], log, work: Path, registry_hosts: set[str]) -> tuple[list[str], dict[str, str], dict[str, list[str]]]:
+    """package.json without any lockfile: resolve one from registry metadata only (`--package-lock-only
+    --ignore-scripts`: nothing is installed, nothing runs). Only the package.json files are copied into the
+    sandbox, never the repository's own .npmrc (it can redirect the registry or make npm run a program).
+    The sandbox can reach only `registry_hosts`; anything else a dependency points at is blocked and reported.
+    Returns (lockfiles created, {package.json: error}, {package.json: hosts that were blocked})."""
+    from guardian import sandbox
+
     have = {str(Path(m["path"]).parent) for m in manifests if m["role"] == "lockfile" and m["ecosystem"] == "npm"}
-    done, failed = [], {}
+    done, failed, blocked = [], {}, {}
     for m in manifests:
         folder = str(Path(m["path"]).parent)
-        if not m["path"].endswith("package.json") or folder in have or not shutil.which("npm"):
+        if not m["path"].endswith("package.json") or folder in have:
             continue
         try:
             pj = json.loads(_read(src / m["path"]) or "{}")
@@ -210,19 +233,28 @@ def resolve_npm_lockfiles(src: Path, manifests: list[dict], log) -> tuple[list[s
             continue
         if any(h == "." or folder.startswith(h + "/") for h in have):
             continue  # part of a workspace whose lockfile is higher up
-        log(f"{m['path']}: no lockfile, resolving versions from registry.npmjs.org (npm --package-lock-only --ignore-scripts)")
-        try:
-            r = subprocess.run(["npm", "install", "--package-lock-only", "--ignore-scripts", "--no-audit", "--no-fund",
-                                "--registry=https://registry.npmjs.org/"],
-                               cwd=src / folder, capture_output=True, text=True, timeout=240)
-            if r.returncode == 0 and (src / folder / "package-lock.json").exists():
-                done.append(str(Path(folder) / "package-lock.json").removeprefix("./"))
-                have.add(folder)
-            else:
-                failed[m["path"]] = (r.stderr or r.stdout)[-600:]
-        except subprocess.TimeoutExpired:
-            failed[m["path"]] = "npm timed out"
-    return done, failed
+        log(f"{m['path']}: no lockfile, resolving versions in the sandbox (npm --package-lock-only --ignore-scripts, "
+            f"network only to {', '.join(sorted(registry_hosts))})")
+        proj = work / f"npm-{len(done) + len(failed)}"
+        shutil.rmtree(proj, ignore_errors=True)
+        for p in _walk(src / folder):  # the manifests of this project and its workspaces, nothing else
+            if p.name == "package.json":
+                dest = proj / p.relative_to(src / folder)
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(p, dest)
+        res = sandbox.run("npm", ["install", "--package-lock-only", "--ignore-scripts", "--no-audit", "--no-fund",
+                                  "--registry=https://registry.npmjs.org/"],
+                          output=proj, workdir="{out}", egress=registry_hosts, timeout=300,
+                          env={"npm_config_update_notifier": "false", "npm_config_cache": "/tmp/npm-cache"})
+        if res.denied:
+            blocked[m["path"]] = res.denied
+        if res.ok and (proj / "package-lock.json").exists():
+            shutil.copyfile(proj / "package-lock.json", src / folder / "package-lock.json")
+            done.append(str(Path(folder) / "package-lock.json").removeprefix("./"))
+            have.add(folder)
+        else:
+            failed[m["path"]] = res.error or (res.stderr or res.stdout)[-600:]
+    return done, failed, blocked
 
 
 def declared_npm(src: Path, pj_rel: str, err: str) -> tuple[list[dict], list[dict]]:
@@ -251,15 +283,17 @@ def declared_npm(src: Path, pj_rel: str, err: str) -> tuple[list[dict], list[dic
 
 
 def run_syft(src: Path, out: Path) -> tuple[dict, str | None]:
-    if not shutil.which("syft"):
-        return {}, "syft not installed"
-    cdx, spdx = out / "sbom.syft.cdx.json", out / "sbom.syft.spdx.json"
-    r = subprocess.run(["syft", f"dir:{src}", "-q", "-o", f"cyclonedx-json={cdx}", "-o", f"spdx-json={spdx}",
-                        "--exclude", "./**/node_modules/**", "--exclude", "./**/.git/**"],
-                       capture_output=True, text=True, timeout=900,
-                       env={**os.environ, "SYFT_CHECK_FOR_APP_UPDATE": "false", "SYFT_JAVASCRIPT_INCLUDE_DEV_DEPENDENCIES": "true"})
-    if r.returncode != 0 or not cdx.exists():
-        return {}, f"syft failed: {r.stderr[-300:]}"
+    """CycloneDX + SPDX SBOM of the source tree, by Syft in the sandbox (no network, source read-only)."""
+    from guardian import sandbox
+
+    cdx = out / "sbom.syft.cdx.json"
+    res = sandbox.run("syft", ["dir:{src}", "-q", "-o", "cyclonedx-json={out}/sbom.syft.cdx.json",
+                               "-o", "spdx-json={out}/sbom.syft.spdx.json",
+                               "--exclude", "./**/node_modules/**", "--exclude", "./**/.git/**"],
+                      inputs={"src": src}, output=out,
+                      env={"SYFT_CHECK_FOR_APP_UPDATE": "false", "SYFT_JAVASCRIPT_INCLUDE_DEV_DEPENDENCIES": "true"})
+    if not res.ok or not cdx.exists():
+        return {}, res.error or f"syft failed ({res.returncode}): {res.stderr[-300:]}"
     return json.loads(cdx.read_text()), None
 
 
@@ -282,6 +316,8 @@ def _npm_inventory(src: Path, lock_rel: str) -> tuple[list[dict], list[dict]]:
 
 
 def _syft_inventory(doc: dict, skip_files: set[str]) -> tuple[list[dict], list[dict]]:
+    from guardian.adapters.build_files import non_shipped
+
     inv, by_ref = [], {}
     for c in doc.get("components", []):
         purl = c.get("purl") or ""
@@ -297,7 +333,8 @@ def _syft_inventory(doc: dict, skip_files: set[str]) -> tuple[list[dict], list[d
             name = f"{c['group']}:{c['name']}"
         ver = c.get("version") or ""
         exact = bool(re.match(r"^v?\d[\w.+\-]*$", ver)) and not re.search(r"[\^~<>=*| ]", ver)
-        dev = bool(re.search(r"(dev|test|lint|doc)", Path(loc).name, re.I)) or props.get("syft:package:dev") == "true"
+        dev = bool(re.search(r"(dev|test|lint|doc)", Path(loc).name, re.I)) or props.get("syft:package:dev") == "true" \
+            or non_shipped(loc)  # e.g. docs/mkdocs/requirements.txt, tools/*/requirements.txt
         row = {"key": f"{eco}:{name}@{ver}#{loc}", "name": name, "version": ver if exact else "", "declared": ver, "purl": purl,
                "ecosystem": eco, "direct": None, "dev": dev, "runtime": not dev, "optional": False, "resolved": None,
                "integrity": None, "has_install_script": False, "license": None, "alias": None, "lockfile_line": None,
@@ -435,8 +472,65 @@ def browser_extensions(src: Path, manifests: list[dict]) -> tuple[list[dict], li
     return comps, findings
 
 
+PY_BUILD_TOOLS = {"setuptools", "pkg_resources", "distutils", "pip", "wheel"}  # provided by the build/install environment
+REQUIREMENT_STRING = re.compile(r"""["']\s*([A-Za-z0-9][A-Za-z0-9._\-]*)\s*(?:\[[^\]"']*\])?\s*(?:[<>=!~;@(][^"'\n]*)?["']""")
+
+
+def _catches_import_error(node: ast.Try) -> bool:
+    def names(t):
+        if t is None:
+            return {"*"}  # bare except
+        if isinstance(t, ast.Tuple):
+            return set().union(*(names(e) for e in t.elts))
+        return {t.id if isinstance(t, ast.Name) else getattr(t, "attr", "")}
+    return any(names(h.type) & {"*", "ImportError", "ModuleNotFoundError", "Exception", "BaseException"} for h in node.handlers)
+
+
+def _is_type_checking(test: ast.expr) -> bool:
+    return (isinstance(test, ast.Name) and test.id == "TYPE_CHECKING") or \
+        (isinstance(test, ast.Attribute) and test.attr == "TYPE_CHECKING")
+
+
+def _required_imports(tree: ast.Module, module_level_only: bool) -> list[tuple[str, int]]:
+    """(top-level module, line) of imports the code cannot run without. Not counted (found on real apps, see
+    docs/TESTING.md): imports in `try: ... except ImportError` and in its fallback handler (optional), any later
+    import of a module the same file treats as optional (`if has_simplejson: from simplejson import ...`), imports
+    under `if TYPE_CHECKING:` (type hints only) and, for tests, imports inside functions/classes."""
+    out: list[tuple[str, int]] = []
+    optional: set[str] = set()
+
+    def imported(node: ast.AST) -> list[tuple[str, int]]:
+        if isinstance(node, ast.Import):
+            return [(a.name.split(".")[0], node.lineno) for a in node.names]
+        if isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            return [(node.module.split(".")[0], node.lineno)]
+        return []
+
+    def visit(node: ast.AST) -> None:
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, ast.Try) and _catches_import_error(child):
+                for part in (*child.body, *child.handlers):
+                    optional.update(nm for n in ast.walk(part) for nm, _ in imported(n))
+                for part in (*child.orelse, *child.finalbody):
+                    visit(part)
+                continue
+            if isinstance(child, ast.If) and _is_type_checking(child.test):
+                for part in child.orelse:
+                    visit(part)
+                continue
+            if module_level_only and isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                continue
+            out.extend(imported(child))
+            visit(child)
+    visit(tree)
+    return [(nm, line) for nm, line in out if nm not in optional]
+
+
 def undeclared_imports(src: Path, inventory: list[dict], manifests: list[dict]) -> list[dict]:
-    """Code imports a third-party package that no manifest declares: an unexpected, unpinned dependency."""
+    """Code imports a third-party package that no manifest declares: an unexpected, unpinned dependency.
+    Only shipped code counts: examples, docs and benchmarks are skipped (they are not part of the application)."""
+    from guardian.adapters.build_files import NON_SHIPPED_DIRS
+
     declared = {p["name"].lower().replace("_", "-") for p in inventory}
     local_py, local_js = set(), set()
     py_files, js_files = [], []
@@ -446,12 +540,15 @@ def undeclared_imports(src: Path, inventory: list[dict], manifests: list[dict]) 
             if f.endswith(".py"):
                 local_py.add(f[:-3])
                 local_py.update(Path(dirpath).relative_to(src).parts)
+    skip_dirs = NON_SHIPPED_DIRS - {"test", "tests", "testing", "tools"}  # tests and tools still run in CI: keep them
     for p in _walk(src):
+        rel_parts = {x.lower() for x in p.relative_to(src).parts[:-1]}
         if p.suffix == ".py":
-            py_files.append(p)
             local_py.add(p.stem)
             local_py.update(part for part in p.relative_to(src).parts[:-1])
-        elif p.suffix in (".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx") and not p.name.endswith(".min.js"):
+            if not rel_parts & skip_dirs:
+                py_files.append(p)
+        elif p.suffix in (".js", ".mjs", ".cjs", ".ts", ".tsx", ".jsx") and not p.name.endswith(".min.js") and not rel_parts & skip_dirs:
             js_files.append(p)
     for m in manifests:  # names declared in package.json files (even when no lockfile could be resolved)
         if m["path"].endswith("package.json"):
@@ -464,10 +561,13 @@ def undeclared_imports(src: Path, inventory: list[dict], manifests: list[dict]) 
             except ValueError:
                 pass
         if m["ecosystem"] == "pypi" and m["role"] in ("manifest", "lockfile"):
-            for ln in _read(src / m["path"]).splitlines():
+            text = _read(src / m["path"])
+            for ln in text.splitlines():
                 mm = re.match(r"^\s*\"?([A-Za-z0-9][\w.\-]*)", ln)
                 if mm:
                     declared.add(mm.group(1).lower().replace("_", "-"))
+            # requirement strings anywhere: [project.optional-dependencies], dependency groups, extras_require ...
+            declared |= {n.lower().replace("_", "-") for n in REQUIREMENT_STRING.findall(text)}
     hits: dict[tuple, list] = {}
     std = set(getattr(sys, "stdlib_module_names", ())) | {"__future__"}
     for p in py_files[:MAX_TEXT_FILES]:
@@ -477,22 +577,13 @@ def undeclared_imports(src: Path, inventory: list[dict], manifests: list[dict]) 
             continue
         is_test = any(x in ("tests", "test", "testing") for x in p.relative_to(src).parts) or p.name.startswith("test_") \
             or p.name.endswith("_test.py") or p.name == "conftest.py"
-        # tests create throw-away modules inside test functions: only their module-level imports count
-        nodes = [n for top in tree.body for n in ast.walk(top) if not isinstance(top, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))] \
-            if is_test else ast.walk(tree)
-        for node in nodes:
-            names = []
-            if isinstance(node, ast.Import):
-                names = [a.name.split(".")[0] for a in node.names]
-            elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
-                names = [node.module.split(".")[0]]
-            for nm in names:
-                if nm in std or nm in local_py or nm.startswith("_"):
-                    continue
-                dist = PY_DIST.get(nm, nm).lower().replace("_", "-")
-                if dist in declared or nm.lower() in declared:
-                    continue
-                hits.setdefault(("pypi", dist), []).append(f"{_rel(src, p)}:{node.lineno}")
+        for nm, lineno in _required_imports(tree, module_level_only=is_test):
+            if nm in std or nm in local_py or nm.startswith("_") or nm in PY_BUILD_TOOLS:
+                continue
+            dist = PY_DIST.get(nm, nm).lower().replace("_", "-")
+            if dist in declared or nm.lower() in declared:
+                continue
+            hits.setdefault(("pypi", dist), []).append(f"{_rel(src, p)}:{lineno}")
     imp = re.compile(r"""(?:\brequire\(\s*|\bimport\s*\(\s*|^\s*(?:import|export)\b[^'"`;]*?\bfrom\s*|^\s*import\s+)['"]([^'"./][^'"]*)['"]""", re.M)
     for p in js_files[:MAX_TEXT_FILES]:
         text = _read(p, 1_500_000)
@@ -671,15 +762,22 @@ def osv_api(inventory: list[dict]) -> tuple[list[dict], str | None]:
 
 
 def grype_all(sbom: Path) -> tuple[list[dict], str | None]:
-    if not shutil.which("grype"):
-        return [], "grype not installed"
-    env = {**os.environ, "GRYPE_DB_AUTO_UPDATE": "false", "GRYPE_CHECK_FOR_APP_UPDATE": "false"}
-    r = subprocess.run(["grype", f"sbom:{sbom}", "-o", "json", "-q"], capture_output=True, text=True, env=env, timeout=900)
-    if r.returncode != 0:
-        return [], f"grype failed ({r.returncode}): {r.stderr[-200:]}"
+    """Grype on the SBOM in the sandbox: no network, read-only DB prepared by `guardian sandbox setup`."""
+    from guardian import sandbox
+
+    db = ROOT / ".cache" / "grype" / "db"
+    if not db.exists():
+        return [], "grype DB missing: run `guardian sandbox setup`"
+    res = sandbox.run("grype", ["sbom:{sbom.json}", "-o", "json", "-q"], inputs={"sbom.json": sbom, "db": db},
+                      env={"GRYPE_DB_CACHE_DIR": "{db}", "GRYPE_DB_AUTO_UPDATE": "false", "GRYPE_DB_VALIDATE_AGE": "false",
+                           "GRYPE_CHECK_FOR_APP_UPDATE": "false"})
+    if not res.ok:
+        return [], res.error or f"grype failed ({res.returncode}): {res.stderr[-200:]}"
     out = []
-    for m in json.loads(r.stdout or "{}").get("matches", []):
+    for m in json.loads(res.stdout or "{}").get("matches", []):
         v, a = m["vulnerability"], m["artifact"]
+        if not a.get("version"):  # Grype matches version-less components against every advisory: unknown != vulnerable
+            continue              # (the floating version itself is reported by D19 dynamic_version / unpinned counts)
         ids = [v["id"]] + [x["id"] for x in m.get("relatedVulnerabilities", [])]
         out.append({"name": a["name"], "version": a["version"], "ids": list(dict.fromkeys(ids)),
                     "summary": (v.get("description") or "")[:200],
@@ -740,9 +838,12 @@ def write_sbom(inv: list[dict], edges: list[dict], app: str, commit: str, out: P
         if p["key"] in seen:
             continue
         seen.add(p["key"])
-        props = [{"name": f"guardian:{k}", "value": str(p.get(k))} for k in ("source_file", "origin", "found_by", "direct", "dev")]
+        props = [{"name": f"guardian:{k}", "value": str(p.get(k))} for k in ("source_file", "origin", "found_by", "direct", "dev", "declared")]
+        # an unpinned component has no version: writing its range ('31.+', '^1.2') as one makes scanners match a
+        # version that does not exist (false advisories); the declared range stays in guardian:declared
         comps.append({"type": "application" if p.get("first_party") else "library", "bom-ref": p["key"], "name": p["name"],
-                      "version": p["version"] or p.get("declared") or "", "purl": p.get("purl"), "properties": props})
+                      "version": p["version"] or "", "purl": p.get("purl") if p["version"] else (p.get("purl") or "").split("@")[0],
+                      "properties": props})
     deps: dict[str, list[str]] = {}
     for e in edges:
         deps.setdefault(e["parent"] or "app", []).append(e["child"])
@@ -757,10 +858,44 @@ def write_sbom(inv: list[dict], edges: list[dict], app: str, commit: str, out: P
 
 # ------------------------------------------------------------------ one snapshot
 def scan_tree(src: Path, out: Path, app: str, commit: str, log=lambda m: None, with_vulns: bool = True) -> dict:
+    """One snapshot of one tree. Every tool that reads the tree runs in the sandbox (guardian/sandbox); a tool
+    that could not run becomes a `tool_error` finding, so the report says what was NOT checked."""
+    from guardian import sandbox
+
+    with sandbox.recording() as runs:
+        res = _scan_tree(src, out, app, commit, log, with_vulns)
+    errors = {"syft": res["syft_error"], **res["vulns"]["errors"], **res["ci"]["errors"]}
+    errors |= {r["tool"]: r["error"] for r in runs if r["error"] and r["tool"] not in errors}
+    tool_errors = [{"detector": "T0", "type": "tool_error", "severity": "info", "hard_signal": False, "component": tool,
+                    "file": None, "line": None,
+                    "summary": f"{tool} did not complete, so what it checks was not checked in this scan: {err}"[:400]}
+                   for tool, err in sorted(errors.items()) if err]
+    res["suspicious"] += tool_errors
+    (out / "suspicious.json").write_text(json.dumps(res["suspicious"], indent=1))
+    res["sandbox"] = {"mode": sandbox.mode(), "isolated": all(r["isolated"] for r in runs), "runs": runs}
+    (out / "sandbox.json").write_text(json.dumps(res["sandbox"], indent=1))
+    return res
+
+
+def egress_findings(blocked: dict[str, list[str]]) -> list[dict]:
+    """D16: while resolving dependencies in the sandbox, something tried to reach a host that is not an approved
+    registry (a dependency given as a URL or git repository, or a redirect). The connection was refused."""
+    return [{"detector": "D16", "type": "sandbox_egress_blocked", "severity": "high", "hard_signal": False,
+             "component": pj, "file": pj, "line": None,
+             "summary": f"resolving the dependencies of {pj} tried to reach {', '.join(hosts)}, which is not an approved "
+                        "registry; the sandbox blocked it"}
+            for pj, hosts in sorted(blocked.items())]
+
+
+def _scan_tree(src: Path, out: Path, app: str, commit: str, log, with_vulns: bool) -> dict:
+    from guardian.adapters import build_files
+
     out.mkdir(parents=True, exist_ok=True)
     policy = _policy()
     manifests = find_manifests(src)
-    resolved, unresolved = resolve_npm_lockfiles(src, manifests, log)
+    registry_hosts = set((policy.get("sandbox") or {}).get("npm_registry_hosts") or ["registry.npmjs.org"])
+    resolved, unresolved, blocked = resolve_npm_lockfiles(src, manifests, log, out / "work", registry_hosts)
+    shutil.rmtree(out / "work", ignore_errors=True)
     if resolved:
         manifests = find_manifests(src)
     inv, edges = [], []
@@ -776,6 +911,8 @@ def scan_tree(src: Path, out: Path, app: str, commit: str, log=lambda m: None, w
                 parsed.add(str(Path(lock).parent / sib).removeprefix("./"))
         except Exception as e:
             log(f"{lock}: could not parse ({e}); falling back to Syft")
+    # build files Guardian reads itself: skip Syft's copy of the same entries (Syft's vcpkg reader, for one)
+    parsed |= {m["path"] for m in manifests if Path(m["path"]).name in ("vcpkg.json", "conanfile.txt", "build.gradle", "build.gradle.kts")}
     log("Building the SBOM with Syft (CycloneDX + SPDX), all ecosystems")
     doc, syft_err = run_syft(src, out)
     s_inv, s_edges = _syft_inventory(doc, parsed)
@@ -788,7 +925,8 @@ def scan_tree(src: Path, out: Path, app: str, commit: str, log=lambda m: None, w
         v_comps += d_comps
         script_findings += d_find
     x_comps, ext_findings = browser_extensions(src, manifests)
-    for c in v_comps + x_comps:
+    b_comps, build_findings = build_files.scan(src, manifests)
+    for c in v_comps + x_comps + b_comps:
         inv.append(c)
         edges.append({"parent": "", "child": c["key"], "name": c["name"], "spec": c["declared"] or "", "kind": "prod",
                       "project": str(Path(c["source_file"]).parent)})
@@ -799,8 +937,8 @@ def scan_tree(src: Path, out: Path, app: str, commit: str, log=lambda m: None, w
         p["depth"] = len(p["path"]) - 1
     sbom = write_sbom(inv, edges, app, commit, out)
 
-    suspicious = script_findings + ext_findings + undeclared_imports(src, inv, manifests) + \
-        registry_config(src, manifests, policy) + package_signals(inv, policy)
+    suspicious = script_findings + ext_findings + build_findings + egress_findings(blocked) + \
+        undeclared_imports(src, inv, manifests) + registry_config(src, manifests, policy) + package_signals(inv, policy)
     log("Checking CI workflows and container images")
     actions, images, ci = ci_and_images(src, manifests)
     vul = {"vulnerabilities": [], "errors": {}, "counts": {}}
@@ -830,7 +968,7 @@ def scan_tree(src: Path, out: Path, app: str, commit: str, log=lambda m: None, w
                "lockfiles": sum(1 for m in manifests if m["role"] == "lockfile"),
                "workflows": sum(1 for m in manifests if m["role"] == "ci"), "actions": len(actions), "base_images": len(images),
                "edges": len(edges), "unresolved_manifests": {k: v[-200:] for k, v in unresolved.items()}, "graph_files": sorted({p["source_file"] for p in inv if p.get("graph") or p.get("found_by") == "guardian npm lockfile parser"}),
-               "resolved_lockfiles": resolved}
+               "resolved_lockfiles": resolved, "egress_blocked": blocked}
     return {"dir": str(out), "commit": commit, "inventory": inv, "edges": edges, "manifests": manifests, "actions": actions,
             "images": images, "vulns": vul, "ci": ci, "suspicious": suspicious, "summary": summary, "sbom_agreement": agree,
             "syft_error": syft_err, "sbom": {"guardian": str(sbom), "cyclonedx": str(out / "sbom.syft.cdx.json"),
@@ -857,6 +995,17 @@ def _commit(repo: Path, ref: str) -> str:
     return r.stdout.strip() if r.returncode == 0 else ""
 
 
+def git_show(repo: Path, ref: str, path: str) -> str | None:
+    """Content of one file at a commit, read from git objects (no checkout, nothing runs). None if absent."""
+    r = subprocess.run(["git", "-C", str(repo), "show", f"{ref}:{path}"], capture_output=True, text=True)
+    return r.stdout if r.returncode == 0 else None
+
+
+def _name(component: str) -> str:
+    """'@scope/pkg@1.2.3' -> '@scope/pkg'; 'pkg@1.2.3' -> 'pkg'."""
+    return component.rsplit("@", 1)[0] if "@" in component[1:] else component
+
+
 def _key(f: dict) -> tuple:
     return (f["type"], re.sub(r"@[^@#]*$", "", f["component"]) if f["type"] in ("install_script", "untrusted_source") else f["component"])
 
@@ -870,11 +1019,17 @@ def change_signals(base: dict, head: dict, files: list[str], policy: dict) -> li
     for p in head["inventory"]:
         hidx.setdefault((p.get("ecosystem"), p["name"]), []).append(p)
     allow_scripts = set((policy.get("install_scripts") or {}).get("allowlist", []))
+    allowed_hosts = set((policy.get("registries") or {}).get("allowed_hosts", ["registry.npmjs.org"]))
     for k, ps in hidx.items():
         olds = bidx.get(k, [])
         for p in ps:
             comp = f"{p['name']}@{p['version'] or p.get('declared')}"
             prev = next((o for o in olds if o["version"] == p["version"]), None)
+            host = urlparse(p.get("resolved") or "").netloc
+            if not prev and host and host not in allowed_hosts and p.get("found_by") == "guardian npm lockfile parser":
+                out.append({"detector": "D3", "type": "lockfile_tamper", "severity": "critical", "hard_signal": True, "component": comp,
+                            "file": p.get("source_file"), "line": p.get("lockfile_line"),
+                            "summary": f"this change brings in a package downloaded from {host}, which is not on the allow-list"})
             if p.get("has_install_script") and p["name"] not in allow_scripts and not (prev and prev.get("has_install_script")):
                 out.append({"detector": "D2", "type": "new_install_script", "severity": "high", "hard_signal": True, "component": comp,
                             "file": p.get("source_file"), "line": p.get("lockfile_line"),
@@ -939,6 +1094,19 @@ def _pkg_diff(b_inv: list[dict], h_inv: list[dict]) -> dict:
             "updated": sorted(f"{n} {','.join(sorted(b[n]))} -> {','.join(sorted(h[n]))}" for n in h.keys() & b.keys() if h[n] != b[n])}
 
 
+def _sandbox_summary(head: dict, base: dict) -> dict:
+    """What ran isolated, with which pinned images, and what the egress proxy refused (for the report headline)."""
+    from guardian import sandbox
+
+    runs = head["sandbox"]["runs"] + (base["sandbox"]["runs"] if base is not head else [])
+    st = sandbox.status()
+    return {"mode": head["sandbox"]["mode"], "engine": f"podman {st['podman']}" if st["podman"] else None,
+            "all_isolated": all(r["isolated"] for r in runs) and bool(runs),
+            "tools": sorted({r["tool"] for r in runs}), "failed": sorted({r["tool"] for r in runs if r["error"]}),
+            "images": sorted({r["image"] for r in runs if r["image"]}),
+            "egress_denied": sorted({h for r in runs for h in r["denied"]}), "grype_db": st["grype_db"]}
+
+
 def check_any(repo: Path, base: str | None, head: str, out: Path, app: str, log=lambda m: None) -> dict:
     """Full Day 1 report for any git repository. base=None -> full scan of head (nothing is labelled 'introduced')."""
     out.mkdir(parents=True, exist_ok=True)
@@ -960,13 +1128,19 @@ def check_any(repo: Path, base: str | None, head: str, out: Path, app: str, log=
     vulns = _label(B["vulns"]["vulnerabilities"], H["vulns"]["vulnerabilities"], vkey)
     from guardian.inventory.ci_risk import label_ci
     ci = label_ci(B["ci"]["findings"], H["ci"]["findings"])
-    sus = _label(B["suspicious"], H["suspicious"], _key)
+    sus = _label([s for s in B["suspicious"] if s["type"] != "tool_error"],
+                 [s for s in H["suspicious"] if s["type"] != "tool_error"], _key)
     sus = [s for s in sus if s["label"] != "fixed"]
+    # a tool that did not run is a gap in THIS scan, not a property of the change
+    sus += [{**s, "label": "not_checked", "component": f"{s['component']} ({scan})"}
+            for scan, snap in (("head", H), ("base", B if B is not H else None)) if snap
+            for s in snap["suspicious"] if s["type"] == "tool_error"]
     if B is not H:
         sus += [{**s, "label": "introduced"} for s in change_signals(B, H, files, policy)]
-    # a package that newly runs install code: keep the strong "new_install_script" signal, drop the weak duplicate
-    strong = {re.sub(r"@.*$", "", s["component"]) for s in sus if s["type"] == "new_install_script"}
-    sus = [s for s in sus if not (s["type"] == "install_script" and re.sub(r"@.*$", "", s["component"]) in strong)]
+    # the same package flagged twice: keep the strong signal from the change, drop the weak duplicate from the scan
+    weak_of = {"new_install_script": "install_script", "lockfile_tamper": "untrusted_source"}
+    strong = {(weak_of[s["type"]], _name(s["component"])) for s in sus if s["type"] in weak_of}
+    sus = [s for s in sus if (s["type"], _name(s["component"])) not in strong]
     pkgs = _pkg_diff(B["inventory"], H["inventory"]) if B is not H else {"added": [], "removed": [], "updated": []}
 
     def count(items, lab):
@@ -986,13 +1160,14 @@ def check_any(repo: Path, base: str | None, head: str, out: Path, app: str, log=
                      "errors": H["ci"]["errors"]},
         "suspicious_changes": [f"[{x['severity']}] {x['type']}: {x['component']} - {x['summary']}" for x in sus],
         "suspicious_error": None, "syft_error": H["syft_error"],
+        "sandbox": _sandbox_summary(H, B),
         "blocking": bool([x for x in sus if x["label"] == "introduced" and (x["hard_signal"] or x["severity"] in ("high", "critical"))] or
                          [v for v in intro_v if v["severity"] in ("high", "critical")] or
                          [c for c in intro_c if c["severity"] in ("high", "critical")]),
     }
     report = {"headline": headline, "package_changes": pkgs, "suspicious_changes": sus, "vulnerabilities": vulns, "ci_image": ci,
               "inventory": H["inventory"], "actions": H["actions"], "images": H["images"], "manifests": H["manifests"],
-              "sbom": H["sbom"], "runs": {"base": B["dir"], "head": H["dir"]}}
+              "sbom": H["sbom"], "runs": {"base": B["dir"], "head": H["dir"]}, "sandbox_runs": H["sandbox"]["runs"]}
     shutil.rmtree(out / "trees", ignore_errors=True)
     path = out / f"report-{bc[:8]}-{hc[:8]}.json"
     path.write_text(json.dumps(report, indent=1))

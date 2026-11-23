@@ -1,6 +1,6 @@
 .venv/
 .cache/
-sandbox/
+/sandbox/
 guardian-out/
 __pycache__/
 *.pyc

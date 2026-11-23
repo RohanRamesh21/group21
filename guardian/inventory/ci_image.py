@@ -11,11 +11,17 @@ SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 FIRST_PARTY_OWNERS = {"actions", "github"}
 
 
-def _line_and_comment(text: str, uses: str) -> tuple[int | None, str | None]:
+def _line_and_comment(text: str, uses: str, occurrence: int = 0) -> tuple[int | None, str | None]:
+    """Line of the `occurrence`-th (0-based) `uses:` line with this exact value, and its version comment.
+    Repeated actions (e.g. actions/checkout in every job) each get their own line."""
+    seen = 0
     for i, line in enumerate(text.splitlines(), start=1):
-        if "uses:" in line and uses in line:
-            m = re.search(r"#\s*(\S+)", line.split(uses, 1)[1])
-            return i, (m.group(1) if m else None)
+        m = re.match(r"^\s*(?:-\s*)?uses:\s*['\"]?([^\s'\"#]+)", line)
+        if m and m.group(1) == uses:
+            if seen == occurrence:
+                c = re.search(r"#\s*(\S+)", line.split(uses, 1)[1])
+                return i, (c.group(1) if c else None)
+            seen += 1
     return None, None
 
 
@@ -25,6 +31,7 @@ def parse_workflow(path: str, text: str) -> list[WorkflowAction]:
     except yaml.YAMLError:
         return []
     out: list[WorkflowAction] = []
+    occurrences: dict[str, int] = {}
     jobs = doc.get("jobs") or {}
     for job_name, job in jobs.items():
         if not isinstance(job, dict):
@@ -42,7 +49,8 @@ def parse_workflow(path: str, text: str) -> list[WorkflowAction]:
                 continue
             target, ref = uses.rsplit("@", 1)
             owner_repo = "/".join(target.split("/")[:2])
-            line, comment = _line_and_comment(text, uses)
+            line, comment = _line_and_comment(text, uses, occurrences.get(uses, 0))
+            occurrences[uses] = occurrences.get(uses, 0) + 1
             out.append(WorkflowAction(
                 workflow=path, job=str(job_name), uses=uses, owner_repo=owner_repo, ref=ref,
                 pinned_sha=bool(SHA_RE.match(ref)),

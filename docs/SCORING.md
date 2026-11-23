@@ -283,7 +283,7 @@ Every score card in the **Risk scores** tab shows four things.
 | `guardian/scoring/score.py` | Floors, SSVC table, AHP weights + consistency check, factor values, contributions, counterfactuals, verdict |
 | `guardian/scoring/intel.py` | CVSS vectors from the offline OSV database; EPSS and CISA KEV with a one-day cache |
 | `guardian/scoring/explain.py` | Gemini explanation + the rule-based checker + cache |
-| `guardian/check.py` | Runs the scoring after every check and writes `scores-<base>-<head>.json` |
+| `guardian/universal.py` (`check_any`) | Runs the scoring after every check and writes `scores-<base>-<head>.json` |
 | `guardian/server.py` | `GET /api/scores`, `POST /api/explain` |
 | `guardian/dashboard/src/components/RiskScores.tsx` | The Risk scores tab and score cards |
 | `tests/test_scoring_projects.py` | Tests: AHP consistency, floors, combos, SSVC, verdict, explanation checker |

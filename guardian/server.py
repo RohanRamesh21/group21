@@ -61,10 +61,13 @@ def _meta() -> dict:
     """Headline numbers from the real scenario (git + lockfile only, no network)."""
     try:
         from guardian.adapters.npm import parse_lockfile
-        from guardian.snapshot.snapshot import open_view
+        from guardian.universal import git_show
         repo = ROOT / "sandbox" / "uptime-kuma"
-        head, _ = parse_lockfile(open_view(repo, "scenario/s3-s9").text("package-lock.json"))
-        base, _ = parse_lockfile(open_view(repo, "scenario/base").text("package-lock.json"))
+        locks = {ref: git_show(repo, ref, "package-lock.json") for ref in ("scenario/base", "scenario/s3-s9")}
+        if None in locks.values():
+            raise FileNotFoundError("scenario/base or scenario/s3-s9 has no package-lock.json")
+        base, _ = parse_lockfile(locks["scenario/base"])
+        head, _ = parse_lockfile(locks["scenario/s3-s9"])
         hv = {(p.name, p.version) for p in head.values()}
         bv = {(p.name, p.version) for p in base.values()}
         return {"components": len({p.name for p in head.values()}), "lockfile_entries": len(head),

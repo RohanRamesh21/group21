@@ -1,0 +1,32 @@
+{
+  "_about": "Ground truth for testbed/apps: what each synthetic app plants and what Guardian must report. Written from the planted risks, not copied from Guardian's output. 'findings' = [type, text the component must contain]; 'components' = [ecosystem:name, exact version or null if it must be unpinned]. Control apps must produce no findings at all.",
+  "js-web": {
+    "findings": [["typosquat", "lodahs"], ["untrusted_source", "lodahs"], ["install_script", "lodahs"], ["remote_script_no_sri", "jquery"]],
+    "components": [["npm:lodahs", "1.0.0"], ["npm:left-pad", "1.3.0"], ["npm:jquery", "3.4.1"]]
+  },
+  "python-api": {
+    "findings": [["extra_index_url", "requirements.txt"], ["insecure_transport", "requirements.txt"], ["undeclared_dependency", "pyyaml"]],
+    "components": []
+  },
+  "go-service": {
+    "findings": [["module_replaced", "github.com/sirupsen/logrus"], ["missing_checksums", "go.mod"], ["checksum_bypass", "GOFLAGS"], ["checksum_bypass", "GONOSUMDB"]],
+    "components": []
+  },
+  "java-gradle": {
+    "findings": [["insecure_transport", "repo.example.com"], ["extra_repository", "jitpack.io"], ["dynamic_version", "guava"], ["unverified_build_tool", "gradle-wrapper.properties"]],
+    "components": [["maven:org.apache.logging.log4j:log4j-core", "2.14.1"], ["maven:com.google.guava:guava", null], ["maven:junit:junit", "4.13.2"]]
+  },
+  "java-maven": {
+    "findings": [["insecure_transport", "nexus.example.com"], ["dynamic_version", "jackson-databind"], ["unverified_build_tool", "maven-wrapper.properties"]],
+    "components": []
+  },
+  "cpp-native": {
+    "findings": [["unpinned_source_fetch", "json@master"], ["unverified_download", "zlib_ext"], ["insecure_transport", "zlib_ext"],
+                 ["unpinned_source_fetch", "vcpkg.json"], ["dynamic_version", "boost"], ["missing_lockfile", "conanfile.txt"],
+                 ["insecure_transport", "third_party/imgui"], ["unpinned_source_fetch", "gtest"]],
+    "components": [["cmake:json", null], ["conan:zlib", "1.3.1"], ["conan:boost", null], ["vcpkg:openssl", null], ["meson:gtest", null]]
+  },
+  "cpp-pinned": {"control": true, "findings": [],
+                 "components": [["cmake:json", "9cca280a4d0ccf0c08f47a99aa71d1b0e52f8d03"], ["vcpkg:fmt", "10.2.1"], ["conan:zlib", "1.3.1"]]},
+  "go-pinned": {"control": true, "findings": [], "components": []}
+}

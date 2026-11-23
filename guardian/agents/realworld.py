@@ -7,7 +7,6 @@ and only hosts listed in guardian.yaml `fetch_hosts`. Package code is never exec
 from __future__ import annotations
 
 import fnmatch
-import io
 import json
 import subprocess
 import tarfile
@@ -19,8 +18,8 @@ import yaml
 from rapidfuzz.distance import DamerauLevenshtein
 
 from guardian.adapters.npm import parse_lockfile
-from guardian.snapshot.snapshot import open_view
 from guardian.store.evidence import EvidenceStore
+from guardian.universal import git_show
 
 LIFECYCLE = ("preinstall", "install", "postinstall", "prepare")
 # Names attackers imitate most (plus every direct dependency of the app, added at runtime).
@@ -30,22 +29,25 @@ POPULAR = ["axios", "express", "lodash", "react", "request", "chalk", "commander
 
 
 class RealFacts:
-    def __init__(self, repo: Path, base: str, head: str, store: EvidenceStore, policy_path: Path,
-                 cache: Path, human_policy: str = "simulated"):
+    def __init__(self, repo: Path, base: str, head: str, store: EvidenceStore, policy_path: Path, cache: Path):
         self.repo, self.base, self.head, self.store = Path(repo), base, head, store
         self.policy = yaml.safe_load(Path(policy_path).read_text())
         self.cache = Path(cache)
         self.cache.mkdir(parents=True, exist_ok=True)
         self.http = requests.Session()
         self.http.headers["User-Agent"] = "guardian-hackathon-scanner"
-        self.base_view, self.head_view = open_view(self.repo, base), open_view(self.repo, head)
-        self.base_pkgs, _ = parse_lockfile(self.base_view.text("package-lock.json"))
-        self.head_pkgs, _ = parse_lockfile(self.head_view.text("package-lock.json"))
+        self.base_pkgs, _ = parse_lockfile(self._lockfile(base))
+        self.head_pkgs, _ = parse_lockfile(self._lockfile(head))
         self._memo: dict[tuple[str, str], str] = {}
         self.diff = self._compute_diff()
-        self.human_policy = human_policy
 
     # --- plumbing ------------------------------------------------------------
+    def _lockfile(self, ref: str) -> str:
+        text = git_show(self.repo, ref, "package-lock.json")
+        if text is None:
+            raise FileNotFoundError(f"no package-lock.json at {ref} in {self.repo}")
+        return text
+
     def _git(self, *args: str) -> str:
         return subprocess.run(["git", "-C", str(self.repo), *args], capture_output=True, text=True, check=True).stdout
 

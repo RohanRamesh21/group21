@@ -1,0 +1,70 @@
+# Real open-source apps for testing Guardian on many ecosystems (CLAUDE.md §3.1 test-corpus exception, approved
+# 2026-11-24). Each is pinned to a full commit SHA, fetched read-only as a bare repository into sandbox/corpus/
+# (nothing is checked out), and scanned through the sandbox. Never built, installed, run, modified or pushed to.
+#
+#   .venv/bin/python testbed/corpus.py fetch            # clone the pinned commits (needs network once)
+#   .venv/bin/python testbed/corpus.py scan [name ...]  # scan, write guardian-out/corpus/summary.json
+#
+# `ref` is informational; `commit` is what is fetched and verified. `base` adds a base->head comparison.
+apps:
+  - name: express
+    repo: https://github.com/expressjs/express
+    ref: v5.1.0
+    commit: cd7d4397c398a3f3ecadeaf9ef6ac1377bd414c4
+    covers: npm package.json WITHOUT a lockfile -> lockfile resolution in the sandbox via the egress proxy
+  - name: axios
+    repo: https://github.com/axios/axios
+    ref: v1.7.9
+    commit: b2cb45d5a533a5465c99559b16987e4d5fc08cbc
+    covers: npm with package-lock.json, GitHub Actions workflows
+  - name: flask
+    repo: https://github.com/pallets/flask
+    ref: 3.1.0
+    commit: ab8149664182b662453a563161aa89013c806dc9
+    covers: Python pyproject + pinned requirements files, workflows
+  - name: requests
+    repo: https://github.com/psf/requests
+    ref: v2.32.3
+    commit: 0e322af87745eff34caffe4df68456ebc20d9068
+    covers: Python setup.py/setup.cfg + requirements-dev.txt
+  - name: cobra
+    repo: https://github.com/spf13/cobra
+    ref: v1.8.1
+    commit: e94f6d0dd9a5e5738dca6bce03c4b1207ffbc0ec
+    covers: Go modules (go.mod + go.sum)
+  - name: gin
+    repo: https://github.com/gin-gonic/gin
+    ref: v1.10.0
+    commit: 75ccf94d605a05fe24817fc2f166f6f2959d5cea
+    base: {ref: v1.9.1, commit: 4ea0e648e38a63d6caff14100f5eab5c50912bcd}
+    covers: Go modules, and a real release diff (introduced / fixed labels on real data)
+  - name: gson
+    repo: https://github.com/google/gson
+    ref: gson-parent-2.11.0
+    commit: 828a97be0f8d58108b140b77df8dc76b657f4a87
+    covers: Java Maven multi-module (pom.xml), Maven wrapper
+  - name: spring-petclinic
+    repo: https://github.com/spring-projects/spring-petclinic
+    ref: main (2026-11-24)
+    commit: 500158f732419217507c7656904b8e6aa1bcc0d6
+    covers: Java with BOTH pom.xml and build.gradle, Gradle + Maven wrappers, Dockerfile/compose
+  - name: spdlog
+    repo: https://github.com/gabime/spdlog
+    ref: v1.15.0
+    commit: 8e5613379f5140fefb0b60412fbf1f5406e7c7f8
+    covers: C++ CMake, bundled third-party code
+  - name: cpr
+    repo: https://github.com/libcpr/cpr
+    ref: 1.11.1
+    commit: dec9422db3af470641f8b0d90e4b451c4daebf64
+    covers: C++ CMake FetchContent (curl, zlib, gtest)
+  - name: nlohmann-json
+    repo: https://github.com/nlohmann/json
+    ref: v3.11.3
+    commit: 9cca280a4d0ccf0c08f47a99aa71d1b0e52f8d03
+    covers: C++ CMake + meson + Bazel, header-only
+  - name: ripgrep
+    repo: https://github.com/BurntSushi/ripgrep
+    ref: 14.1.1
+    commit: 4649aa9700619f94cf9c66876e9549d83420e16c
+    covers: Rust (Cargo.lock) via Syft

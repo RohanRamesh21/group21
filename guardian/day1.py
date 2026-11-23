@@ -1,6 +1,6 @@
 """Day 1 checkpoint view: "what is in the application, what changed, and what appears risky".
 
-Turns a check report (universal or npm `guardian check`) + its scores into the 5 steps of the brief, each with
+Turns a check report (`universal.check_any`) + its scores into the 5 steps of the brief, each with
 real numbers, the files it came from and an honest status: done / nothing found / not applicable (+ why).
 """
 from __future__ import annotations
@@ -15,10 +15,11 @@ ROOT = Path(__file__).resolve().parents[1]
 LEVELS = ["critical", "high", "medium", "low", "info"]
 SLIDE_CHECKS = [  # brief wording -> detector types that answer it
     ("Unexpected dependency", {"undeclared_dependency", "new_dependency", "unresolvable_dependency", "remote_script_no_sri",
-                               "unpinned_remote_script", "extension_network_destinations"}),
+                               "unpinned_remote_script", "extension_network_destinations", "module_replaced"}),
     ("Typosquatted package", {"typosquat"}),
     ("Suspicious update", {"suspicious_update", "untrusted_source", "source_change", "extra_index_url", "non_registry_source",
-                           "sensitive_file_change", "extension_untrusted_update"}),
+                           "sensitive_file_change", "extension_untrusted_update", "sandbox_egress_blocked", "extra_repository",
+                           "insecure_transport", "checksum_bypass"}),
     ("Unsafe install script", {"install_script", "new_install_script"}),
     ("Untrusted / unpinned image", {"image_not_pinned"}),
     ("Modified lockfile", {"modified_lockfile", "lockfile_tamper"}),
@@ -30,6 +31,17 @@ def _abs(p: str | None) -> Path | None:
         return None
     q = Path(p)
     return q if q.is_absolute() else ROOT / q
+
+
+def _sandbox_fact(sb: dict | None) -> str:
+    if not sb:
+        return "sandbox: not recorded for this report (made before the sandbox existed)"
+    if sb.get("mode") == "host":
+        return "WARNING: tools ran on the host without isolation (GUARDIAN_SANDBOX=host)"
+    denied = f"; blocked network attempts: {', '.join(sb['egress_denied'])}" if sb.get("egress_denied") else ""
+    return (f"tools that read the repository ({', '.join(sb.get('tools') or []) or 'none'}) ran in the {sb.get('engine') or 'podman'} "
+            f"sandbox: no network, read-only inputs, pinned images" + (" (all isolated)" if sb.get("all_isolated") else " (NOT all isolated)")
+            + denied)
 
 
 def build(report: dict, scores: dict | None) -> dict:
@@ -49,16 +61,13 @@ def build(report: dict, scores: dict | None) -> dict:
 
     compare = h.get("base_commit") != h.get("head_commit")
     s = h["inventory"]
-    manifests = report.get("manifests")
+    manifests = report.get("manifests") or []
     ecos = s.get("ecosystems") or {"npm": s.get("packages", 0)}
     direct = s.get("direct", sum(1 for p in inv if p.get("direct")))
     transitive = s.get("transitive", len(inv) - direct)
     third_party = [p for p in inv if not p.get("first_party")]
 
     # ---- 1. discover
-    if manifests is None:  # npm check report
-        manifests = [{"path": "package.json", "ecosystem": "npm", "role": "manifest"},
-                     {"path": "package-lock.json", "ecosystem": "npm", "role": "lockfile"}]
     dep_files = [m for m in manifests if m["role"] in ("manifest", "lockfile")]
     step1 = {
         "n": 1, "title": "Discover components", "status": "done" if third_party else "nothing_found",
@@ -90,8 +99,9 @@ def build(report: dict, scores: dict | None) -> dict:
         "n": 2, "title": "Build the supply chain view", "status": "done",
         "facts": [f"SBOM generated: {', '.join(x['file'] for x in sboms) or 'none'} (CycloneDX + SPDX)",
                   f"dependency graph: {len(edges)} edges; transitive links available for "
-                  + (", ".join(s.get("graph_files") or []) or ("package-lock.json" if not report.get("manifests") else "no file (flat list)")),
+                  + (", ".join(s.get("graph_files") or []) or "no file (flat list)"),
                   "origin of components: " + ", ".join(f"{k} {v}" for k, v in sorted(origins.items(), key=lambda x: -x[1])[:6]),
+                  _sandbox_fact(h.get("sandbox")),
                   f"CI/CD: {acts.get('total', 0)} GitHub Actions ({acts.get('pinned', 0)} pinned to a commit SHA) · "
                   f"containers: {imgs.get('total', 0)} base image(s) ({imgs.get('pinned', 0)} pinned by digest)"],
         "sboms": sboms, "edges": len(edges), "origins": origins,
@@ -124,7 +134,8 @@ def build(report: dict, scores: dict | None) -> dict:
     }
 
     # ---- 4. suspicious changes
-    sus = [x for x in report.get("suspicious_changes", []) if x.get("label") != "fixed"]
+    sus = [x for x in report.get("suspicious_changes", []) if x.get("label") != "fixed" and x["type"] != "tool_error"]
+    not_checked = [x for x in report.get("suspicious_changes", []) if x["type"] == "tool_error"]
     ci_f = [c for c in report.get("ci_image", []) if c.get("label") != "fixed"]
     allf = sus + ci_f
     has_lock = any(m["role"] == "lockfile" for m in manifests)
@@ -152,7 +163,9 @@ def build(report: dict, scores: dict | None) -> dict:
                   if compare else "full scan of one version (no earlier version given): every finding is reported as already present",
                   f"{sum(1 for c in checks if c['status'] == 'found')} of {len(checks)} attack patterns from the brief found; "
                   f"{len(other)} other risk signals (CI weaknesses, extension permissions ...)"],
-        "checks": checks, "rows": rows4[:80], "package_changes": pc, "note": None,
+        "checks": checks, "rows": rows4[:80], "package_changes": pc,
+        "note": ("NOT checked in this scan (a tool did not run): " + "; ".join(f"{x['component']}: {x['summary'][:140]}" for x in not_checked))
+                if not_checked else None,
     }
 
     # ---- 5. evidence
@@ -178,5 +191,5 @@ def build(report: dict, scores: dict | None) -> dict:
     return {"question": "What is in the application, what changed, and what appears risky?",
             "chain": ["Repository", "SBOM", "Dependency graph", "Risk detection", "Evidence"],
             "repo": app, "head_commit": h.get("head_commit"), "base_commit": h.get("base_commit"), "compare": compare,
-            "mode": h.get("mode", "npm"), "verdict": (scores or {}).get("verdict", h.get("verdict")),
+            "mode": h.get("mode"), "verdict": (scores or {}).get("verdict", h.get("verdict")),
             "steps": [step1, step2, step3, step4, step5]}

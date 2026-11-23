@@ -104,8 +104,3 @@ class EvidenceStore:
         if ev is None:
             raise KeyError(eid)
         return Path(ev.blob_path).read_text(errors="replace")
-
-    def verify(self, eid: str) -> bool:
-        """True if the blob still matches its recorded hash."""
-        ev = self.get(eid)
-        return ev is not None and hashlib.sha256(Path(ev.blob_path).read_bytes()).hexdigest() == ev.sha256

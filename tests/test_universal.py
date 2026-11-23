@@ -94,6 +94,27 @@ def test_base_head_pipeline_detects_lockfile_tamper_and_works_without_npm(tmp_pa
     assert next(c for c in d["steps"][3]["checks"] if c["check"] == "Modified lockfile")["status"] == "found"
 
 
+def test_new_package_from_unapproved_host_is_critical(tmp_path, offline):
+    repo = tmp_path / "repo"
+    _write(repo, {"package.json": '{"name":"a","dependencies":{"kuma-helper":"1.0.0"}}', "package-lock.json": _lock("sha512-AAA")})
+    git = ["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t"]
+    subprocess.run(["git", "init", "-q", str(repo)], check=True)
+    subprocess.run(git + ["add", "-A"], check=True)
+    subprocess.run(git + ["commit", "-qm", "base"], check=True)
+    lock = json.loads(_lock("sha512-AAA"))
+    lock["packages"][""]["dependencies"]["axois"] = "1.0.0"
+    lock["packages"]["node_modules/axois"] = {"version": "1.0.0", "resolved": "http://127.0.0.1:4873/axois/-/axois-1.0.0.tgz",
+                                              "integrity": "sha512-CCC", "hasInstallScript": True}
+    _write(repo, {"package-lock.json": json.dumps(lock)})
+    subprocess.run(git + ["commit", "-qam", "fix typo"], check=True)
+    assert '"axois"' in u.git_show(repo, "HEAD", "package-lock.json") and u.git_show(repo, "HEAD", "nope.txt") is None
+    rep = u.check_any(repo, "HEAD~1", "HEAD", tmp_path / "out", "repo")
+    axois = {(s["type"], s["severity"], s["label"]) for s in rep["suspicious_changes"] if s["component"].startswith("axois")}
+    assert ("lockfile_tamper", "critical", "introduced") in axois and ("new_install_script", "high", "introduced") in axois
+    assert not {t for t, _, _ in axois} & {"untrusted_source", "install_script"}  # weak duplicates dropped
+    assert rep["headline"]["verdict"] == "block"
+
+
 def test_repo_without_any_manifest_still_completes(tmp_path, offline):
     repo = tmp_path / "repo"
     _write(repo, {"README.md": "hi", "script.py": "import json\n"})

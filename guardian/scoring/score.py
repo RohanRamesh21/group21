@@ -219,7 +219,9 @@ def score_report(report: dict) -> dict:
         })
 
     # ---- suspicious supply-chain changes (non-CVE)
-    sus = report.get("suspicious_changes", [])
+    # a tool that did not run is a gap in coverage, not a risk: listed under data.not_checked, never scored
+    sus = [s for s in report.get("suspicious_changes", []) if s["type"] != "tool_error"]
+    not_checked = [f"{s['component']}: {s['summary']}" for s in report.get("suspicious_changes", []) if s["type"] == "tool_error"]
     types_by_comp: dict[str, set] = {}
     for s in sus:
         comp = s["component"].replace("pkg:npm/", "")
@@ -292,5 +294,5 @@ def score_report(report: dict) -> dict:
                    "levels": LEVEL, "verdict_rule": "block if this PR introduces a critical finding or an Act decision; "
                                                     "review if it introduces a high finding; otherwise allow"},
         "data": {"advisories": len(ids), "cves": len(cves), "epss_found": len(ep), "kev_matches": sum(1 for c in cves if c in kv),
-                 "kev_catalog_size": len(kv), "errors": [x for x in (ep_err, kev_err) if x]},
+                 "kev_catalog_size": len(kv), "errors": [x for x in (ep_err, kev_err) if x], "not_checked": not_checked},
     }

@@ -124,15 +124,6 @@ def parse_lockfile(text: str) -> tuple[dict[str, Package], list[Edge]]:
     return pkgs, edges
 
 
-def root_declarations(text: str) -> dict[str, dict[str, str]]:
-    """Direct dependency declarations from package.json (for 'declared_in')."""
-    data = json.loads(text)
-    return {
-        k: data.get(k, {}) or {}
-        for k in ("dependencies", "devDependencies", "optionalDependencies", "peerDependencies")
-    }
-
-
 def line_of(text: str, needle: str) -> int | None:
     """1-based line number of the first line containing `needle` (used for evidence locators)."""
     for i, line in enumerate(text.splitlines(), start=1):

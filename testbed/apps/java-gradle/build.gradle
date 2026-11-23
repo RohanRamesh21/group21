@@ -1,0 +1,13 @@
+plugins { id 'java' }
+
+repositories {
+    mavenCentral()
+    maven { url 'http://repo.example.com/maven2' }
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    implementation 'org.apache.logging.log4j:log4j-core:2.14.1'
+    implementation 'com.google.guava:guava:31.+'
+    testImplementation 'junit:junit:4.13.2'
+}

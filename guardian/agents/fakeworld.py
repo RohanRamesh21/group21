@@ -7,8 +7,6 @@ real tool output. Stage B replaces each canned answer with the real tool.
 """
 from __future__ import annotations
 
-import json
-
 from guardian.store.evidence import EvidenceStore
 
 AXOIS = "pkg:npm/axois@1.0.0"
@@ -97,10 +95,3 @@ def build(store: EvidenceStore) -> dict:
     }
     return world
 
-
-def pretty(store: EvidenceStore, eid: str) -> str:
-    data = store.content(eid)
-    try:
-        return json.dumps(json.loads(data), indent=2)
-    except ValueError:
-        return data

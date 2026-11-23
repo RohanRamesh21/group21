@@ -6,7 +6,6 @@ world="real":   Stage B real tools on sandbox/uptime-kuma scenario/base..scenari
 from __future__ import annotations
 
 import json
-import os
 from pathlib import Path
 
 from guardian import config
@@ -82,6 +81,4 @@ def timeline(board: Board) -> str:
             lines.append(f"  {e['agent']:<9} ✘ REJECTED {e['kind']}: {e['reason']}"[:170])
         elif ev in ("dispatch", "ask_human", "floor_intervention", "verdict", "coverage_gap", "run_start"):
             lines.append(f"  {'system':<9} • {ev}: " + json.dumps({k: v for k, v in e.items() if k != 'event'}, default=str)[:140])
-    for m in board.messages:
-        pass
     return "\n".join(lines)

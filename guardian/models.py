@@ -1,14 +1,12 @@
-"""Shared data models for the Guardian (FINAL_PLAN.md §13).
+"""Shared data models: evidence records, npm packages and edges, CI actions and base images.
 
-Every other module codes against these schemas.
+The agents' own message, finding and case schemas live in guardian/agents/protocol.py.
 """
 from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field
-
-Risk = Literal["critical", "high", "medium", "low", "info"]
+from pydantic import BaseModel
 
 
 class Evidence(BaseModel):
@@ -74,69 +72,3 @@ class ImageRef(BaseModel):
     digest: str | None
     line: int
 
-
-class Snapshot(BaseModel):
-    id: str
-    repo: str
-    commit: str
-    ref: str
-    taken_at: str
-    file_hashes: dict[str, str] = Field(default_factory=dict)
-    tag_map: dict[str, str] = Field(default_factory=dict)  # action@ref -> ref (SHA once resolved)
-    image_digest: str | None = None
-    sbom_paths: dict[str, str] = Field(default_factory=dict)
-    tool_versions: dict[str, str] = Field(default_factory=dict)
-
-
-class Finding(BaseModel):
-    id: str
-    detector: str
-    type: Literal[
-        "known_vulnerability", "malicious_package", "typosquat", "install_script", "lockfile_tamper",
-        "suspicious_update", "ci_risk", "image_risk", "source_change", "dependency_confusion",
-        "provenance", "artifact_mismatch", "prompt_injection",
-    ]
-    component: str
-    layer: Literal["app", "image", "ci", "source"]
-    label: Literal["introduced", "pre_existing", "fixed"] | None = None
-    hard_signal: bool = False
-    paths: list[list[str]] = Field(default_factory=list)
-    declared_in: dict | None = None
-    introduced_by: str | None = None
-    advisory: dict | None = None
-    fix: dict | None = None
-    evidence_ids: list[str]
-    status: Literal["candidate", "verified", "needs_review"] = "candidate"
-
-
-class Claim(BaseModel):
-    text: str
-    evidence_ids: list[str]
-    kind: Literal["verified", "inferred"]
-
-
-class Case(BaseModel):
-    id: str
-    title: str
-    finding_ids: list[str]
-    root_cause: str | None = None
-    verdict: Literal["malicious", "suspicious", "vulnerable", "benign", "unresolved"] = "unresolved"
-    risk: Risk = "info"
-    confidence: float = 1.0
-    claims: list[Claim] = Field(default_factory=list)
-    message_ids: list[str] = Field(default_factory=list)
-    verifier: Literal["pass", "rejected", "not_run"] = "not_run"
-
-
-class AgentMessage(BaseModel):
-    id: str
-    case_id: str
-    sender: Literal["investigator", "skeptic", "fixer", "system"]
-    recipient: Literal["investigator", "skeptic", "fixer", "system"]
-    kind: Literal["assign", "hypothesis", "challenge", "answer", "corroborate", "dispute", "evidence_request", "resolve"]
-    claim: str | None = Field(None, max_length=600)
-    evidence_ids: list[str] = Field(default_factory=list)
-    kind_of_claim: Literal["verified", "inferred"] | None = None
-    confidence: float | None = Field(None, ge=0, le=1)
-    proposed_risk: Risk | None = None
-    in_reply_to: str | None = None

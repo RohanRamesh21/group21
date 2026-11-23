@@ -12,3 +12,10 @@ node | v26.7.0 | -
 python | 3.12.12 | -
 verdaccio image | verdaccio/verdaccio:6 | sha256:8c9cd40d28ef134140f4f6c4cef2032ac58bd554cce56757048f81b72717c09c
 sample app | uptime-kuma 2.5.12 | commit 5aa5dec425f8a955b54e150636979a6927745ec5
+# Sandbox images (guardian.yaml sandbox.images; pulled by `guardian sandbox setup`, never during a scan), recorded 2026-11-23
+image node | 24-alpine | sha256:d8d97e479cdc64f052f81f129362168717c59783ade8dcc1abd22e1cca8dbd7c
+image syft | v1.57.2 | sha256:9c2563b5fb56e9f5e9cb5b6cf10b9ab0dc6a6d1c1b1e24165bcdf9c8c85a9584
+image grype | v0.122.1 | sha256:f51a9094a94d5842328a89f11175dfbec7ca7cf148c7fdd0030d1747cff7df7f
+image osv-scanner | v2.7.1 | sha256:bc10cae80da100d32572aea48cfc48e592be9adc4a8b0820fd5d2c2db71f9446
+image zizmor | 1.33.1 | sha256:e308cf5848d9660e463ad07280f5bc009d4c4ea3a5ed4f851a1e1b72b5828248
+podman | 5.8.6 (rootless) | -
