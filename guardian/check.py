@@ -93,5 +93,17 @@ def check(repo: Path, base: str, head: str, out: Path) -> dict:
               "runs": {"base": str(db), "head": str(dh)}}
     path = out / f"report-{rb['commit'][:8]}-{rh['commit'][:8]}.json"
     path.write_text(json.dumps(report, indent=1))
-    (out / "latest.json").write_text(json.dumps({"path": str(path)}))
+    pointer = {"path": str(path)}
+    try:  # explainable risk scoring (deterministic; EPSS/KEV cached, missing data stays "unknown")
+        from guardian.scoring.score import score_report
+        scores = score_report(report)
+        spath = out / f"scores-{rb['commit'][:8]}-{rh['commit'][:8]}.json"
+        spath.write_text(json.dumps(scores, indent=1))
+        pointer["scores"] = str(spath)
+        report["headline"]["verdict"] = scores["verdict"]
+        report["headline"]["verdict_reasons"] = scores["reasons"]
+        path.write_text(json.dumps(report, indent=1))
+    except Exception as e:
+        pointer["scores_error"] = f"{type(e).__name__}: {e}"[:300]
+    (out / "latest.json").write_text(json.dumps(pointer))
     return {**report, "path": str(path)}

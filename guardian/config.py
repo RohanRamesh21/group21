@@ -22,6 +22,8 @@ def provider() -> str:
     load_env()
     if os.environ.get("GUARDIAN_LLM_PROVIDER"):
         return os.environ["GUARDIAN_LLM_PROVIDER"]
+    if os.environ.get("GOOGLE_API_KEY"):
+        return "gemini"
     if os.environ.get("OPENROUTER_API_KEY"):
         return "openrouter"
     if os.environ.get("ANTHROPIC_API_KEY"):

@@ -95,7 +95,9 @@ class OpenRouterBackend:
             else:  # assistant blocks
                 text = "".join(b.get("text", "") for b in content if b.get("type") == "text")
                 calls = [{"id": b["id"], "type": "function",
-                          "function": {"name": b["name"], "arguments": json.dumps(b["input"])}}
+                          "function": {"name": b["name"], "arguments": json.dumps(b["input"])},
+                          # Gemini 3 needs its thought signature sent back with each tool call
+                          **({"extra_content": b["extra_content"]} if b.get("extra_content") else {})}
                          for b in content if b.get("type") == "tool_use"]
                 msg = {"role": "assistant", "content": text or None}
                 if calls:
@@ -145,8 +147,127 @@ class OpenRouterBackend:
                 args = {"_invalid_json": tc["function"].get("arguments", "")[:200]}
             calls.append(ToolCall(tc["id"], tc["function"]["name"], args))
         text = msg.get("content") or ""
+        extra = {tc["id"]: tc.get("extra_content") for tc in msg.get("tool_calls") or []}
         raw = ([{"type": "text", "text": text}] if text else []) + \
-              [{"type": "tool_use", "id": c.id, "name": c.name, "input": c.input} for c in calls]
+              [{"type": "tool_use", "id": c.id, "name": c.name, "input": c.input,
+                **({"extra_content": extra[c.id]} if extra.get(c.id) else {})} for c in calls]
+        stop = "tool_use" if calls else ("refusal" if choice.get("finish_reason") == "content_filter" else "end_turn")
+        return Turn(text=text, tool_calls=calls, stop_reason=stop, raw_content=raw or [{"type": "text", "text": ""}])
+
+
+class GeminiBackend(OpenRouterBackend):
+    """Google Gemini through its OpenAI-compatible endpoint (same message translation as OpenRouter).
+
+    Tries GUARDIAN_MODEL first (default gemini-3.5-flash), then the fallback models in order when Google
+    reports overload (503) or quota (429). The model that answered each step is recorded in `self.used`.
+    """
+
+    URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions"
+    MODEL = "gemini-3.5-flash"
+    FALLBACKS = ("gemini-2.5-flash",)
+
+    def __init__(self, model: str | None = None, timeout: int = 180):
+        import os
+
+        import requests
+
+        from guardian import config
+
+        config.load_env()  # the key lives in guardian/.env (git-ignored, mode 600)
+        self.session = requests.Session()
+        self.key = os.environ["GOOGLE_API_KEY"]
+        self.model = model or os.environ.get("GUARDIAN_MODEL", self.MODEL)
+        extra = [m.strip() for m in os.environ.get("GUARDIAN_FALLBACK_MODELS", "").split(",") if m.strip()]
+        self.models = [self.model] + [m for m in (extra or list(self.FALLBACKS)) if m != self.model]
+        self.timeout = timeout
+        self.usage = {"calls": 0, "prompt_tokens": 0, "completion_tokens": 0}
+        self.used: dict[str, int] = {}
+        self.sticky: dict[str, str] = {}
+
+    # Gemini 3 requires a thought signature on function calls in the history. Calls produced by a model that
+    # gives none (e.g. a fallback model) get Google's documented placeholder so the history stays valid.
+    SKIP_SIG = {"google": {"thought_signature": "skip_thought_signature_validator"}}
+
+    def _to_openai(self, system: str, messages: list) -> list:
+        out = OpenRouterBackend._to_openai(system, messages)
+        for m in out:
+            for tc in m.get("tool_calls") or []:
+                tc.setdefault("extra_content", self.SKIP_SIG)
+        return out
+
+    step_timeout = 120  # seconds per call before falling back to the next model
+
+    def step(self, agent, system, messages, tools, effort):
+        import time
+
+        import requests
+
+        effort = {"max": "high", "xhigh": "high"}.get(effort, effort)
+        last_err = None
+        sticky = self.sticky.get(agent)  # once an agent falls back, it stays on that model (keeps its history valid)
+        order = [sticky] + [m for m in self.models if m != sticky] if sticky else self.models
+        for model in order:
+            body = {"model": model, "messages": self._to_openai(system, messages), "tools": self._tools(tools),
+                    "tool_choice": "auto", "max_tokens": 16000, "reasoning_effort": effort}
+            for attempt in range(4):
+                try:
+                    r = self.session.post(self.URL, json=body, timeout=self.step_timeout,
+                                          headers={"Authorization": f"Bearer {self.key}"})
+                except requests.RequestException as e:  # slow or dropped: move on to the next model
+                    last_err = f"{model}: {type(e).__name__}"
+                    break
+                if r.status_code == 200:
+                    self.used[model] = self.used.get(model, 0) + 1
+                    if model != self.models[0]:
+                        self.sticky[agent] = model
+                    return self._parse(r.json())
+                last_err = f"{model} HTTP {r.status_code}: {r.text[:300]}"
+                if r.status_code == 404:  # model retired or not available to this key: try the next one
+                    break
+                if r.status_code == 429:
+                    wait = self._retry_delay(r)
+                    if wait is None or wait > 65:  # daily quota used up: next model
+                        break
+                    time.sleep(wait + 1)  # per-minute limit: wait as Google asks, then retry the same model
+                    continue
+                if r.status_code not in (500, 502, 503, 504):
+                    raise RuntimeError(f"Gemini error {last_err}")
+                time.sleep(3 * (attempt + 1))
+        raise RuntimeError(f"Gemini error after trying {', '.join(order)}: {last_err}")
+
+    @staticmethod
+    def _retry_delay(r) -> float | None:
+        """Seconds Google asks us to wait (RetryInfo), or None if it gives no hint."""
+        try:
+            body = r.json()
+            err = body[0]["error"] if isinstance(body, list) else body["error"]
+            for d in err.get("details", []):
+                if d.get("retryDelay"):
+                    return float(str(d["retryDelay"]).rstrip("s"))
+        except Exception:
+            return None
+        return None
+
+    def _parse(self, data: dict) -> Turn:
+        u = data.get("usage") or {}
+        self.usage["calls"] += 1
+        self.usage["prompt_tokens"] += u.get("prompt_tokens", 0)
+        self.usage["completion_tokens"] += u.get("completion_tokens", 0)
+        choice = data["choices"][0]
+        msg = choice["message"]
+        calls = []
+        for i, tc in enumerate(msg.get("tool_calls") or []):
+            tc.setdefault("id", f"call_{self.usage['calls']}_{i}")
+            try:
+                args = json.loads(tc["function"].get("arguments") or "{}")
+            except json.JSONDecodeError:
+                args = {"_invalid_json": tc["function"].get("arguments", "")[:200]}
+            calls.append(ToolCall(tc["id"], tc["function"]["name"], args))
+        text = msg.get("content") or ""
+        extra = {tc["id"]: tc.get("extra_content") for tc in msg.get("tool_calls") or []}
+        raw = ([{"type": "text", "text": text}] if text else []) + \
+              [{"type": "tool_use", "id": c.id, "name": c.name, "input": c.input,
+                **({"extra_content": extra[c.id]} if extra.get(c.id) else {})} for c in calls]
         stop = "tool_use" if calls else ("refusal" if choice.get("finish_reason") == "content_filter" else "end_turn")
         return Turn(text=text, tool_calls=calls, stop_reason=stop, raw_content=raw or [{"type": "text", "text": ""}])
 

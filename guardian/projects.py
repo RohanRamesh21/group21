@@ -1,0 +1,211 @@
+"""Scan any project the user brings (any language / package manager): a ZIP upload or a public Git URL.
+
+Safety rules (the analysed project is untrusted):
+  * Nothing from the project is installed or executed. If a lockfile is missing we only *resolve* one with
+    `npm install --package-lock-only --ignore-scripts` (registry metadata, no package code runs).
+  * ZIP: no absolute paths, no `..`, no symlinks, size and file-count limits.
+  * Git: https only, host allow-list, read-only shallow clone, hooks disabled, no submodules, no credential prompts.
+  * Everything stays under guardian-out/projects/<id>/.
+"""
+from __future__ import annotations
+
+import json
+import os
+import shutil
+import stat
+import subprocess
+import threading
+import time
+import uuid
+import zipfile
+from pathlib import Path
+from urllib.parse import urlparse
+
+ROOT = Path(__file__).resolve().parents[1]
+BASE = ROOT / "guardian-out" / "projects"
+GIT_HOSTS = {"github.com", "gitlab.com", "bitbucket.org"}
+MAX_ZIP_BYTES = 200 * 1024 * 1024
+MAX_FILES = 60_000
+SKIP_DIRS = {"node_modules", ".git"}
+GIT_ENV = {**os.environ, "GIT_TERMINAL_PROMPT": "0", "GIT_ASKPASS": "echo", "GIT_CONFIG_NOSYSTEM": "1"}
+SAFE_GIT = ["git", "-c", "core.hooksPath=/dev/null", "-c", "protocol.file.allow=never", "-c", "core.symlinks=false"]
+
+JOBS: dict[str, dict] = {}
+_LOCK = threading.Lock()
+
+
+def _job(pid: str, **kw):
+    with _LOCK:
+        JOBS[pid].update(kw)
+        JOBS[pid]["updated"] = time.time()
+        (BASE / pid / "job.json").write_text(json.dumps(JOBS[pid], indent=1))
+
+
+def _step(pid: str, msg: str):
+    with _LOCK:
+        JOBS[pid].setdefault("steps", []).append({"t": round(time.time() - JOBS[pid]["created"], 1), "msg": msg})
+    _job(pid, status="running", message=msg)
+
+
+def list_jobs() -> list[dict]:
+    if BASE.exists():
+        for d in BASE.iterdir():
+            f = d / "job.json"
+            if f.exists() and d.name not in JOBS:
+                try:
+                    JOBS[d.name] = json.loads(f.read_text())
+                except Exception:
+                    pass
+    return sorted(JOBS.values(), key=lambda j: -j["created"])
+
+
+def get(pid: str) -> dict | None:
+    list_jobs()
+    return JOBS.get(pid)
+
+
+def _new(kind: str, label: str, extra: dict) -> str:
+    pid = time.strftime("%H%M%S") + "-" + uuid.uuid4().hex[:6]
+    (BASE / pid).mkdir(parents=True, exist_ok=True)
+    JOBS[pid] = {"id": pid, "kind": kind, "label": label, "status": "queued", "message": "queued", "created": time.time(),
+                 "steps": [], **extra}
+    _job(pid)
+    return pid
+
+
+# ---------------------------------------------------------------- ZIP
+def safe_extract(zip_path: Path, dest: Path) -> int:
+    with zipfile.ZipFile(zip_path) as z:
+        infos = z.infolist()
+        if len(infos) > MAX_FILES:
+            raise ValueError(f"archive has {len(infos)} entries (limit {MAX_FILES})")
+        total = sum(i.file_size for i in infos)
+        if total > MAX_ZIP_BYTES:
+            raise ValueError(f"archive expands to {total // 1_000_000} MB (limit {MAX_ZIP_BYTES // 1_000_000} MB)")
+        root = dest.resolve()
+        n = 0
+        for i in infos:
+            name = i.filename.replace("\\", "/")
+            if name.startswith("/") or ".." in Path(name).parts or ":" in Path(name).parts[0]:
+                raise ValueError(f"unsafe path in archive: {name}")
+            if stat.S_ISLNK(i.external_attr >> 16):
+                continue  # never materialise symlinks
+            if any(p in SKIP_DIRS for p in Path(name).parts):
+                continue
+            target = (dest / name).resolve()
+            if not str(target).startswith(str(root)):
+                raise ValueError(f"unsafe path in archive: {name}")
+            if i.is_dir():
+                target.mkdir(parents=True, exist_ok=True)
+                continue
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with z.open(i) as src, open(target, "wb") as out:
+                shutil.copyfileobj(src, out)
+            n += 1
+        return n
+
+
+def _git_snapshot(repo: Path, message: str):
+    subprocess.run(SAFE_GIT + ["init", "-q"], cwd=repo, check=True, env=GIT_ENV)
+    subprocess.run(SAFE_GIT + ["add", "-A"], cwd=repo, check=True, env=GIT_ENV)
+    subprocess.run(SAFE_GIT + ["-c", "user.name=guardian", "-c", "user.email=guardian@localhost", "commit", "-q",
+                               "--no-verify", "-m", message], cwd=repo, check=True, env=GIT_ENV)
+
+
+def start_zip(upload: Path, filename: str) -> str:
+    pid = _new("zip", filename, {})
+    threading.Thread(target=_run_zip, args=(pid, upload), daemon=True).start()
+    return pid
+
+
+def _run_zip(pid: str, upload: Path):
+    try:
+        src = BASE / pid / "src"
+        _step(pid, "Extracting archive safely (no symlinks, no paths outside the folder, size limits)")
+        n = safe_extract(upload, src)
+        upload.unlink(missing_ok=True)
+        tops = [p for p in src.iterdir() if not p.name.startswith(".") and p.name != "__MACOSX"]
+        repo = tops[0] if len(tops) == 1 and tops[0].is_dir() else src  # zip of a single folder: use that folder
+        _step(pid, f"Extracted {n} files")
+        if (repo / ".git").exists():
+            shutil.rmtree(repo / ".git")
+        _git_snapshot(repo, "uploaded snapshot")
+        _analyse(pid, repo, None, "HEAD", label=Path(JOBS[pid]["label"]).stem)
+    except Exception as e:
+        _job(pid, status="error", message=f"{type(e).__name__}: {e}"[:400])
+
+
+# ---------------------------------------------------------------- Git URL
+def validate_git_url(url: str) -> str:
+    u = urlparse(url.strip())
+    if u.scheme != "https" or not u.hostname or u.hostname.lower() not in GIT_HOSTS:
+        raise ValueError(f"only https URLs on {', '.join(sorted(GIT_HOSTS))} are allowed")
+    if u.username or u.password or u.query or u.fragment:
+        raise ValueError("URL must not contain credentials, query or fragment")
+    parts = [p for p in u.path.split("/") if p]
+    if len(parts) < 2:
+        raise ValueError("URL must point to a repository (https://host/owner/repo)")
+    return url.strip()
+
+
+def start_git(url: str, base: str | None, head: str | None) -> str:
+    url = validate_git_url(url)
+    pid = _new("git", url.removeprefix("https://"), {"url": url, "base": base or None, "head": head or None})
+    threading.Thread(target=_run_git, args=(pid, url, base, head), daemon=True).start()
+    return pid
+
+
+def _run_git(pid: str, url: str, base: str | None, head: str | None):
+    try:
+        repo = BASE / pid / "src"
+        _step(pid, "Cloning read-only (shallow, no hooks, no submodules)")
+        r = subprocess.run(SAFE_GIT + ["clone", "-q", "--depth", "200", "--no-recurse-submodules", url, str(repo)],
+                           capture_output=True, text=True, timeout=300, env=GIT_ENV)
+        if r.returncode != 0:
+            raise RuntimeError("clone failed: " + r.stderr[-300:])
+        for ref in [x for x in (base, head) if x]:
+            if subprocess.run(SAFE_GIT + ["rev-parse", "--verify", "-q", f"{ref}^{{commit}}"], cwd=repo, env=GIT_ENV,
+                              capture_output=True).returncode != 0:
+                _step(pid, f"Fetching ref {ref}")
+                f = subprocess.run(SAFE_GIT + ["fetch", "-q", "--depth", "200", "origin", f"{ref}:refs/guardian/{ref}"],
+                                   cwd=repo, capture_output=True, text=True, timeout=300, env=GIT_ENV)
+                if f.returncode != 0:
+                    raise RuntimeError(f"ref {ref} not found: {f.stderr[-200:]}")
+        head_ref = head or "HEAD"
+        if not base and subprocess.run(SAFE_GIT + ["rev-parse", "--verify", "-q", f"{head_ref}~1^{{commit}}"], cwd=repo, env=GIT_ENV,
+                                       capture_output=True).returncode == 0:
+            base = f"{head_ref}~1"  # default "what changed": the latest commit
+            _job(pid, base_default=True)
+        _analyse(pid, repo, base, head_ref, label=url.rstrip("/").rsplit("/", 1)[-1].removesuffix(".git"))
+    except Exception as e:
+        _job(pid, status="error", message=f"{type(e).__name__}: {e}"[:400])
+
+
+# ---------------------------------------------------------------- analysis (universal: any ecosystem)
+def _analyse(pid: str, repo: Path, base: str | None, head: str, label: str):
+    from guardian.universal import check_any
+
+    mode = "compare" if base else "single"
+    _step(pid, "Day 1 pipeline: components -> SBOM -> dependency graph -> vulnerabilities -> suspicious changes -> evidence"
+               + (f" (comparing {base} -> {head})" if base else " (full scan, no earlier version to compare)"))
+    out = BASE / pid / "check"
+    rep = check_any(repo, base, head, out, label, log=lambda m: _step(pid, m))
+    latest = json.loads((out / "latest.json").read_text())
+    h = rep["headline"]
+    _job(pid, status="done", message="done", mode=mode, out=str(out),
+         summary={"packages": h["inventory"]["packages"], "ecosystems": h["inventory"].get("ecosystems"), "verdict": h.get("verdict"),
+                  "reasons": h.get("verdict_reasons", [])[:3], "head_commit": h["head_commit"], "base_commit": h["base_commit"],
+                  "scores": bool(latest.get("scores"))})
+    try:  # pre-write AI explanations for the findings a reviewer opens first
+        from guardian.scoring.explain import warm
+        warm(json.loads(Path(latest["scores"]).read_text())["findings"], limit=6)
+    except Exception:
+        pass
+
+
+def out_dir(pid: str | None) -> Path:
+    if not pid:
+        return ROOT / "guardian-out" / "check"
+    if not get(pid):
+        raise KeyError(pid)
+    return BASE / pid / "check"

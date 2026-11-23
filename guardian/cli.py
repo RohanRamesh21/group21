@@ -114,7 +114,7 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("--head", required=True)
     c.add_argument("--out", type=Path, default=Path("guardian-out/check"))
     inv = sub.add_parser("investigate", help="Agentic investigation of a PR (base..head)")
-    inv.add_argument("--backend", choices=["auto", "replay", "openrouter", "claude"], default="auto",
+    inv.add_argument("--backend", choices=["auto", "replay", "gemini", "openrouter", "claude"], default="auto",
                      help="auto picks from guardian/.env; replay = recorded agent turns (canned world only)")
     inv.add_argument("--world", choices=["canned", "real"], default="canned",
                      help="real = live tools on sandbox/uptime-kuma scenario/base..scenario/s3-s9")

@@ -7,3 +7,4 @@ __pycache__/
 .env
 guardian/dashboard/node_modules/
 guardian/dashboard/dist/
+guardian.egg-info/

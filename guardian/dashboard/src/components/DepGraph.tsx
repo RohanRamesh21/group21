@@ -50,12 +50,13 @@ function PkgNode({ data }: NodeProps<Node<NData>>) {
 }
 const nodeTypes = { p: PkgNode };
 
-export function useGraph() {
+export function useGraph(project?: string | null) {
   const [g, setG] = useState<DGraph | null>(null);
   const [err, setErr] = useState<string | null>(null);
   useEffect(() => {
-    fetch("/api/depgraph").then(async (r) => (r.ok ? setG(await r.json()) : setErr((await r.json()).detail))).catch(() => setErr("backend offline"));
-  }, []);
+    setG(null); setErr(null);
+    fetch(`/api/depgraph${project ? `?project=${project}` : ""}`).then(async (r) => (r.ok ? setG(await r.json()) : setErr((await r.json()).detail))).catch(() => setErr("backend offline"));
+  }, [project]);
   return { g, err };
 }
 
@@ -146,8 +147,8 @@ function Inner({ g, mode, selected, setSelected, query }: { g: DGraph; mode: Mod
   );
 }
 
-export function DepGraph() {
-  const { g, err } = useGraph();
+export function DepGraph({ project }: { project?: string | null } = {}) {
+  const { g, err } = useGraph(project);
   const [mode, setMode] = useState<Mode>("risk");
   const [selected, setSelected] = useState<string | null>(null);
   const [query, setQuery] = useState("");

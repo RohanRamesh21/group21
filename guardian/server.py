@@ -12,7 +12,7 @@ import time
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -184,11 +184,150 @@ def evidence(run_id: str, eid: str):
 _DEP_CACHE: dict = {}
 
 
+def _check_dir(project: str | None) -> Path:
+    from guardian import projects
+    try:
+        return projects.out_dir(project)
+    except KeyError:
+        raise HTTPException(404, f"unknown project {project}")
+
+
+_WARMED: set[str] = set()
+
+
+@app.get("/api/scores")
+def scores(project: str | None = None):
+    """Explainable risk scores (floors + SSVC + AHP-weighted priority) for the latest check of the main
+    scenario, or of an uploaded project. Deterministic; no LLM involved in the numbers."""
+    d = _check_dir(project)
+    latest = d / "latest.json"
+    if not latest.exists():
+        raise HTTPException(404, "no check report yet")
+    ptr = json.loads(latest.read_text())
+    if not ptr.get("scores"):
+        from guardian.scoring.score import score_report
+        rp = Path(ptr["path"]) if Path(ptr["path"]).is_absolute() else ROOT / ptr["path"]
+        data = score_report(json.loads(rp.read_text()))
+        sp = rp.with_name(rp.name.replace("report-", "scores-"))
+        sp.write_text(json.dumps(data, indent=1))
+        ptr["scores"] = str(sp)
+        latest.write_text(json.dumps(ptr))
+    sp = Path(ptr["scores"]) if Path(ptr["scores"]).is_absolute() else ROOT / ptr["scores"]
+    data = json.loads(sp.read_text())
+    if str(sp) not in _WARMED:  # pre-write explanations in the background so the UI opens them instantly
+        _WARMED.add(str(sp))
+        from guardian.scoring.explain import warm
+        threading.Thread(target=warm, args=(data["findings"],), kwargs={"limit": 10}, daemon=True).start()
+    from guardian.scoring.explain import is_cached
+    for f in data["findings"]:
+        f["explained"] = is_cached(f)
+    return data
+
+
+class ExplainReq(BaseModel):
+    id: str
+    project: str | None = None
+    force: bool = False
+
+
+@app.post("/api/explain")
+def explain_finding(req: ExplainReq):
+    """Plain-English explanation of one scored finding (Gemini), checked against the score card."""
+    data = scores(req.project)
+    f = next((x for x in data["findings"] if x["id"] == req.id), None)
+    if not f:
+        raise HTTPException(404, "unknown finding")
+    from guardian.scoring.explain import explain
+    return explain(f, force=req.force)
+
+
+class GitReq(BaseModel):
+    url: str
+    base: str | None = None
+    head: str | None = None
+
+
+@app.get("/api/projects")
+def list_projects():
+    from guardian import projects
+    return projects.list_jobs()
+
+
+@app.get("/api/projects/{pid}")
+def get_project(pid: str):
+    from guardian import projects
+    j = projects.get(pid)
+    if not j:
+        raise HTTPException(404, "unknown project")
+    return j
+
+
+@app.post("/api/projects/git")
+def project_git(req: GitReq):
+    from guardian import projects
+    try:
+        return {"id": projects.start_git(req.url, (req.base or "").strip() or None, (req.head or "").strip() or None)}
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+@app.post("/api/projects/zip")
+async def project_zip(file: UploadFile = File(...)):
+    from guardian import projects
+    if not (file.filename or "").lower().endswith(".zip"):
+        raise HTTPException(400, "please upload a .zip file")
+    projects.BASE.mkdir(parents=True, exist_ok=True)
+    tmp = projects.BASE / f"upload-{uuid.uuid4().hex}.zip"
+    size = 0
+    with open(tmp, "wb") as out:
+        while chunk := await file.read(1 << 20):
+            size += len(chunk)
+            if size > projects.MAX_ZIP_BYTES:
+                out.close()
+                tmp.unlink(missing_ok=True)
+                raise HTTPException(413, "zip is larger than 200 MB")
+            out.write(chunk)
+    return {"id": projects.start_zip(tmp, file.filename)}
+
+
+def _latest(project: str | None) -> tuple[dict, dict | None]:
+    latest = _check_dir(project) / "latest.json"
+    if not latest.exists():
+        raise HTTPException(404, "no report yet for this project")
+    ptr = json.loads(latest.read_text())
+    path = Path(ptr["path"]) if Path(ptr["path"]).is_absolute() else ROOT / ptr["path"]
+    rep = json.loads(path.read_text())
+    sp = ptr.get("scores")
+    sc = json.loads((Path(sp) if Path(sp).is_absolute() else ROOT / sp).read_text()) if sp else None
+    return rep, sc
+
+
+@app.get("/api/day1")
+def day1(project: str | None = None):
+    """The Day 1 checkpoint (5 steps of the brief) for a scanned project, from real scan data."""
+    from guardian.day1 import build
+    rep, sc = _latest(project)
+    return build(rep, sc)
+
+
+@app.get("/api/sbom")
+def sbom(project: str | None = None, fmt: str = "cyclonedx"):
+    files = {"guardian": "sbom.guardian.cdx.json", "cyclonedx": "sbom.syft.cdx.json", "spdx": "sbom.syft.spdx.json"}
+    if fmt not in files:
+        raise HTTPException(400, "fmt must be guardian, cyclonedx or spdx")
+    rep, _ = _latest(project)
+    head = Path(rep["runs"]["head"])
+    f = (head if head.is_absolute() else ROOT / head) / files[fmt]
+    if not f.exists():
+        raise HTTPException(404, f"{files[fmt]} was not produced for this scan")
+    return FileResponse(f, media_type="application/json", filename=f"{project or 'main'}-{files[fmt]}")
+
+
 @app.get("/api/depgraph")
-def depgraph():
+def depgraph(project: str | None = None):
     """Full dependency graph of the PR head from the latest `guardian check` report, with risk overlaid.
     Real scan data (lockfile + OSV + Grype + detectors); no LLM involved."""
-    latest = ROOT / "guardian-out" / "check" / "latest.json"
+    latest = _check_dir(project) / "latest.json"
     if not latest.exists():
         raise HTTPException(404, "no check report yet: run `guardian check sandbox/uptime-kuma --base scenario/base --head scenario/s3-s9`")
     path = Path(json.loads(latest.read_text())["path"])
