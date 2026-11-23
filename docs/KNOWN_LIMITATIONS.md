@@ -36,3 +36,10 @@ An honest list of what does not work, or is simulated. Update it whenever a limi
 - `testbed/apps/` are **synthetic** projects (simulated risks, `example.com` hosts). Detection rates on them say the
   rules fire as designed. They do not measure performance on real-world projects.
 - The npm attack scenarios (`sandbox/uptime-kuma`, branches `scenario/*`) are **simulated** in a local fork.
+
+## Agent investigation security
+
+The live investigation has mandatory npm checks. Changed workflows and Dockerfiles prevent a safe recommendation
+until their deterministic checks are integrated. The local reviewer token is a run-scoped capability. Shared
+deployment requires reviewer authentication and per-project authorization. Marker detection and secret redaction
+are heuristic. See [Guardian self-protection](GUARDIAN_SELF_PROTECTION.md) for the remaining integration limits.

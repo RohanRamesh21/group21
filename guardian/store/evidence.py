@@ -7,7 +7,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import sqlite3
+import tempfile
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
@@ -63,8 +65,6 @@ class EvidenceStore:
         sha = hashlib.sha256(data).hexdigest()
         eid = "E-" + identity[:12]
         blob = self.blob_dir / sha
-        if not blob.exists():
-            blob.write_bytes(data)
         ev = Evidence(
             id=eid,
             kind=kind,
@@ -77,6 +77,13 @@ class EvidenceStore:
             created_at=datetime.now(timezone.utc).isoformat(timespec="seconds"),
         )
         with self._lock:
+            if not blob.exists():
+                with tempfile.NamedTemporaryFile(dir=self.blob_dir, delete=False) as temporary:
+                    temporary.write(data)
+                try:
+                    os.replace(temporary.name, blob)
+                finally:
+                    Path(temporary.name).unlink(missing_ok=True)
             self.db.execute(
                 "INSERT OR IGNORE INTO evidence VALUES (?,?,?,?,?,?,?,?,?,?)",
                 (ev.id, ev.kind, ev.source, ev.path, lines[0] if lines else None, lines[1] if lines else None,
@@ -99,8 +106,17 @@ class EvidenceStore:
             return self.db.execute("SELECT 1 FROM evidence WHERE id=?", (eid,)).fetchone() is not None
 
     def content(self, eid: str) -> str:
-        """Raw content for display or for an agent (wrapped by the agent layer as untrusted data)."""
+        """Read a verified blob from this store and check its evidence locator."""
         ev = self.get(eid)
         if ev is None:
             raise KeyError(eid)
-        return Path(ev.blob_path).read_text(errors="replace")
+        if len(ev.sha256) != 64 or any(c not in "0123456789abcdef" for c in ev.sha256):
+            raise ValueError("invalid evidence digest")
+        blob = self.blob_dir / ev.sha256
+        if blob.is_symlink():
+            raise ValueError("invalid evidence blob")
+        data = blob.read_bytes()
+        identity = hashlib.sha256(data + f"|{ev.kind}|{ev.source}|{ev.path}|{ev.lines}".encode()).hexdigest()
+        if hashlib.sha256(data).hexdigest() != ev.sha256 or eid != "E-" + identity[:12]:
+            raise ValueError("evidence integrity check failed")
+        return data.decode(errors="replace")

@@ -42,7 +42,7 @@ class ClaudeBackend:
     def __init__(self):
         import anthropic
 
-        self.client = anthropic.Anthropic()  # credentials from the environment (ANTHROPIC_API_KEY or an ant profile)
+        self.client = anthropic.Anthropic(timeout=60.0, max_retries=1)
 
     def step(self, agent, system, messages, tools, effort):
         resp = self.client.beta.messages.create(
@@ -72,7 +72,7 @@ class OpenRouterBackend:
     URL = "https://openrouter.ai/api/v1/chat/completions"
     MODEL = "anthropic/claude-opus-5.5"
 
-    def __init__(self, model: str | None = None, timeout: int = 180):
+    def __init__(self, model: str | None = None, timeout: int = 60):
         import os
 
         import requests
@@ -147,7 +147,8 @@ class OpenRouterBackend:
         raw = ([{"type": "text", "text": text}] if text else []) + \
               [{"type": "tool_use", "id": c.id, "name": c.name, "input": c.input,
                 **({"extra_content": extra[c.id]} if extra.get(c.id) else {})} for c in calls]
-        stop = "tool_use" if calls else ("refusal" if choice.get("finish_reason") == "content_filter" else "end_turn")
+        stop = {"content_filter": "refusal", "length": "length"}.get(choice.get("finish_reason"),
+                                                                  "tool_use" if calls else "end_turn")
         return Turn(text=text, tool_calls=calls, stop_reason=stop, raw_content=raw or [{"type": "text", "text": ""}])
 
 
@@ -162,7 +163,7 @@ class GeminiBackend(OpenRouterBackend):
     MODEL = "gemini-3.5-flash"
     FALLBACKS = ("gemini-2.5-flash",)
 
-    def __init__(self, model: str | None = None, timeout: int = 180):
+    def __init__(self, model: str | None = None, timeout: int = 60):
         import os
 
         import requests
@@ -190,8 +191,6 @@ class GeminiBackend(OpenRouterBackend):
                 tc.setdefault("extra_content", self.SKIP_SIG)
         return out
 
-    step_timeout = 120  # seconds per call before falling back to the next model
-
     def step(self, agent, system, messages, tools, effort):
         import time
 
@@ -206,7 +205,7 @@ class GeminiBackend(OpenRouterBackend):
                     "tool_choice": "auto", "max_tokens": 16000, "reasoning_effort": effort}
             for attempt in range(4):
                 try:
-                    r = self.session.post(self.URL, json=body, timeout=self.step_timeout,
+                    r = self.session.post(self.URL, json=body, timeout=self.timeout,
                                           headers={"Authorization": f"Bearer {self.key}"})
                 except requests.RequestException as e:  # slow or dropped: move on to the next model
                     last_err = f"{model}: {type(e).__name__}"
@@ -222,7 +221,7 @@ class GeminiBackend(OpenRouterBackend):
                     wait = self._retry_delay(r)
                     if wait is None or wait > 65:  # daily quota used up: next model
                         break
-                    time.sleep(wait + 1)  # per-minute limit: wait as Google asks, then retry the same model
+                    time.sleep(min(max(wait, 0), 10) + 1)
                     continue
                 if r.status_code not in (500, 502, 503, 504):
                     raise RuntimeError(f"Gemini error {last_err}")
@@ -258,7 +257,8 @@ class GeminiBackend(OpenRouterBackend):
         raw = ([{"type": "text", "text": text}] if text else []) + \
               [{"type": "tool_use", "id": c.id, "name": c.name, "input": c.input,
                 **({"extra_content": extra[c.id]} if extra.get(c.id) else {})} for c in calls]
-        stop = "tool_use" if calls else ("refusal" if choice.get("finish_reason") == "content_filter" else "end_turn")
+        stop = {"content_filter": "refusal", "length": "length"}.get(choice.get("finish_reason"),
+                                                                  "tool_use" if calls else "end_turn")
         return Turn(text=text, tool_calls=calls, stop_reason=stop, raw_content=raw or [{"type": "text", "text": ""}])
 
 

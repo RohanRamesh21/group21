@@ -33,7 +33,7 @@ export function EvidenceDrawer({ runId, id, onClose }: { runId: string | null; i
             </div>
             {ev?.untrusted && (
               <div className="flex items-start gap-2 border-b border-high/20 bg-high/8 px-4 py-2.5 text-xs text-high">
-                <ShieldWarning size={16} className="shrink-0" /> Untrusted content from the change under review. Agents see it wrapped as data and never follow it (C5).
+                <ShieldWarning size={16} className="shrink-0" /> Untrusted evidence. Guardian treats its contents as data and checks any action separately.
               </div>
             )}
             <div className="scroll-thin min-h-0 flex-1 overflow-auto p-4">

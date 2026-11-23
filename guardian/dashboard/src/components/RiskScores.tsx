@@ -7,7 +7,7 @@ import { RISK, RiskTag, spring } from "../ui";
 interface Contribution { factor: string; value: number; weight: number; points: number; why: string }
 export interface Scored {
   id: string; kind: "vulnerability" | "supply_chain" | "ci_image"; title: string; component: string; label: string; summary: string;
-  decision: "Act" | "Attend" | "Track*" | "Track"; level: Risk; score: number; floor: string | null; explained?: boolean;
+  decision: "Act" | "Attend" | "Track*" | "Track"; level: Risk; score: number; floor: string | null;
   ssvc: { exploitation: string; automatable: string; technical_impact: string; mission: string; rule: string } | null;
   contributions: Contribution[]; counterfactuals: { if: string; then: string }[];
   evidence: Record<string, any>;
@@ -19,7 +19,7 @@ interface Scores {
   data: { advisories: number; cves: number; epss_found: number; kev_matches: number; kev_catalog_size: number; errors: string[] };
 }
 interface Explanation { headline: string; sentences: { text: string; cites: string[]; status: "verified" | "inferred" }[];
-  rejected: { text: string; reason: string }[]; model?: string; cached?: boolean; error?: string }
+  rejected: { text: string; reason: string }[]; model?: string; ai_enabled?: boolean; error?: string }
 
 const FACTOR: Record<string, string> = { exploitation: "Being attacked", impact: "Impact", exposure: "Exposure", introduced: "Introduced by PR", actionable: "Fix available" };
 const DEC_TONE: Record<string, string> = { Act: "text-crit bg-crit/12 ring-crit/40", Attend: "text-high bg-high/12 ring-high/40",
@@ -158,7 +158,6 @@ function ScoreCard({ f, project }: { f: Scored; project?: string | null }) {
     fetch("/api/explain", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: f.id, project, force }) })
       .then((r) => r.json()).then(setEx).catch(() => setEx({ headline: "", sentences: [], rejected: [], error: "backend offline" })).finally(() => setBusy(false));
   };
-  useEffect(() => { if (f.explained) ask(); }, [f.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const ev = f.evidence;
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={spring}
@@ -226,10 +225,12 @@ function ScoreCard({ f, project }: { f: Scored; project?: string | null }) {
 
       <div className="rounded-lg border border-accent/25 bg-accent/5 px-4 py-3">
         <div className="flex items-center justify-between gap-2">
-          <span className="flex items-center gap-1.5 text-[12.5px] font-medium"><Sparkle size={15} className="text-accent" /> AI explanation</span>
-          {!busy && <button onClick={() => ask(!!ex && !ex.error)} className="rounded-md bg-accent/15 px-2.5 py-1 text-[12px] text-accent hover:bg-accent/25">{ex && !ex.error ? "Regenerate" : "Explain"}</button>}
+          <span className="flex items-center gap-1.5 text-[12.5px] font-medium"><Sparkle size={15} className="text-accent" /> Score explanation</span>
+          {!busy && (!ex || ex.error || ex.ai_enabled) && (
+            <button onClick={() => ask(!!ex?.ai_enabled)} className="rounded-md bg-accent/15 px-2.5 py-1 text-[12px] text-accent hover:bg-accent/25">{ex?.ai_enabled ? "Request AI summary" : "Explain"}</button>
+          )}
         </div>
-        {busy && <div className="mt-2 animate-pulse text-[12.5px] text-muted">Gemini is writing an explanation from the score card…</div>}
+        {busy && <div className="mt-2 animate-pulse text-[12.5px] text-muted">Preparing the explanation…</div>}
         {ex && !busy && (ex.error ? <div className="mt-2 text-[12.5px] text-high">{ex.error}</div> : (
           <div className="mt-2 space-y-2 text-[13px]">
             <div className="font-medium">{ex.headline}</div>
@@ -238,9 +239,8 @@ function ScoreCard({ f, project }: { f: Scored; project?: string | null }) {
                 <span className={`mr-1.5 rounded px-1 py-0.5 align-middle text-[10px] font-semibold ${x.status === "verified" ? "bg-ok/15 text-ok" : "bg-med/15 text-med"}`}>{x.status}</span>
                 {x.text}{" "}<span className="text-[10.5px] text-faint">[{x.cites.join(", ")}]</span>
               </p>))}
-            <div className="text-[11px] text-faint">Checked against the score card: every number and ID must appear in it{ex.rejected.length ? ` · ${ex.rejected.length} sentence(s) removed` : " · nothing removed"} · {ex.model}{ex.cached ? " · cached" : ""}. The AI explains the score; it never changes it.</div>
+            <div className="text-[11px] text-faint">Generated from the score card{ex.rejected.length ? ` · ${ex.rejected.length} sentence(s) removed` : ""}. {ex.model !== "deterministic" && "AI sentences are marked inferred."}</div>
           </div>))}
-        {!ex && !busy && <div className="mt-2 text-[12px] text-muted">The score above is computed by rules. Ask Gemini to explain it in plain English; each sentence is checked against the card.</div>}
       </div>
     </motion.div>);
 }

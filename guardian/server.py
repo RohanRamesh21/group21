@@ -7,23 +7,25 @@ from __future__ import annotations
 
 import asyncio
 import json
+import secrets
 import threading
 import time
 import uuid
 from pathlib import Path
+from typing import Literal
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from guardian import config
-from guardian.agents.tools import UNTRUSTED_KINDS
+from guardian.agents.boundary import redact
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "guardian-out" / "dashboard"
 DIST = ROOT / "guardian" / "dashboard" / "dist"
-HUMAN_TIMEOUT = 120  # seconds; after that the policy answer is used and the audit says so
+HUMAN_TIMEOUT = 120
 
 app = FastAPI(title="Supply Chain Guardian")
 
@@ -39,19 +41,36 @@ class Run:
         self.pending_human: dict | None = None
         self._answer: str | None = None
         self._answered = threading.Event()
+        self._human_lock = threading.Lock()
+        self._human_deadline = 0.0
+        self.review_token = secrets.token_urlsafe(32)
 
     def human(self, question: str, options: list[str], fallback) -> str:
-        self.pending_human = {"question": question, "options": options, "timeout": HUMAN_TIMEOUT}
-        self._answered.clear()
-        got = self._answered.wait(HUMAN_TIMEOUT)
-        self.pending_human = None
-        if got and self._answer:
-            return f"(human reviewer) {self._answer}"
-        return f"(no reply in {HUMAN_TIMEOUT}s, policy answer used) {fallback(question, options)}"
+        with self._human_lock:
+            self._answer = None
+            self._answered.clear()
+            self._human_deadline = time.monotonic() + HUMAN_TIMEOUT
+            self.pending_human = {"id": uuid.uuid4().hex, "question": question, "options": options, "timeout": HUMAN_TIMEOUT}
+        self._answered.wait(HUMAN_TIMEOUT)
+        with self._human_lock:
+            self.pending_human = None
+            if self._answer is not None:
+                return f"(reviewer context) {self._answer}"
+        return "No reviewer response. Registry intent is unknown."
 
-    def answer(self, text: str) -> None:
-        self._answer = text
-        self._answered.set()
+    def answer(self, token: str, question_id: str, choice: int) -> None:
+        """Accept one enumerated answer from the holder of the run's review token."""
+        if not secrets.compare_digest(token.encode(), self.review_token.encode()):
+            raise HTTPException(403, "invalid review token")
+        with self._human_lock:
+            pending = self.pending_human
+            if (pending is None or pending["id"] != question_id or self._answered.is_set()
+                    or time.monotonic() >= self._human_deadline):
+                raise HTTPException(409, "question expired or already answered")
+            if not 0 <= choice < len(pending["options"]):
+                raise HTTPException(400, "unknown reviewer choice")
+            self._answer = pending["options"][choice]
+            self._answered.set()
 
 
 RUNS: dict[str, Run] = {}
@@ -80,9 +99,9 @@ def _meta() -> dict:
 
 
 class StartReq(BaseModel):
-    mode: str = "replay"  # replay | live
-    world: str = "canned"  # canned | real
-    pace: float = 0.55
+    mode: Literal["replay", "live"] = "replay"
+    world: Literal["canned", "real"] = "canned"
+    pace: float = Field(default=0.55, ge=0, le=2)
 
 
 @app.get("/api/health")
@@ -104,12 +123,12 @@ def start(req: StartReq):
 
     if req.mode == "replay" and req.world != "canned":
         raise HTTPException(400, "replay runs on the canned world; use live for real facts")
-    run_id = f"RUN-{uuid.uuid4().hex[:6].upper()}"
-    r = Run(run_id, req.mode, req.world)
-    RUNS[run_id] = r
     backend = "replay" if req.mode == "replay" else config.provider()
     if req.mode == "live" and backend == "replay":
         raise HTTPException(400, "no LLM key configured in guardian/.env")
+    run_id = f"RUN-{uuid.uuid4().hex[:16].upper()}"
+    r = Run(run_id, req.mode, req.world)
+    RUNS[run_id] = r
 
     def attach(board, store):
         r.board, r.store, r.status = board, store, "running"
@@ -120,10 +139,10 @@ def start(req: StartReq):
                        pace=req.pace if req.mode == "replay" else 0.0, human_override=r.human, on_board=attach)
             r.status = "done"
         except BaseException as e:  # noqa: BLE001  surface any failure to the UI
-            r.status, r.error = "error", f"{type(e).__name__}: {e}"[:400]
+            r.status, r.error = "error", f"{type(e).__name__}: investigation could not start or save its result"
 
     threading.Thread(target=work, daemon=True, name=run_id).start()
-    return {"run_id": run_id, "backend": backend}
+    return {"run_id": run_id, "backend": backend, "review_token": r.review_token}
 
 
 def _state(r: Run) -> dict:
@@ -162,15 +181,15 @@ async def events(run_id: str):
 
 
 class HumanReq(BaseModel):
-    answer: str
+    token: str = Field(max_length=128)
+    question_id: str = Field(max_length=32)
+    choice: int = Field(strict=True)
 
 
 @app.post("/api/runs/{run_id}/human")
 def human(run_id: str, req: HumanReq):
     r = RUNS.get(run_id) or _404()
-    if not r.pending_human:
-        raise HTTPException(409, "no question is waiting")
-    r.answer(req.answer[:500])
+    r.answer(req.token, req.question_id, req.choice)
     return {"ok": True}
 
 
@@ -180,8 +199,12 @@ def evidence(run_id: str, eid: str):
     if not r.store or not r.store.exists(eid):
         raise HTTPException(404, "unknown evidence id")
     ev = r.store.get(eid)
-    return {"id": eid, "kind": ev.kind, "source": ev.source, "path": ev.path,
-            "untrusted": ev.kind in UNTRUSTED_KINDS, "content": r.store.content(eid)[:20000]}
+    try:
+        content = redact(r.store.content(eid))[:20000]
+    except (ValueError, OSError):
+        raise HTTPException(409, "evidence failed its integrity check") from None
+    return {"id": eid, "kind": ev.kind, "source": redact(ev.source), "path": redact(ev.path) if ev.path else None,
+            "untrusted": True, "content": content}
 
 
 _DEP_CACHE: dict = {}
@@ -193,9 +216,6 @@ def _check_dir(project: str | None) -> Path:
         return projects.out_dir(project)
     except KeyError:
         raise HTTPException(404, f"unknown project {project}")
-
-
-_WARMED: set[str] = set()
 
 
 @app.get("/api/scores")
@@ -217,13 +237,6 @@ def scores(project: str | None = None):
         latest.write_text(json.dumps(ptr))
     sp = Path(ptr["scores"]) if Path(ptr["scores"]).is_absolute() else ROOT / ptr["scores"]
     data = json.loads(sp.read_text())
-    if str(sp) not in _WARMED:  # pre-write explanations in the background so the UI opens them instantly
-        _WARMED.add(str(sp))
-        from guardian.scoring.explain import warm
-        threading.Thread(target=warm, args=(data["findings"],), kwargs={"limit": 10}, daemon=True).start()
-    from guardian.scoring.explain import is_cached
-    for f in data["findings"]:
-        f["explained"] = is_cached(f)
     return data
 
 
@@ -390,5 +403,7 @@ if DIST.exists():
 
     @app.get("/{path:path}")
     def spa(path: str):
-        f = DIST / path
-        return FileResponse(f if path and f.is_file() else DIST / "index.html")
+        f = (DIST / path).resolve()
+        if path and f.is_relative_to(DIST.resolve()) and f.is_file():
+            return FileResponse(f)
+        return FileResponse(DIST / "index.html")

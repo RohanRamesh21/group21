@@ -82,3 +82,10 @@ Each fix has an offline regression test that copies the real pattern (`tests/tes
 - gson: Maven sub-modules that are not shipped (`metrics`, `proto`) count as runtime, because Maven scopes and
   module packaging are not read.
 - spdlog: its bundled `fmt` copy (`include/spdlog/fmt/bundled`) is not detected as a component.
+
+## Guardian self-protection
+
+Run `.venv/bin/python -m pytest -q tests/test_guardian_boundary.py tests/test_agent_loop.py tests/test_constitution.py`.
+The boundary tests use inert strings, fake model turns, local Git and mocked HTTP. They assert the peer and tool
+channels cannot override mandatory checks and that untrusted model input is bounded and kept away from privileged
+actions. See [the defense design](GUARDIAN_SELF_PROTECTION.md).

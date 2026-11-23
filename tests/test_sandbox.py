@@ -98,6 +98,7 @@ def test_tool_errors_are_reported_as_not_checked_never_scored(monkeypatch, tmp_p
     assert {"syft", "grype"} <= set(sb["failed"]) and sb["all_isolated"]  # did not run at all, and nothing ran on the host
     scores = json.loads(open(json.loads((tmp_path / "out" / "latest.json").read_text())["scores"]).read())
     assert not [f for f in scores["findings"] if "tool_error" in f["id"]] and scores["data"]["not_checked"]
+    assert scores["verdict"] == "review"
     assert "NOT checked" in build(rep, scores)["steps"][3]["note"]
 
 

@@ -63,3 +63,11 @@ Append-only. One entry per decision: date, decision, alternatives, why.
   spring-petclinic), C++ CMake/FetchContent/meson (spdlog, cpr, nlohmann-json) and Rust (ripgrep).
 - **Why:** synthetic apps only prove the rules fire as designed. The first real run found 211 duplicate or false-positive
   findings and a line-number bug in D10 (`docs/TESTING.md` §3).
+
+## 2026-11-24 — Treat the Guardian review as a security boundary
+
+- **Decision:** credit Rohan Ramesh's proposal to defend the reviewer itself. Run mandatory checks outside model
+  control, validate actions server-side, and preserve unsafe or incomplete outcomes across model failures.
+- **Why:** the agent team reads content controlled by a change author or package publisher. Prompt framing and
+  reviewer-directed text detection help with triage. The action checks still hold if a model follows that text.
+- **Details:** [How Guardian protects its own review](GUARDIAN_SELF_PROTECTION.md).

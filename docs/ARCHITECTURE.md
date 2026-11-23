@@ -11,7 +11,7 @@ or label.
 
 ```mermaid
 flowchart LR
-  R[Repository<br/>git / ZIP / URL] -->|git archive: no hooks,<br/>no symlinks| T[Exported tree<br/>base and head]
+  R[Repository<br/>git / ZIP / URL] -->|read regular blobs<br/>at pinned commits| T[Snapshot tree<br/>base and head]
   T --> D[Discovery<br/>find_manifests]
   D --> NPM[npm lockfile parser<br/>adapters/npm.py]
   D --> BF[Build-file readers<br/>adapters/build_files.py<br/>C/C++, Java, Go]
@@ -45,6 +45,9 @@ flowchart LR
 ```
 
 ### Trust boundaries
+
+The investigation's mandatory checks, model evidence boundary, validated tool calls, and reviewer context
+are documented in [Guardian self-protection](GUARDIAN_SELF_PROTECTION.md).
 
 | Runs where | What | Why it is safe |
 |---|---|---|

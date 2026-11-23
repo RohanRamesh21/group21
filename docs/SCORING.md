@@ -17,10 +17,10 @@ Every finding gets three things:
 Then the pull request gets **one verdict**:
 
 - **Block**: the PR adds something Critical (or an "Act" decision).
-- **Review**: the PR adds something High. A human decides.
-- **Allow**: the PR adds nothing High or Critical.
+- **Review** when the PR adds a High finding or required scanner coverage is incomplete.
+- **Allow** when the PR adds no High or Critical finding and scanner coverage is complete.
 
-**The AI never sets or changes any of these.** It only explains them in plain English, and a checker makes sure its explanation matches the numbers.
+Guardian computes these results deterministically. Any AI summary is optional interpretation.
 
 ---
 
@@ -178,24 +178,18 @@ This is computed in code every time (`guardian/scoring/score.py → ahp()`), and
 
 ---
 
-## 7. Layer 4: Explanation (explainable AI)
+## 7. Layer 4: Explanation
 
 Every score card in the **Risk scores** tab shows four things.
 
 1. **Why this level**: the hard floor, or the SSVC path: *Being attacked → Automatable → Impact → Importance ⇒ Decision*, plus the rule in words.
 2. **What makes up the score**: one bar per factor. The faint bar is the factor's maximum (its weight); the coloured bar is what this finding earned. The points add up to the score.
 3. **What would change it** (counterfactuals): Guardian re-runs the decision with one fact changed and lists the changes that flip the outcome. For example: *"If this were dev-only tooling → Track (low)"*, *"If it appeared in CISA KEV → Act (critical)"*, *"If upgraded to 1.8.8 → this finding disappears."*
-4. **AI explanation** (Gemini): a short plain-English summary, written **only from the score card**.
+4. **Score explanation** generated locally from the score, label, decision, and applicable floor.
 
-### How the AI explanation is kept honest
-- Gemini receives only the score card: factors, decision path, counterfactuals and evidence pointers. Advisory text is wrapped as untrusted data.
-- Each sentence must list the card fields it relies on.
-- **A rule-based checker** then reads every sentence:
-  - **verified**: all its numbers, versions and IDs appear in the card, and its cites are valid
-  - **inferred**: valid cites, but nothing checkable in it
-  - **removed**: it mentions a number or ID that is **not** in the card (counted and shown)
-- Explanations are cached by a hash of the card, so the same card always gives the same text.
-- **The AI never changes a score, level, decision or verdict.**
+When the operator enables `GUARDIAN_AI_EXPLANATIONS=1`, the reviewer may request an optional AI summary.
+Gemini receives the numerical score and allow-listed factor names and contributions. Guardian marks accepted model
+sentences as inferred. See [Guardian self-protection](GUARDIAN_SELF_PROTECTION.md).
 
 ---
 
@@ -282,7 +276,7 @@ Every score card in the **Risk scores** tab shows four things.
 |---|---|
 | `guardian/scoring/score.py` | Floors, SSVC table, AHP weights + consistency check, factor values, contributions, counterfactuals, verdict |
 | `guardian/scoring/intel.py` | CVSS vectors from the offline OSV database; EPSS and CISA KEV with a one-day cache |
-| `guardian/scoring/explain.py` | Gemini explanation + the rule-based checker + cache |
+| `guardian/scoring/explain.py` | Local score explanation and optional AI summary |
 | `guardian/universal.py` (`check_any`) | Runs the scoring after every check and writes `scores-<base>-<head>.json` |
 | `guardian/server.py` | `GET /api/scores`, `POST /api/explain` |
 | `guardian/dashboard/src/components/RiskScores.tsx` | The Risk scores tab and score cards |

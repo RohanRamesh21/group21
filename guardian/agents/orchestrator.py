@@ -5,7 +5,6 @@ lead -> (tasks?) workers [parallel via Send] -> (hypotheses?) skeptic -> (challe
 """
 from __future__ import annotations
 
-import json
 import operator
 from typing import Annotated, TypedDict
 
@@ -14,6 +13,7 @@ from langgraph.types import Send
 
 from guardian.agents.agents import Agent
 from guardian.agents.board import Board
+from guardian.agents.boundary import untrusted
 from guardian.agents.tools import ToolRegistry
 
 
@@ -43,7 +43,13 @@ class Orchestrator:
 
     @staticmethod
     def _fmt(msgs) -> str:
-        return "\n".join(json.dumps(m.model_dump(exclude_none=True, exclude={"run_id"})) for m in msgs) or "(none)"
+        return untrusted([m.model_dump(exclude_none=True, exclude={"run_id"}) for m in msgs])
+
+    def _run_agent(self, agent: Agent, brief: str) -> str:
+        result = agent.run(brief)
+        if result in ("exhausted", "refusal", "max_tokens", "length"):
+            self.board.investigation_interrupted = True
+        return result
 
     # --- nodes ---------------------------------------------------------------
     def lead_node(self, state: State) -> dict:
@@ -51,12 +57,13 @@ class Orchestrator:
         news = self._unread("lead")
         self._mark_read("lead")
         if self.board.rounds == 1:
-            text = (f"New run {self.board.run_id}: compare base {self.board.base} with head {self.board.head}. "
-                    "Investigate and submit a verdict.")
+            text = "Investigate this comparison and submit a verdict.\n" + untrusted({
+                "run_id": self.board.run_id, "base": self.board.base, "head": self.board.head,
+            })
         else:
             text = ("Update. New messages to you:\n" + self._fmt(news) +
-                    f"\nBoard: {json.dumps(self.board.snapshot())}\nContinue: re-plan, build/resolve cases, or submit the verdict.")
-        self.lead.run(text)
+                    f"\nBoard: {untrusted(self.board.snapshot())}\nContinue: re-plan, build/resolve cases, or submit the verdict.")
+        self._run_agent(self.lead, text)
         return {}
 
     def dispatch_node(self, state: State) -> dict:
@@ -70,9 +77,9 @@ class Orchestrator:
         task.status = "running"
         agent = Agent(task.assignee, self.backend, self.registry, max_steps=task.budget.get("max_steps", 12), task_id=task.id)
         self.task_agents[task.id] = agent
-        brief = (f"Task {task.id} ({task.depth}): {task.goal}\nScope: {task.scope}\nAcceptance: {task.acceptance}\n"
-                 "Post hypotheses to the Skeptic and finish with a task_result to the Lead (include task_id).")
-        result = agent.run(brief)
+        brief = ("Investigate the scoped items. Post hypotheses to the Skeptic and finish with a task_result to the Lead.\n"
+                 + untrusted(task.model_dump(include={"id", "depth", "goal", "scope", "acceptance"})))
+        result = self._run_agent(agent, brief)
         if task.status == "running":
             task.status = "done" if result != "exhausted" else "exhausted"
         return {"done": [task.id]}
@@ -80,8 +87,8 @@ class Orchestrator:
     def skeptic_node(self, state: State) -> dict:
         news = self._unread("skeptic")
         self._mark_read("skeptic")
-        self.skeptic.run("Review these messages:\n" + self._fmt(news) +
-                         "\nChallenge, corroborate, dispute, clear (non-hard only) or report missed risks.")
+        self._run_agent(self.skeptic, "Review these messages:\n" + self._fmt(news) +
+                        "\nChallenge, corroborate, dispute, clear (non-hard only) or report missed risks.")
         return {}
 
     def respond_node(self, state: State) -> dict:
@@ -92,13 +99,13 @@ class Orchestrator:
                 agent = self.task_agents.get(m.task_id or "") or next(
                     (a for tid, a in reversed(list(self.task_agents.items())) if a.name == role), None)
                 if agent:
-                    agent.run("The Skeptic challenges you:\n" + self._fmt([m]) + "\nAnswer with evidence (kind 'answer').")
+                    self._run_agent(agent, "The Skeptic challenges you:\n" + self._fmt([m]) + "\nAnswer with evidence (kind 'answer').")
         return {}
 
     # --- routing -------------------------------------------------------------
     def route(self, state: State) -> str:
         b = self.board
-        if b.verdict or b.rounds >= self.max_rounds:
+        if b.verdict or b.investigation_interrupted or b.rounds >= self.max_rounds:
             return END
         if b.open_tasks():
             return "dispatch"
@@ -124,5 +131,6 @@ class Orchestrator:
         return g.compile()
 
     def run(self) -> Board:
+        self.registry.run_required_checks()
         self.graph.invoke({"board": self.board, "done": []}, {"recursion_limit": 200})
         return self.board

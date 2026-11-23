@@ -7,8 +7,8 @@ evidence.
 
 - **Any repository:** npm, Python, Go, Java (Maven/Gradle), C/C++ (vcpkg, conan, CMake, meson) and the other
   ecosystems Syft knows, plus CI workflows and container images.
-- **Safe on untrusted code:** nothing from the scanned repository is installed or run. Every tool that reads it runs
-  in a locked-down podman sandbox: no network, read-only, pinned images (`docs/SETUP.md`).
+- **Handling untrusted code:** Guardian reads committed Git objects. Package managers and third-party scanners
+  run in pinned Podman containers with read-only inputs and restricted network access (`docs/SETUP.md`).
 
 ## Quick start
 
@@ -32,5 +32,6 @@ uv venv --python 3.12 .venv && uv pip install --python .venv/bin/python -r requi
 | `docs/TESTING.md` | Test layers, real-app corpus results (12 open-source apps, 7 ecosystems) |
 | `docs/SCORING.md` | How risk is scored |
 | `docs/AGENTIC_CORE.md` | The agent team and its constitution |
+| [Guardian self-protection](docs/GUARDIAN_SELF_PROTECTION.md) | Rohan's proposal for defending the review workflow |
 | `docs/DECISIONS.md` · `docs/KNOWN_LIMITATIONS.md` | Why things are the way they are; what does not work |
 | `testbed/apps/README.md` | Synthetic sample apps per ecosystem (simulated risks) |

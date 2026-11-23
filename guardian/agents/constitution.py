@@ -57,16 +57,19 @@ def check_message(msg: AgentMessage, board: Board, store: EvidenceStore) -> None
             raise ConstitutionError("C9: 'clear' must name the finding_id it clears.")
         if f.hard_signal:
             raise ConstitutionError(f"C2: {f.id} is a hard signal ({f.type}); it can never be cleared or lowered.")
+        if not set(f.evidence_ids).intersection(msg.evidence_ids):
+            raise ConstitutionError("C9: a clearance must cite evidence attached to the finding.")
 
 
 def check_resolution(board: Board, case_id: str, risk: str, verdict: str) -> None:
     """C2 floors: a case can never be resolved below the highest floor among its findings."""
     case = board.cases[case_id]
-    floors = [board.findings[f].floor for f in case.finding_ids if f in board.findings]
+    floors = [max(board.findings[f].floor, board.findings[f].risk, key=RISK_ORDER.__getitem__)
+              for f in case.finding_ids if f in board.findings and board.findings[f].status != "cleared"]
     top = max(floors, key=lambda r: RISK_ORDER[r], default="info")
     if RISK_ORDER[risk] < RISK_ORDER[top]:
         board.log(event="floor_intervention", case=case_id, proposed=risk, floor=top)
-        raise ConstitutionError(f"C2: {case_id} contains a hard signal with floor '{top}'; risk '{risk}' is not allowed.")
+        raise ConstitutionError(f"C2: {case_id} has a risk floor of '{top}'; risk '{risk}' is not allowed.")
     hard = [board.findings[f] for f in case.finding_ids if f in board.findings and board.findings[f].hard_signal]
     if hard and verdict == "benign":
         raise ConstitutionError("C2: a case with a hard signal cannot be resolved as benign.")
@@ -78,6 +81,16 @@ def check_verdict(board: Board, decision: str) -> None:
     if gaps:
         board.log(event="coverage_gap", gaps=gaps)
         raise ConstitutionError(f"C3: coverage incomplete. Examine these surfaces first: {gaps}")
+    if decision == "safe_to_merge" and introduced_hard_signals(board):
+        raise ConstitutionError("C2: introduced High/Critical hard signals require the decision 'block'.")
+    if decision == "safe_to_merge" and (board.investigation_interrupted
+                                        or any(status != "passed" for status in board.required_checks.values())):
+        raise ConstitutionError("C3: required checks or investigation did not complete.")
+    if decision == "safe_to_merge" and (
+        any(task.status != "done" for task in board.tasks.values())
+        or any(case.verdict == "unresolved" for case in board.cases.values())
+    ):
+        raise ConstitutionError("C3: outstanding tasks or cases require review.")
     unresolved = [c.id for c in board.cases.values() if not c.resolved]
     if unresolved:
         raise ConstitutionError(f"Resolve every case before the verdict: {unresolved}")
@@ -88,7 +101,16 @@ def check_verdict(board: Board, decision: str) -> None:
     ]
     if blocking and decision != "block":
         raise ConstitutionError(f"C2: introduced High/Critical cases {blocking} require the decision 'block'.")
+    if decision == "block" and not (blocking or introduced_hard_signals(board)):
+        raise ConstitutionError("C2: a blocking recommendation requires an introduced High/Critical finding.")
     loose = [f.id for f in board.findings.values()
              if f.status not in ("cleared",) and not any(f.id in c.finding_ids for c in board.cases.values())]
     if loose:
         raise ConstitutionError(f"Every open finding must belong to a case or be cleared: {loose}")
+
+
+def introduced_hard_signals(board: Board) -> list[str]:
+    """Return blocking findings independently of agent-created cases."""
+    return [f.id for f in board.findings.values()
+            if f.hard_signal and f.label != "fixed"
+            and f.label != "pre_existing" and RISK_ORDER[f.floor] >= RISK_ORDER["high"]]

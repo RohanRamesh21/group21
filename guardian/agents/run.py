@@ -6,11 +6,14 @@ world="real":   Stage B real tools on sandbox/uptime-kuma scenario/base..scenari
 from __future__ import annotations
 
 import json
+import re
+import tempfile
 from pathlib import Path
 
 from guardian import config
 from guardian.agents import fakeworld
 from guardian.agents.board import Board
+from guardian.agents.constitution import introduced_hard_signals
 from guardian.agents.llm import ClaudeBackend, GeminiBackend, OpenRouterBackend, ScriptedBackend, load_script, make_resolver
 from guardian.agents.orchestrator import Orchestrator
 from guardian.agents.tools import ToolRegistry
@@ -24,12 +27,17 @@ def run(out: Path, backend: str = "auto", replay: Path = DEFAULT_REPLAY, run_id:
         world_kind: str = "canned", repo: Path = ROOT / "sandbox" / "uptime-kuma",
         base: str = "scenario/base", head: str = "scenario/s3-s9", pace: float = 0.0,
         human_override=None, on_board=None) -> Board:
-    store = EvidenceStore(out)
+    if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", run_id) or world_kind not in {"canned", "real"}:
+        raise ValueError("invalid investigation identifier or world")
+    if backend == "replay" and world_kind == "real":
+        raise ValueError("replay requires the canned world")
+    out.mkdir(parents=True, exist_ok=True)
+    store = EvidenceStore(Path(tempfile.mkdtemp(prefix="evidence-", dir=out)))
     if world_kind == "real":
         from guardian.agents.realworld import RealFacts
         facts = RealFacts(repo, base, head, store, ROOT / "guardian.yaml", ROOT / ".cache" / "tarballs")
         world = {"facts": facts}
-        board = Board(run_id=run_id, base=base, head=head)
+        board = Board(run_id=run_id, base=facts.base, head=facts.head)
         board.coverage_required = facts.coverage_required()
         human = facts.human
     else:
@@ -62,9 +70,24 @@ def run(out: Path, backend: str = "auto", replay: Path = DEFAULT_REPLAY, run_id:
     else:
         raise SystemExit(f"unknown backend {backend}")
     board.log(event="run_start", backend=backend)
-    Orchestrator(board, registry, model).run()
+    try:
+        Orchestrator(board, registry, model).run()
+    except Exception as exc:
+        board.log(event="investigation_error", error=type(exc).__name__)
+        board.investigation_interrupted = True
+    if board.verdict is None or board.investigation_interrupted:
+        blockers = introduced_hard_signals(board)
+        board.verdict = {
+            "decision": "block" if blockers else "inconclusive",
+            "rationale": ("Required checks found a blocking hard signal." if blockers
+                          else "The investigation ended without a verified recommendation."),
+            "case_ids": [],
+            "evidence_ids": list(dict.fromkeys(eid for fid in blockers for eid in board.findings[fid].evidence_ids)),
+        }
+        board.log(event="verdict", **board.verdict)
     (out / f"{run_id}.board.json").write_text(json.dumps({
         "board": board.snapshot(),
+        "evidence_dir": store.root.name,
         "messages": [m.model_dump(exclude_none=True) for m in board.messages],
         "audit": board.audit,
     }, indent=1, default=str))

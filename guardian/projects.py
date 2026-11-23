@@ -28,8 +28,10 @@ GIT_HOSTS = {"github.com", "gitlab.com", "bitbucket.org"}
 MAX_ZIP_BYTES = 200 * 1024 * 1024
 MAX_FILES = 60_000
 SKIP_DIRS = {"node_modules", ".git"}
-GIT_ENV = {**os.environ, "GIT_TERMINAL_PROMPT": "0", "GIT_ASKPASS": "echo", "GIT_CONFIG_NOSYSTEM": "1"}
-SAFE_GIT = ["git", "-c", "core.hooksPath=/dev/null", "-c", "protocol.file.allow=never", "-c", "core.symlinks=false"]
+GIT_ENV = {"PATH": os.defpath, "LANG": "C.UTF-8", "GIT_TERMINAL_PROMPT": "0", "GIT_ASKPASS": "false",
+           "GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": os.devnull}
+SAFE_GIT = ["git", "-c", f"core.hooksPath={os.devnull}", "-c", "protocol.file.allow=never",
+            "-c", "http.followRedirects=false"]
 
 JOBS: dict[str, dict] = {}
 _LOCK = threading.Lock()
@@ -159,21 +161,24 @@ def start_git(url: str, base: str | None, head: str | None) -> str:
 def _run_git(pid: str, url: str, base: str | None, head: str | None):
     try:
         repo = BASE / pid / "src"
-        _step(pid, "Cloning read-only (shallow, no hooks, no submodules)")
-        r = subprocess.run(SAFE_GIT + ["clone", "-q", "--depth", "200", "--no-recurse-submodules", url, str(repo)],
+        _step(pid, "Cloning read-only (shallow, no checkout, no hooks, no submodules)")
+        r = subprocess.run(SAFE_GIT + ["clone", "-q", "--depth", "200", "--no-checkout", "--no-recurse-submodules", "--", url, str(repo)],
                            capture_output=True, text=True, timeout=300, env=GIT_ENV)
         if r.returncode != 0:
             raise RuntimeError("clone failed: " + r.stderr[-300:])
         for ref in [x for x in (base, head) if x]:
-            if subprocess.run(SAFE_GIT + ["rev-parse", "--verify", "-q", f"{ref}^{{commit}}"], cwd=repo, env=GIT_ENV,
+            if subprocess.run(SAFE_GIT + ["rev-parse", "--verify", "-q", "--end-of-options", f"{ref}^{{commit}}"], cwd=repo, env=GIT_ENV,
                               capture_output=True).returncode != 0:
                 _step(pid, f"Fetching ref {ref}")
-                f = subprocess.run(SAFE_GIT + ["fetch", "-q", "--depth", "200", "origin", f"{ref}:refs/guardian/{ref}"],
+                remote_ref = f"refs/guardian/{ref}"
+                if subprocess.run(SAFE_GIT + ["check-ref-format", remote_ref], cwd=repo, env=GIT_ENV).returncode:
+                    raise ValueError("invalid remote ref")
+                f = subprocess.run(SAFE_GIT + ["fetch", "-q", "--depth", "200", "--", "origin", f"{ref}:{remote_ref}"],
                                    cwd=repo, capture_output=True, text=True, timeout=300, env=GIT_ENV)
                 if f.returncode != 0:
                     raise RuntimeError(f"ref {ref} not found: {f.stderr[-200:]}")
         head_ref = head or "HEAD"
-        if not base and subprocess.run(SAFE_GIT + ["rev-parse", "--verify", "-q", f"{head_ref}~1^{{commit}}"], cwd=repo, env=GIT_ENV,
+        if not base and subprocess.run(SAFE_GIT + ["rev-parse", "--verify", "-q", "--end-of-options", f"{head_ref}~1^{{commit}}"], cwd=repo, env=GIT_ENV,
                                        capture_output=True).returncode == 0:
             base = f"{head_ref}~1"  # default "what changed": the latest commit
             _job(pid, base_default=True)
@@ -197,11 +202,6 @@ def _analyse(pid: str, repo: Path, base: str | None, head: str, label: str):
          summary={"packages": h["inventory"]["packages"], "ecosystems": h["inventory"].get("ecosystems"), "verdict": h.get("verdict"),
                   "reasons": h.get("verdict_reasons", [])[:3], "head_commit": h["head_commit"], "base_commit": h["base_commit"],
                   "scores": bool(latest.get("scores"))})
-    try:  # pre-write AI explanations for the findings a reviewer opens first
-        from guardian.scoring.explain import warm
-        warm(json.loads(Path(latest["scores"]).read_text())["findings"], limit=6)
-    except Exception:
-        pass
 
 
 def out_dir(pid: str | None) -> Path:

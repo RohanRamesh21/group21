@@ -23,11 +23,11 @@ export interface Case {
 }
 export interface RunState {
   run_id: string; status: "starting" | "running" | "done" | "error"; error?: string; mode: string; world: string;
-  pending_human?: { question: string; options: string[]; timeout: number } | null; elapsed: number;
+  pending_human?: { id: string; question: string; options: string[]; timeout: number } | null; elapsed: number;
   plan?: string[]; tasks?: Record<string, { assignee: string; goal: string; scope: string[]; status: string }>;
   findings?: Record<string, Finding>; cases?: Record<string, Case>;
   coverage?: { required: string[]; done: string[] }; coverage_gaps?: string[];
-  verdict?: { decision: "block" | "safe_to_merge"; rationale: string; case_ids: string[]; evidence_ids: string[] } | null;
+  verdict?: { decision: "block" | "safe_to_merge" | "inconclusive"; rationale: string; case_ids: string[]; evidence_ids: string[] } | null;
 }
 export interface Meta {
   components?: number; lockfile_entries?: number; direct?: number; runtime?: number; install_scripts?: number;

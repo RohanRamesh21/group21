@@ -26,15 +26,15 @@ import math
 import os
 import re
 import shutil
-import subprocess
 import sys
-import tarfile
 import time
 from collections import deque
 from pathlib import Path
 from urllib.parse import urlparse
 
 import yaml
+
+from guardian.git_snapshot import OID, changed_paths, export_tree, git, resolve_commit
 
 ROOT = Path(__file__).resolve().parents[1]
 CACHE = ROOT / ".cache" / "osv-api"
@@ -976,29 +976,19 @@ def _scan_tree(src: Path, out: Path, app: str, commit: str, log, with_vulns: boo
 
 
 # ------------------------------------------------------------------ base vs head
-def export_tree(repo: Path, ref: str, dest: Path):
-    """`git archive` the commit into a clean folder (no hooks run; symlinks dropped)."""
-    if dest.exists():
-        shutil.rmtree(dest)
-    dest.mkdir(parents=True)
-    tar = dest.parent / f"{dest.name}.tar"
-    subprocess.run(["git", "-C", str(repo), "-c", "core.hooksPath=/dev/null", "archive", "--format=tar", "-o", str(tar), ref],
-                   check=True, capture_output=True, timeout=300)
-    with tarfile.open(tar) as t:
-        members = [m for m in t.getmembers() if (m.isfile() or m.isdir()) and not m.name.startswith("/") and ".." not in Path(m.name).parts]
-        t.extractall(dest, members=members, filter="data") if sys.version_info >= (3, 12) else t.extractall(dest, members=members)
-    tar.unlink()
-
-
-def _commit(repo: Path, ref: str) -> str:
-    r = subprocess.run(["git", "-C", str(repo), "rev-parse", f"{ref}^{{commit}}"], capture_output=True, text=True)
-    return r.stdout.strip() if r.returncode == 0 else ""
-
-
 def git_show(repo: Path, ref: str, path: str) -> str | None:
     """Content of one file at a commit, read from git objects (no checkout, nothing runs). None if absent."""
-    r = subprocess.run(["git", "-C", str(repo), "show", f"{ref}:{path}"], capture_output=True, text=True)
-    return r.stdout if r.returncode == 0 else None
+    try:
+        commit = ref if OID.fullmatch(ref) else resolve_commit(repo, ref)
+    except ValueError:
+        return None
+    location = f"{commit}:{path}"
+    size = git(repo, "cat-file", "-s", location, check=False)
+    if size.returncode:
+        return None
+    if int(size.stdout) > 16 * 1024 * 1024:
+        raise ValueError("Git file exceeds the evidence size limit")
+    return git(repo, "cat-file", "blob", location).stdout.decode(errors="replace")
 
 
 def _name(component: str) -> str:
@@ -1111,17 +1101,17 @@ def check_any(repo: Path, base: str | None, head: str, out: Path, app: str, log=
     """Full Day 1 report for any git repository. base=None -> full scan of head (nothing is labelled 'introduced')."""
     out.mkdir(parents=True, exist_ok=True)
     policy = _policy()
-    hc = _commit(repo, head)
-    bc = _commit(repo, base) if base else hc
-    log(f"Exporting commit {hc[:8]} (git archive: no hooks, no symlinks)")
-    export_tree(repo, head, out / "trees" / "head")
+    hc = resolve_commit(repo, head)
+    bc = resolve_commit(repo, base) if base else hc
+    log(f"Reading tracked files at commit {hc[:8]}")
+    export_tree(repo, hc, out / "trees" / "head")
     H = scan_tree(out / "trees" / "head", out / f"snap-{hc[:12]}", app, hc, log)
     files: list[str] = []
     if base and bc != hc:
         log(f"Scanning the previous state {bc[:8]} to find what changed")
-        export_tree(repo, base, out / "trees" / "base")
+        export_tree(repo, bc, out / "trees" / "base")
         B = scan_tree(out / "trees" / "base", out / f"snap-{bc[:12]}", app, bc, log)
-        files = [f for f in subprocess.run(["git", "-C", str(repo), "diff", "--name-only", bc, hc], capture_output=True, text=True).stdout.splitlines() if f]
+        files = changed_paths(repo, bc, hc)
     else:
         B = H
     vkey = lambda v: v["key"]  # noqa: E731

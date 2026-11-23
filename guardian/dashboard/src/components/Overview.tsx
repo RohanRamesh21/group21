@@ -75,6 +75,10 @@ export function Overview({ meta, state }: { meta: Meta | null; state: RunState |
               <div className="text-4xl font-semibold tracking-tight text-ok">Safe to merge</div>
               <p className="max-w-[60ch] text-sm leading-relaxed text-ink/80">{v?.rationale}</p>
             </>)}
+            {phase === "inconclusive" && (<>
+              <div className="text-3xl font-semibold tracking-tight">Review required</div>
+              <p className="max-w-[60ch] text-sm leading-relaxed text-muted">{v?.rationale}</p>
+            </>)}
             {phase === "error" && (<>
               <div className="text-sm text-crit">Run failed</div>
               <p className="font-mono text-xs text-muted">{state?.error}</p>

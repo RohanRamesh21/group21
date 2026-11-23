@@ -2,6 +2,9 @@
 
 Written 23 Nov 2026 to continue in a new session. Read this first, then `docs/FINAL_PLAN.md` (v3) and `docs/AGENTIC_CORE.md` (v4, agent design).
 
+**24 Nov update:** [Guardian self-protection](docs/GUARDIAN_SELF_PROTECTION.md) records Rohan's proposal,
+the implemented boundaries around agent review, the offline regression tests, and the remaining work.
+
 ## 1. Context
 - **Event:** Bosch BGSW hiring hackathon. Day 1 = build + continuous evaluation, Day 2 = production stages, Day 3 = tech + HR interview. Goal: win.
 - **Problem statement:** "Software Supply Chain Guardian: know what you build, trust what you ship." An agentic AI that discovers, detects, analyses, remediates and validates supply-chain risks.
@@ -13,7 +16,7 @@ Written 23 Nov 2026 to continue in a new session. Read this first, then `docs/FI
 ## 2. How the user wants to work
 - Simple, clear English. Discuss in chat first; write files once a plan is agreed.
 - Be honest: say what is verified and what is not. Never present replay or canned data as live.
-- Commit or push only when asked. **Nothing is committed yet.** Never push scenario branches.
+- Commit or push only when asked. Keep local scenario branches local.
 - Never execute analysed package code (always `--ignore-scripts`). Local registry only; never publish to public registries.
 - Never print or log API keys. Cognee is the preferred long-term memory.
 - The user interrupts long tool calls. Keep steps short, and say what an interrupted step may have changed.

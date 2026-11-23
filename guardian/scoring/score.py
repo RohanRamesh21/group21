@@ -282,9 +282,13 @@ def score_report(report: dict) -> dict:
     intro = [f for f in findings if f["label"] == "introduced"]
     block = [f for f in intro if f["level"] == "critical" or f["decision"] == "Act"]
     review = [f for f in intro if f not in block and f["level"] == "high"]
-    verdict = "block" if block else ("review" if review else "allow")
-    reasons = ([f"{f['title']} ({f['floor'] or f['ssvc']['rule']})" for f in block] or
-               [f"{f['title']} needs a human decision" for f in review] or ["no high or critical risk introduced by this PR"])
+    verdict = "block" if block else ("review" if review or not_checked else "allow")
+    reasons = [f"{f['title']} ({f['floor'] or f['ssvc']['rule']})" for f in block]
+    reasons += [f"{f['title']} needs a human decision" for f in review]
+    if not_checked:
+        reasons.append("One or more scanner checks did not complete.")
+    if not reasons:
+        reasons.append("No high or critical risk introduced by this PR.")
     counts = {lv: {lab: sum(1 for f in findings if f["level"] == lv and f["label"] == lab) for lab in ("introduced", "pre_existing")}
               for lv in ORDER[::-1]}
     return {
@@ -292,7 +296,7 @@ def score_report(report: dict) -> dict:
         "method": {"ahp": AHP, "criteria_text": CRITERIA_TEXT, "epss_poc_threshold": EPSS_POC,
                    "floors": {k: {"level": v[0], "decision": v[1], "why": v[2]} for k, v in FLOORS.items()},
                    "levels": LEVEL, "verdict_rule": "block if this PR introduces a critical finding or an Act decision; "
-                                                    "review if it introduces a high finding; otherwise allow"},
+                                                    "review if it introduces a high finding or scanner coverage is incomplete; otherwise allow"},
         "data": {"advisories": len(ids), "cves": len(cves), "epss_found": len(ep), "kev_matches": sum(1 for c in cves if c in kv),
                  "kev_catalog_size": len(kv), "errors": [x for x in (ep_err, kev_err) if x], "not_checked": not_checked},
     }

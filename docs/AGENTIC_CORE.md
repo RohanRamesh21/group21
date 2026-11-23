@@ -1,5 +1,8 @@
 # Guardian v4: Agentic Core
 
+See [Guardian self-protection](GUARDIAN_SELF_PROTECTION.md) for the current mandatory checks,
+tool validation, reviewer response handling, and verdict behavior.
+
 > **Agents decide. Tools prove. The constitution guards.**
 > This document replaces the control-flow parts of `FINAL_PLAN.md` v3 (§6 pipeline, §7 agents, §8 protocol, the S6/S9 "deterministic" stages and the `--no-agents` product mode). Everything else in v3 (sample app, scenarios, detectors as signals, data model, dashboard, safety, testing, pitch) still applies, with the changes listed in §12.
 
@@ -32,9 +35,9 @@ Agents have broad autonomy. These rules are enforced in code, outside any prompt
 |---|---|---|
 | C1 | **Facts come only from tools.** Versions, advisories, paths, hashes, URLs, diffs and labels are tool outputs; an agent can cite them, never assert them | Evidence verifier: every claim needs evidence IDs; PURLs, versions, CVE IDs and paths must match the evidence store |
 | C2 | **Hard-signal floors.** `MAL-` match · same version with changed integrity · off-allow-list `resolved` host · existing package's new version adding an install script · CI tag moved or SHA→tag · history rewrite on the default branch · `.npmrc` registry redirect · internal name resolved publicly. Minimum High/Critical; agents may only escalate | `risk.py` floor check on every case resolution and on the final verdict |
-| C3 | **Coverage before verdict.** Every changed surface must be examined: each introduced/updated package advisory-checked, lockfile diffed, sensitive paths checked, every changed workflow and Dockerfile inspected | Coverage gate: the Lead cannot submit a verdict until `coverage_report()` is complete; gaps are returned to the Lead as tasks |
+| C3 | **Coverage before verdict.** Mandatory detectors run before the Lead. Changed packages need a successful advisory lookup and tracked sensitive surfaces need evidence. | The verdict gate checks both required detector status and changed-surface coverage. Changed workflows and Dockerfiles require review until their deterministic checks are connected. |
 | C4 | **No execution of analysed code.** No installs with scripts, no running tarballs, no host builds of untrusted Dockerfiles | Tools expose no such capability; sandbox has no network after the fetch tool |
-| C5 | **Untrusted content is data.** Package files, READMEs, commit messages, issue text reach an agent only through `get_evidence()`, wrapped in `<untrusted-data id=…>`; agent messages carry evidence IDs, never pasted content | Tool layer + message schema (`claim` is the agent's own words, length-capped; `injection_scan` on every referenced item) |
+| C5 | **Untrusted content is data.** Evidence, structured metadata, and agent narratives enter model context as encoded data. | Delimiter escaping, credential redaction, bounds, evidence references, and automatic heuristic checks on rendered evidence. |
 | C6 | **Read-only agents.** Agents have no shell, no write access to repos, no publishing, no secrets | Tool allow-lists per agent |
 | C7 | **Humans own irreversible decisions.** Merging, accepting a risk, allow-listing, applying a fix | `interrupt()` approval points; agents can only recommend |
 | C8 | **Bounded runs.** Token, time and step budgets per run, per task and per case | Orchestrator budget accounting; exhaustion → case `unresolved`, reported with tool evidence only |
@@ -261,7 +264,8 @@ All v3 tools remain; they are now **called by agents** rather than run in a fixe
 | `plan_*`, `dispatch_task`, `cancel_task`, `open_case`, `merge_cases`, `split_case`, `resolve_case`, `submit_verdict` | Lead | Board operations |
 | `benign_explanations(signal)`, `injection_scan(evidence_id)` | Skeptic | Known-good patterns; instruction-like text detection |
 
-The detectors D0–D10 from v3 are unchanged as code, but they are **signal tools**: an agent decides when to run them and how to interpret them. The coverage gate (C3) guarantees the essential ones run on every changed surface even if an agent's plan forgets them.
+The investigation runs its implemented hard-signal detectors before the first model turn. Agents can request the
+results and choose further checks. See [Guardian self-protection](GUARDIAN_SELF_PROTECTION.md) for current coverage.
 
 ---
 
