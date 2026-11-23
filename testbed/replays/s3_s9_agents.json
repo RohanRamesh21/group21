@@ -1,0 +1,54 @@
+{
+  "_about": "Stage A replay of scenario S3+S9 (AGENTIC_CORE.md §6). Each agent has a queue of turns; [] ends that agent's turn. Includes one wrong version claim and one too-low risk on purpose, to show the constitution rejecting them.",
+  "lead": [
+    [["diff_summary", {}], ["policy_lookup", {}]],
+    [["write_plan", {"steps": ["T1 hunter/deep: axois (new package, look-alike name)", "T2 forensics/standard: commit a1b2c3d, lockfile, .npmrc", "Then: Skeptic review, cases, coverage check, verdict"]}],
+     ["dispatch_task", {"assignee": "hunter", "goal": "Assess the new package axois", "scope": ["pkg:npm/axois@1.0.0"], "depth": "deep", "acceptance": ["advisories checked", "registry metadata and install hooks examined"]}],
+     ["dispatch_task", {"assignee": "forensics", "goal": "Explain commit a1b2c3d, the lockfile change and .npmrc", "scope": ["commit:a1b2c3d", "file:.npmrc", "file:package-lock.json"], "depth": "standard", "acceptance": ["every changed sensitive file diffed", "commit message compared with diff"]}]],
+    [],
+    [["ask_human", {"question": "Is a private npm registry at 10.0.0.5:4873 expected for this repository?", "options": ["Yes, it is our internal registry", "No"]}],
+     ["dispatch_task", {"assignee": "hunter", "goal": "Quick check of kuma-helper bump (Skeptic missed_risk)", "scope": ["pkg:npm/kuma-helper@1.0.1"], "depth": "quick", "acceptance": ["version comparison and advisories checked"]}]],
+    [],
+    [["open_case", {"title": "Registry hijack + typosquat introduced by mislabelled commit a1b2c3d", "finding_ids": ["{F:lockfile_tamper}", "{F:source_change}", "{F:typosquat}", "{F:prompt_injection}"], "root_cause": "commit a1b2c3d titled 'fix typo' redirects .npmrc to 10.0.0.5:4873 and adds axois from that host"}]],
+    [["resolve_case", {"case_id": "{C:last}", "verdict": "malicious", "risk": "high", "confidence": 0.92, "rationale": "Typosquat with networked install hook plus registry redirect", "evidence_ids": ["{E:npmrc}", "{E:lock}", "{E:reg_axois}", "{E:file_axois}"]}]],
+    [["resolve_case", {"case_id": "{C:last}", "verdict": "malicious", "risk": "critical", "confidence": 0.92, "rationale": "Registry redirect and off-allow-list download host are hard signals (floor critical); typosquat of axios with an install script that sends the hostname to 10.0.0.5:9000; the human confirmed the registry is not expected; an injection attempt targets AI reviewers.", "evidence_ids": ["{E:npmrc}", "{E:lock}", "{E:reg_axois}", "{E:file_axois}", "{E:human}"]}]],
+    [["submit_verdict", {"decision": "block", "rationale": "One critical malicious case introduced by commit a1b2c3d; kuma-helper bump cleared with evidence; no pre-existing blockers.", "case_ids": ["{C:last}"], "evidence_ids": ["{E:npmrc}", "{E:lock}", "{E:file_axois}", "{E:human}"]}]],
+    []
+  ],
+  "forensics": [
+    [["lockfile_diff", {}], ["sensitive_path_check", {}], ["git_diff", {"path": ".npmrc"}], ["commit_metadata", {"sha": "a1b2c3d"}]],
+    [["run_detector", {"detector": "D7"}], ["run_detector", {"detector": "D3"}]],
+    [["post_message", {"recipient": "skeptic", "kind": "hypothesis", "claim": "Commit a1b2c3d, titled 'fix typo', redirects the npm registry in .npmrc to 10.0.0.5:4873 and adds axois@1.0.0 resolved from that host. The message does not match the change.", "evidence_ids": ["{E:npmrc}", "{E:commit}", "{E:lock}"], "kind_of_claim": "verified", "confidence": 0.95, "proposed_risk": "critical", "finding_id": "{F:source_change}", "task_id": null, "case_id": null, "in_reply_to": null, "payload_json": null}],
+     ["post_message", {"recipient": "hunter", "kind": "handoff", "claim": "axois@1.0.0 arrived in commit a1b2c3d together with the .npmrc redirect; confirm the link between the package and the redirect.", "evidence_ids": ["{E:lock}", "{E:commit}"], "kind_of_claim": "verified", "confidence": null, "proposed_risk": null, "finding_id": null, "task_id": null, "case_id": null, "in_reply_to": null, "payload_json": "{\"scope\": [\"pkg:npm/axois@1.0.0\"], \"depth\": \"quick\"}"}]],
+    [["post_message", {"recipient": "lead", "kind": "task_result", "claim": "Commit a1b2c3d hides a registry redirect (.npmrc to 10.0.0.5:4873) and an off-allow-list package source behind the message 'fix typo'. Two hard signals opened (D7, D3).", "evidence_ids": ["{E:npmrc}", "{E:lock}", "{E:commit}"], "kind_of_claim": "verified", "confidence": 0.95, "proposed_risk": "critical", "finding_id": null, "task_id": null, "case_id": null, "in_reply_to": null, "payload_json": null}]],
+    []
+  ],
+  "hunter": [
+    [["registry_metadata", {"purl": "pkg:npm/axois@1.0.0"}], ["popularity_baseline", {"name": "axios"}], ["osv_lookup", {"purl": "pkg:npm/axois@1.0.0"}]],
+    [["install_hooks", {"purl": "pkg:npm/axois@1.0.0"}], ["read_package_file", {"purl": "pkg:npm/axois@1.0.0", "path": "setup.js"}], ["read_package_file", {"purl": "pkg:npm/axois@1.0.0", "path": "README.md"}]],
+    [["run_detector", {"detector": "D1"}]],
+    [["post_message", {"recipient": "skeptic", "kind": "hypothesis", "claim": "axois@1.0.2 is a typosquat of axios.", "evidence_ids": ["{E:reg_axois}"], "kind_of_claim": "verified", "confidence": 0.9, "proposed_risk": "critical", "finding_id": "{F:typosquat}", "task_id": null, "case_id": null, "in_reply_to": null, "payload_json": null}]],
+    [["post_message", {"recipient": "skeptic", "kind": "hypothesis", "claim": "axois@1.0.0 is a typosquat of axios: 1 edit away, published 1 day ago, 1 maintainer, 3 weekly downloads, no repository; its postinstall runs setup.js, which sends the hostname to 10.0.0.5:9000.", "evidence_ids": ["{E:reg_axois}", "{E:pop_axios}", "{E:hooks_axois}", "{E:file_axois}"], "kind_of_claim": "verified", "confidence": 0.9, "proposed_risk": "critical", "finding_id": "{F:typosquat}", "task_id": null, "case_id": null, "in_reply_to": null, "payload_json": null}],
+     ["post_message", {"recipient": "lead", "kind": "task_result", "claim": "axois@1.0.0: typosquat of axios with a networked install script; no OSV advisory yet (new package).", "evidence_ids": ["{E:reg_axois}", "{E:pop_axios}", "{E:file_axois}", "{E:osv_axois}"], "kind_of_claim": "verified", "confidence": 0.9, "proposed_risk": "critical", "finding_id": null, "task_id": null, "case_id": null, "in_reply_to": null, "payload_json": null}]],
+    [],
+    [["post_message", {"recipient": "lead", "kind": "task_result", "claim": "Confirmed: axois@1.0.0 is resolved from the same host the .npmrc redirect points to (10.0.0.5:4873), so both come from one root cause.", "evidence_ids": ["{E:lock}", "{E:reg_axois}"], "kind_of_claim": "verified", "confidence": 0.95, "proposed_risk": "critical", "finding_id": null, "task_id": null, "case_id": null, "in_reply_to": null, "payload_json": null}]],
+    [],
+    [["post_message", {"recipient": "skeptic", "kind": "answer", "claim": "Not an internal fork: policy has no internal scopes and allows only registry.npmjs.org; axois has no repository link; its install script contacts 10.0.0.5:9000.", "evidence_ids": ["{E:policy}", "{E:reg_axois}", "{E:file_axois}"], "kind_of_claim": "verified", "confidence": 0.92, "proposed_risk": "critical", "finding_id": "{F:typosquat}", "task_id": null, "case_id": null, "in_reply_to": null, "payload_json": null}]],
+    [],
+    [["compare_versions_metadata", {"purl": "pkg:npm/kuma-helper@1.0.1"}], ["osv_lookup", {"purl": "pkg:npm/kuma-helper@1.0.1"}], ["run_detector", {"detector": "D4"}]],
+    [["post_message", {"recipient": "skeptic", "kind": "hypothesis", "claim": "The kuma-helper bump from 1.0.0 to 1.0.1 looks routine: no new install hooks, same maintainer, 2% size change, one file changed, no advisories.", "evidence_ids": ["{E:cmp_kuma}", "{E:osv_kuma}"], "kind_of_claim": "verified", "confidence": 0.85, "proposed_risk": "info", "finding_id": "{F:suspicious_update}", "task_id": null, "case_id": null, "in_reply_to": null, "payload_json": null}],
+     ["post_message", {"recipient": "lead", "kind": "task_result", "claim": "kuma-helper bump examined: no new hooks, same maintainer, small diff, no advisories.", "evidence_ids": ["{E:cmp_kuma}", "{E:osv_kuma}"], "kind_of_claim": "verified", "confidence": 0.85, "proposed_risk": "info", "finding_id": null, "task_id": null, "case_id": null, "in_reply_to": null, "payload_json": null}]],
+    []
+  ],
+  "skeptic": [
+    [["diff_summary", {}], ["injection_scan", {"evidence_id": "{E:readme_axois}"}]],
+    [["post_message", {"recipient": "hunter", "kind": "challenge", "claim": "Strongest innocent explanation: axois is an internal fork of axios. What evidence rules that out?", "evidence_ids": ["{E:reg_axois}"], "kind_of_claim": null, "confidence": null, "proposed_risk": null, "finding_id": "{F:typosquat}", "task_id": "{T:hunter}", "case_id": null, "in_reply_to": null, "payload_json": null}],
+     ["post_message", {"recipient": "lead", "kind": "corroborate", "claim": "The .npmrc redirect to 10.0.0.5:4873 is shown directly by the diff and the commit message 'fix typo' does not describe it.", "evidence_ids": ["{E:npmrc}", "{E:commit}"], "kind_of_claim": "verified", "confidence": 0.95, "proposed_risk": "critical", "finding_id": "{F:source_change}", "task_id": null, "case_id": null, "in_reply_to": null, "payload_json": null}],
+     ["post_message", {"recipient": "lead", "kind": "missed_risk", "claim": "kuma-helper was bumped from 1.0.0 to 1.0.1 in the same change and no task has examined it.", "evidence_ids": ["{E:diff}"], "kind_of_claim": "verified", "confidence": 0.9, "proposed_risk": null, "finding_id": null, "task_id": null, "case_id": null, "in_reply_to": null, "payload_json": null}]],
+    [],
+    [["post_message", {"recipient": "lead", "kind": "corroborate", "claim": "Typosquat confirmed: no internal scope, host not allowed, no repository, networked install script. An instruction aimed at AI reviewers was found in the README and opened as a finding.", "evidence_ids": ["{E:policy}", "{E:reg_axois}", "{E:file_axois}", "{E:readme_axois}"], "kind_of_claim": "verified", "confidence": 0.92, "proposed_risk": "critical", "finding_id": "{F:typosquat}", "task_id": null, "case_id": null, "in_reply_to": null, "payload_json": null}]],
+    [],
+    [["post_message", {"recipient": "lead", "kind": "clear", "claim": "The kuma-helper bump is benign: no new hooks, same maintainer, 2% size change, no advisories.", "evidence_ids": ["{E:cmp_kuma}", "{E:osv_kuma}"], "kind_of_claim": "verified", "confidence": 0.9, "proposed_risk": "info", "finding_id": "{F:suspicious_update}", "task_id": null, "case_id": null, "in_reply_to": null, "payload_json": null}]],
+    []
+  ]
+}

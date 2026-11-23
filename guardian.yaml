@@ -1,0 +1,15 @@
+# Guardian policy (sample). Agents read it with policy_lookup; humans own changes to it.
+registries:
+  allowed_hosts: [registry.npmjs.org, "localhost:4873"]   # localhost:4873 = testbed stand-in for public npm
+  # Hosts the Guardian may fetch from to analyse packages (the local test registry is reachable
+  # for analysis, but packages resolved from it are still flagged: it is NOT an allowed install source).
+  fetch_hosts: [registry.npmjs.org, api.npmjs.org, api.osv.dev, "localhost:4873", "127.0.0.1:4873"]
+internal_scopes: []
+images:
+  require_digest: true
+typosquat:
+  max_distance: 2
+install_scripts:
+  allowlist: [esbuild, core-js, "@fortawesome/fontawesome-common-types", "@fortawesome/fontawesome-svg-core",
+              "@fortawesome/free-regular-svg-icons", "@fortawesome/free-solid-svg-icons", cpu-features, protobufjs]
+sensitive_paths: [".npmrc", ".yarnrc", ".github/workflows/*", ".vscode/tasks.json", ".claude/settings.json", ".git/hooks/*"]

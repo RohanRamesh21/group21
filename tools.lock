@@ -1,0 +1,14 @@
+# Guardian pinned tools (recorded 2026-11-23T09:55Z)
+# name | version | sha256 of binary
+syft | 1.57.2 | 34d09b99e4eab2ad7d178d164f8511f1426101ee0ca31b6bbd7dce9a80506e73
+grype | 0.122.1 | c2c0a65ab8156cf2a0f6cb79094eaaaf919b5c53085bf51097d0adcc57709881
+osv-scanner | 2.7.1 | 1887471ffa0e6f1ba80ea183d44e35651ce190257937e888f4e607abc802056c
+zizmor | 1.33.1 | 70114a001524f655595a75574941f096929b4c004c41e09260cd2ef1a0415865
+cosign | 3.1.4 | c15dd19f1c7659a0782efed48e1953eafcb82e87e92f4f291236ea01b96275fa
+hadolint | 2.15.1 | d2a716f29afd0355ca9d25407ad3fdfe2fc03940aa61de5ade8926640be480e3
+cdxgen | 13.8.0 (@cdxgen/cdxgen) | npm
+lockfile-lint | 5.1.0 | npm
+node | v26.7.0 | -
+python | 3.12.12 | -
+verdaccio image | verdaccio/verdaccio:6 | sha256:8c9cd40d28ef134140f4f6c4cef2032ac58bd554cce56757048f81b72717c09c
+sample app | uptime-kuma 2.5.12 | commit 5aa5dec425f8a955b54e150636979a6927745ec5
