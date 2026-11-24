@@ -35,7 +35,8 @@ def _providers() -> list[dict]:
     out = []
     if os.environ.get("DEEPSEEK_API_KEY"):  # DeepSeek's own API (V4 Flash), main provider when its key is set
         out.append({"name": "deepseek", "url": DEEPSEEK_URL, "key": os.environ["DEEPSEEK_API_KEY"],
-                    "model": os.environ.get("GUARDIAN_DEEPSEEK_MODEL", "deepseek-flash")})
+                    "model": os.environ.get("GUARDIAN_DEEPSEEK_MODEL", "deepseek-flash"),
+                    "token_factor": 3})  # reasoning counts toward max_tokens (measured: 1,500 cut the JSON off)
     if os.environ.get("FM_API_KEY"):
         out.append({"name": "freemodel", "url": FREEMODEL_URL, "key": os.environ["FM_API_KEY"],
                     "model": os.environ.get("GUARDIAN_MODEL", DEFAULT_MODEL)})

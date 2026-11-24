@@ -1,0 +1,110 @@
+"""Rebuild the self-contained architecture SVG from publisher-supplied assets."""
+from pathlib import Path
+from html import escape
+import base64, json
+D=Path(__file__).resolve().parent
+assets=json.loads((D/'assets/sources.json').read_text())
+p=[]
+def add(s):p.append(s)
+def text(x,y,s,size=23,weight=400,color='#34383d',anchor='start'):
+ add(f'<text x="{x}" y="{y}" font-size="{size}" font-weight="{weight}" fill="{color}" text-anchor="{anchor}">{escape(s)}</text>')
+def rect(x,y,w,h,r=18,fill='white',stroke='#cbd0d5',sw=2):
+ add(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" rx="{r}" fill="{fill}" stroke="{stroke}" stroke-width="{sw}"/>')
+def line(d,dash=False,arrow=True):
+ add(f'<path d="{d}" fill="none" stroke="{ "#989fa7" if dash else "#24282d"}" stroke-width="{2 if dash else 3}" stroke-linecap="round" stroke-linejoin="round"'+(' stroke-dasharray="7 8"' if dash else '')+(' marker-end="url(#arrow)"' if arrow else '')+'/>')
+def icon(k,x,y,w=58,h=58):
+ a=assets[k];f=D/'assets'/a['file'];mime={'svg':'image/svg+xml','png':'image/png','jpg':'image/jpeg'}[f.suffix[1:]]
+ if k=='fastapi':rect(x,y,w,h,w/2,'#009688','none',0)
+ b64=base64.b64encode(f.read_bytes()).decode()
+ add(f'<image x="{x}" y="{y}" width="{w}" height="{h}" preserveAspectRatio="xMidYMid meet" href="data:{mime};base64,{b64}"><title>{escape(k+" — "+a["url"])}</title></image>')
+def tool(k,x,y,label,w=62):
+ icon(k,x,y,w,60);text(x+w/2,y+86,label,19,600,anchor='middle')
+def panel(x,y,w,h,n,title,m):
+ rect(x,y,w,h)
+ rect(x+24,y+24,44,38,10,'#25292e','#25292e',0);text(x+46,y+51,n,22,650,'white','middle')
+ text(x+84,y+53,title,29,650,'#20252a')
+ text(x+w-24,y+50,m,18,600,'#6d747c','end')
+ add(f'<path d="M{x+24} {y+80}H{x+w-24}" stroke="#e1e4e8"/>')
+add('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="2400" height="1800" viewBox="0 0 2400 1800" role="img" aria-labelledby="title desc">')
+add('<title id="title">Software Supply Chain Guardian — architecture</title><desc id="desc">Six-step flow: GitHub and dashboard inputs; deterministic scan and score; evidence-based AI investigation; computed fixes and human approval; isolated Docker validation; dashboard and reports. Shared evidence storage and all ten M0–M9 milestones. Official logos embedded from publishers.</desc>')
+add('<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0 0L8 4L0 8" fill="none" stroke="#24282d" stroke-width="2"/></marker></defs>')
+add('<g font-family="Arial, Helvetica, sans-serif"><rect width="2400" height="1800" fill="white"/>')
+text(80,65,'BOSCH BGSW  /  SOFTWARE SUPPLY CHAIN GUARDIAN',19,650,'#68717b')
+text(80,126,'From a pull request to an evidence-backed decision',48,700,'#20252a')
+text(80,171,'Current code architecture • M0–M9 • 24 November 2026',23,400,'#68717b')
+# Top row
+panel(80,220,620,440,'01','Connect & trigger','M7 · M8')
+tool('github',126,325,'GitHub',66);tool('react',280,325,'React',66);tool('fastapi',434,325,'FastAPI',66)
+text(114,462,'PR → Actions → self-hosted runner',25,600)
+text(114,503,'guardian-submit → queue → exact commit',23)
+text(114,550,'Or: dashboard / CLI · Git URL · ZIP · local repo',21)
+rect(110,586,560,44,9,'#f4f5f6','none',0)
+text(128,615,'PR code is read; the trigger does not execute it.',20,500)
+panel(800,220,760,440,'02','Discover, detect & score','M1 · M2')
+for k,x,l,w in [('syft',835,'Syft',120),('osv',1010,'OSV.dev',96),('grype',1160,'Grype',115),('zizmor',1360,'zizmor',60)]:tool(k,x,325,l,w)
+text(834,462,'Base + head → SBOMs + dependency graph',25,600)
+text(834,502,'OSV / Grype + 14 supply-chain detectors + CI checks',22)
+text(834,542,'KEV · EPSS · SSVC · priority · confidence · exposure',22)
+rect(830,586,700,44,9,'#f4f5f6','none',0)
+text(848,615,'Rules decide: ALLOW / REVIEW / BLOCK / INCOMPLETE',21,600)
+panel(1660,220,660,440,'03','Investigate with evidence','M3')
+icon('deepseek',1695,326,76,62);text(1790,351,'DeepSeek',25,600);text(1790,384,'Direct API / FreeModel',20)
+icon('gemini',2080,326,54,54);text(2150,349,'Gemini',22,600);text(2150,380,'Fallback',19)
+text(1694,451,'Lead (rules) → Investigator × cases → Verifier',23,600)
+text(1694,494,'Stored evidence packets; citations checked by code',22)
+text(1694,537,'Token budget + response cache + usage ledger',22)
+rect(1690,586,600,44,9,'#f4f5f6','none',0)
+text(1708,615,'AI review is optional; rules verdict stays unchanged.',20,500)
+line('M700 440H800');text(750,416,'SHAs',18,500,anchor='middle')
+line('M1560 440H1660');text(1610,416,'Cases',18,500,anchor='middle')
+line('M1990 660V790');text(2010,733,'Findings + review',20)
+# Bottom row, reads right to left
+panel(1660,790,660,440,'04','Compute fix & approve','M4 · M5')
+icon('npm',1698,898,95,57);text(1814,923,'OSV ranges + npm registry',24,600)
+text(1694,993,'Ordered rules → one combined patch → SHA-256',23)
+text(1694,1034,'Fixer explains the computed plan; code checks claims',22)
+rect(1690,1062,600,139,12,'#f6f7f8','#858c95',2)
+# Neutral human symbol (not a product logo)
+add('<circle cx="1731" cy="1098" r="13" fill="none" stroke="#25292e" stroke-width="3"/><path d="M1709 1142V1134Q1731 1107 1753 1134V1142" fill="none" stroke="#25292e" stroke-width="3"/>')
+text(1775,1102,'HUMAN APPROVAL',23,700)
+text(1775,1135,'Named person + reason + expiry',21)
+text(1710,1176,'Bound to commits, patch, policy and validation profile',20)
+panel(800,790,760,440,'05','Validate in isolation','M5')
+tool('docker',839,898,'Docker',90);tool('verdaccio',1048,898,'Verdaccio',64);tool('syft',1210,898,'Syft',110)
+text(834,1035,'Approved baseline vs candidate in disposable containers',23,600)
+text(834,1076,'Install → build → security test → unit → integration',23)
+text(834,1117,'Artifact SBOM + source rescan → deterministic gate',23)
+rect(830,1156,700,44,9,'#f4f5f6','none',0)
+text(848,1185,'Approval checked first · non-root · registry-only network',21)
+panel(80,790,620,440,'06','Review & export','M6 · M7')
+icon('react',116,899,62,60);icon('github',206,899,62,60)
+text(114,1009,'React dashboard + live run events',25,600)
+text(114,1053,'HTML / JSON report · SBOM downloads',23)
+text(114,1097,'Before / after risk · remaining risk · audit trail',22)
+rect(110,1148,560,52,9,'#f4f5f6','none',0)
+text(128,1181,'GitHub status + PR comment¹',22,600)
+line('M1660 1005H1560');text(1610,979,'Approved',17,500,anchor='middle')
+line('M800 1005H700');text(750,979,'Results',18,500,anchor='middle')
+# Shared storage: dashed connectors, no direction implied
+for x in [390,1180,1990]:line(f'M{x} 1230V1305',True,False)
+rect(80,1305,2240,119,16,'#fafafa','#cbd0d5',2)
+icon('sqlite',112,1336,155,53)
+text(300,1355,'Shared evidence & audit store',27,650)
+text(300,1392,'SQLite index + SHA-256 blobs · run JSON files · patches · hash-linked audit log · AI cache + token ledger',23)
+text(2288,1354,'ALL STAGES',17,650,'#68717b','end')
+# Cross-cutting controls / milestones
+text(80,1480,'MILESTONE COVERAGE',18,700,'#68717b')
+text(2318,1480,'M0–M9 = 10 milestones',19,500,'#68717b','end')
+ms=[('M0','Trust & correctness'),('M1','One scan engine'),('M2','States & confidence'),('M3','Live investigation'),('M4','Computed fixes'),('M5','Approve & validate'),('M6','HTML / JSON report'),('M7','Dashboard'),('M8','PR trigger'),('M9','Docs & architecture')]
+for i,(m,label) in enumerate(ms):
+ col=i%5;row=i//5;x=80+col*452;y=1504+row*76
+ rect(x,y,430,60,10,'white','#e0e3e7',1)
+ text(x+17,y+37,m,21,700);text(x+73,y+37,label,21)
+text(80,1700,'M0 trust checks apply throughout. M9 documents the system. Diagram shows implemented paths, not universal deployment readiness.',20,400,'#68717b')
+text(80,1734,'¹ GitHub publishing requires token permissions. Full validation requires human approval and a matching profile; app-image build is outside the current profile.',19,400,'#68717b')
+text(80,1769,'Solid arrows: main flow   ·   Dashed lines: shared persistence   ·   Official logos retain their original colors; tool names identify each integration.',19,400,'#68717b')
+add('</g></svg>')
+(D/'guardian-architecture.svg').write_text('\n'.join(p))
+# Lightweight local preview; the SVG remains standalone and editable.
+(D/'guardian-architecture.html').write_text('<!doctype html><meta charset="utf-8"><title>Guardian architecture</title><style>html,body{margin:0;background:#fff}img{display:block;width:100%;height:auto}</style><img src="guardian-architecture.svg" alt="Guardian architecture">')
+print(D/'guardian-architecture.svg')

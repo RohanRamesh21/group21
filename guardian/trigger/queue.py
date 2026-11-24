@@ -65,6 +65,16 @@ class RunQueue:
                 self.runs[rid]["status"] = "running"
                 self._save()
 
+    def cancel(self, rid: str) -> bool:
+        """The user stopped this run (Buddy 'Stop'). A cancelled run is never current, posts nothing, starts nothing."""
+        with self._lock:
+            r = self.runs.get(rid)
+            if not r or r["status"] not in ("queued", "running"):
+                return False
+            r["status"], r["cancelled"] = "cancelled", time.time()
+            self._save()
+            return True
+
     def finish(self, rid: str, result: dict) -> None:
         """Store the result; a superseded run keeps its status (its late result is kept for the audit trail only)."""
         with self._lock:

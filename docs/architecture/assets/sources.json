@@ -1,0 +1,131 @@
+{
+  "github": {
+    "url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+    "file": "github.png",
+    "bytes": 7249
+  },
+  "react": {
+    "url": "https://raw.githubusercontent.com/facebook/react/main/fixtures/dom/public/react-logo.svg",
+    "file": "react.svg",
+    "bytes": 2883
+  },
+  "fastapi": {
+    "url": "https://fastapi.tiangolo.com/img/icon-white.svg",
+    "file": "fastapi.svg",
+    "bytes": 1363
+  },
+  "syft": {
+    "url": "https://anchore.com/wp-content/uploads/2024/11/syft-logo.svg",
+    "file": "syft.svg",
+    "bytes": 135631
+  },
+  "grype": {
+    "url": "https://anchore.com/wp-content/uploads/2024/11/grype-logo.svg",
+    "file": "grype.svg",
+    "bytes": 13033
+  },
+  "python": {
+    "url": "https://www.python.org/static/community_logos/python-logo-generic.svg",
+    "file": "python.svg",
+    "bytes": 15301
+  },
+  "npm": {
+    "url": "https://raw.githubusercontent.com/npm/logos/master/npm%20logo/npm-logo-red.svg",
+    "file": "npm.svg",
+    "bytes": 473
+  },
+  "deepseek": {
+    "url": "https://avatars.githubusercontent.com/u/148330874?s=200&v=4",
+    "file": "deepseek.png",
+    "bytes": 6211
+  },
+  "gemini": {
+    "url": "https://www.gstatic.com/lamda/images/gemini_sparkle_4g_512_lt_f94943af3be039176192d.png",
+    "file": "gemini.png",
+    "bytes": 61823
+  },
+  "osv": {
+    "url": "https://osv.dev/static/img/logo-dark.png",
+    "file": "osv.png",
+    "bytes": 2271
+  },
+  "sqlite": {
+    "url": "https://www.sqlite.org/images/sqlite370_banner.svg",
+    "file": "sqlite.svg",
+    "bytes": 12707
+  },
+  "verdaccio": {
+    "url": "https://verdaccio.org/img/logo/uk/verdaccio-tiny-uk-no-bg.svg",
+    "file": "verdaccio.svg",
+    "bytes": 3279
+  },
+  "zizmor": {
+    "url": "https://docs.zizmor.sh/assets/favicon48x48.png",
+    "file": "zizmor.png",
+    "bytes": 2875
+  },
+  "docker": {
+    "url": "https://www.docker.com/app/uploads/brand/logo/docker-mark-ether.svg",
+    "file": "docker.svg",
+    "bytes": 490
+  },
+  "agent-ShieldStar": {
+    "url": "https://github.com/phosphor-icons/react",
+    "file": "agent-ShieldStar.svg",
+    "license": "MIT",
+    "source": "Installed @phosphor-icons/react 2.1.10; same icon library as Guardian dashboard"
+  },
+  "agent-Detective": {
+    "url": "https://github.com/phosphor-icons/react",
+    "file": "agent-Detective.svg",
+    "license": "MIT",
+    "source": "Installed @phosphor-icons/react 2.1.10; same icon library as Guardian dashboard"
+  },
+  "agent-Scales": {
+    "url": "https://github.com/phosphor-icons/react",
+    "file": "agent-Scales.svg",
+    "license": "MIT",
+    "source": "Installed @phosphor-icons/react 2.1.10; same icon library as Guardian dashboard"
+  },
+  "agent-Wrench": {
+    "url": "https://github.com/phosphor-icons/react",
+    "file": "agent-Wrench.svg",
+    "license": "MIT",
+    "source": "Installed @phosphor-icons/react 2.1.10; same icon library as Guardian dashboard"
+  },
+  "agent-Gavel": {
+    "url": "https://github.com/phosphor-icons/react",
+    "file": "agent-Gavel.svg",
+    "license": "MIT",
+    "source": "Installed @phosphor-icons/react 2.1.10; same icon library as Guardian dashboard"
+  },
+  "agent-User": {
+    "url": "https://github.com/phosphor-icons/react",
+    "file": "agent-User.svg",
+    "license": "MIT",
+    "source": "Installed @phosphor-icons/react 2.1.10; same icon library as Guardian dashboard"
+  },
+  "agent-Package": {
+    "url": "https://github.com/phosphor-icons/react",
+    "file": "agent-Package.svg",
+    "license": "MIT",
+    "source": "Installed @phosphor-icons/react 2.1.10; same icon library as Guardian dashboard"
+  },
+  "agent-GitDiff": {
+    "url": "https://github.com/phosphor-icons/react",
+    "file": "agent-GitDiff.svg",
+    "license": "MIT",
+    "source": "Installed @phosphor-icons/react 2.1.10; same icon library as Guardian dashboard"
+  },
+  "agent-Brain": {
+    "url": "https://github.com/phosphor-icons/react",
+    "file": "agent-Brain.svg",
+    "license": "MIT",
+    "source": "Installed @phosphor-icons/react 2.1.10; same icon library as Guardian dashboard"
+  },
+  "electron": {
+    "url": "https://github.com/electron/electron",
+    "file": "electron.png",
+    "source": "Official Electron.app icon bundled with installed Electron 45.4.1; converted from ICNS to PNG without redrawing"
+  }
+}

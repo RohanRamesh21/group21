@@ -89,3 +89,14 @@ def test_deepseek_direct_is_the_main_provider_when_its_key_is_set(env, monkeypat
     s = Session([(200, OK)])
     data, meta = env.chat_json("p", session=s, max_tokens=50, cache=False)
     assert s.sent[0] == ("https://api.deepseek.com/chat/completions", "deepseek-flash") and meta["provider"] == "deepseek"
+
+
+def test_deepseek_gets_room_for_reasoning(env, monkeypatch):
+    """Found live: deepseek-flash stopped at max_tokens 1,500 (finish_reason=length) mid-JSON."""
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "sk_x")
+    s = Session([(200, OK)])
+    sent = []
+    orig = s.post
+    s.post = lambda url, json=None, **k: (sent.append(json["max_tokens"]), orig(url, json=json, **k))[1]
+    env.chat_json("p", session=s, max_tokens=1500, cache=False)
+    assert sent == [4500]

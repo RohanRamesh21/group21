@@ -36,3 +36,17 @@ export function OutdatedRun({ project, message, onDone }: { project: string | nu
       {err && <p className="mt-2 text-crit">{err}</p>}
     </div>);
 }
+
+
+/* A PR run whose scan is still in progress (opened from Buddy or a toast): say so and check again until it is ready. */
+export function ScanningRun({ message, refresh }: { message: string; refresh: () => void }) {
+  useEffect(() => { const t = window.setInterval(refresh, 2500); return () => window.clearInterval(t); }, [refresh]);
+  return (
+    <div role="status" className="panel flex items-start gap-3 p-8 text-[13px]">
+      <CircleNotch className="mt-0.5 animate-spin text-accent" size={18} />
+      <div>
+        <p className="font-medium text-ink">{message.replace(/^scanning:\s*/, "")}</p>
+        <p className="mt-1 text-muted">Reading the PR's files (nothing is executed), building the SBOM, checking OSV and Grype and the 14 detectors. This usually takes 20–60 seconds; the page fills in by itself.</p>
+      </div>
+    </div>);
+}

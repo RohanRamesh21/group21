@@ -56,8 +56,9 @@ def run(out: Path, backend: str = "auto", replay: Path = DEFAULT_REPLAY, run_id:
         model = ScriptedBackend(load_script(str(replay)), make_resolver(board, world, store))
     elif backend == "openrouter":
         model = OpenRouterBackend()
-    elif backend == "freemodel":
-        model = FreeModelBackend()
+    elif backend in ("freemodel", "deepseek"):
+        from guardian.agents.llm import make_backend
+        model = make_backend(backend)  # DeepSeek first, then FreeModel, then Gemini (fallback on quota/outage)
     elif backend == "gemini":
         model = GeminiBackend()
     elif backend == "claude":

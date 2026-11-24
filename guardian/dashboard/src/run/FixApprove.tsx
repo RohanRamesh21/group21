@@ -2,6 +2,7 @@ import { motion } from "motion/react";
 import { useCallback, useEffect, useState } from "react";
 import { GitDiff } from "@phosphor-icons/react";
 import { api, Badge, jsonPost, q, SectionHead, type Sections } from "./shared";
+import { RemediesUsed } from "./scoring/Remedy";
 
 type Candidate = { id: string; type: string; package?: string; file?: string; from?: string; to?: string; rationale: string;
   expected_risk_reduction: Record<string, number>; compatibility?: { note?: string; semver_jump?: string }; rollback?: string;
@@ -141,6 +142,7 @@ export function FixApprove({ s, project, refresh }: { s: Sections; project: stri
   return (
     <div className="flex flex-col gap-4">
       <SectionHead n={4} title="Fix and approve" sub="Fix versions are computed from advisory ranges and the npm registry (no AI), then combined into one patch. The Fixer may explain it, never change it. Your approval is bound to the patch's SHA-256, both commits, the policy and the validation profile." />
+      <RemediesUsed s={s} />
       <FixPlan project={project} s={s} refresh={refresh} />
     </div>);
 }

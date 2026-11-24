@@ -5,5 +5,6 @@ contextBridge.exposeInMainWorld("buddy", {
   onState: (fn) => ipcRenderer.on("state", (_e, s) => fn(s)),
   openDashboard: () => ipcRenderer.send("open-dashboard"),
   dismiss: () => ipcRenderer.send("dismiss"),
+  stopSession: () => ipcRenderer.send("stop-session"),
   toggleSize: () => ipcRenderer.send("toggle-size"),
 });

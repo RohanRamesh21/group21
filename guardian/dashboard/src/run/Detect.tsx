@@ -7,6 +7,7 @@ import { Badge, SectionHead, st, type Finding, type Fix, type Sections } from ".
 import { AhpWeights } from "./scoring/AhpWeights";
 import { Contextual, Fixes, TIER_SHORT } from "./scoring/Contextual";
 import { Method } from "./scoring/Method";
+import { RemedyChip, remedyFor } from "./scoring/Remedy";
 
 type Filter = "introduced" | "pre_existing" | "all";
 
@@ -134,21 +135,21 @@ export function Detect({ s, project, refresh }: { s: Sections; project: string |
         </div>
         <div className="scroll-thin overflow-x-auto" role="region" aria-label="Scored findings" tabIndex={0}>
         <div className="min-w-[960px]">
-        <div className="grid grid-cols-[88px_minmax(0,1fr)_96px_62px_112px_84px_74px_70px] gap-3 border-b border-line px-3 pb-2 text-[11px] text-faint">
-          <span>Level</span><span>Finding</span><span>Kind</span><span>Decision</span><span>Priority</span><span title="90% range of the rank when every AHP weight varies ±20%">Rank range</span><span title="Estimated from a static import scan">Reachability</span><span>Confidence</span>
+        <div className="grid grid-cols-[88px_minmax(0,1fr)_62px_112px_84px_74px_128px_70px] gap-3 border-b border-line px-3 pb-2 text-[11px] text-faint">
+          <span>Level</span><span>Finding</span><span>Decision</span><span>Priority</span><span title="90% range of the rank when every AHP weight varies ±20%">Rank range</span><span title="Estimated from a static import scan">Reachability</span><span title="How Guardian will fix it (rules; the fix plan if one exists)">Remedy</span><span>Confidence</span>
         </div>
         <div className="scroll-thin max-h-[560px] overflow-y-auto">
           <AnimatePresence initial={false} mode="popLayout">
             {shown.map((f, i) => (
               <motion.button key={f.id} layout initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ ...spring, delay: Math.min(i, 14) * 0.02 }}
-                onClick={() => setOpen(f)} className="grid w-full grid-cols-[88px_minmax(0,1fr)_96px_62px_112px_84px_74px_70px] items-center gap-3 rounded-lg px-3 py-2 text-left text-[12.5px] transition-colors hover:bg-raised focus-visible:outline focus-visible:outline-accent">
+                onClick={() => setOpen(f)} className="grid w-full grid-cols-[88px_minmax(0,1fr)_62px_112px_84px_74px_128px_70px] items-center gap-3 rounded-lg px-3 py-2 text-left text-[12.5px] transition-colors hover:bg-raised focus-visible:outline focus-visible:outline-accent">
                 <RiskTag risk={f.level} />
                 <span className="truncate font-mono">{f.title}</span>
-                <span className="truncate text-[11.5px] text-muted">{f.kind}</span>
                 <span className="text-[11.5px]">{f.decision}</span>
                 <span className="flex items-center gap-2 tabular-nums"><span className="h-1.5 w-14 overflow-hidden rounded-full bg-raised"><span className="block h-full rounded-full bg-accent" style={{ width: `${f.score}%` }} /></span>{f.score}</span>
                 <span className="font-mono text-[11px] tabular-nums text-muted">{f.rank_stability ? <>#{f.rank_stability.baseline_rank} <span className="text-faint">({f.rank_stability.rank_p05}–{f.rank_stability.rank_p95})</span></> : "—"}</span>
                 <span className={`text-[11px] ${f.reachability?.tier === "imported" ? "text-ink" : f.reachability?.tier === "declared" ? "text-med" : "text-faint"}`}>{f.reachability ? TIER_SHORT[f.reachability.tier] : "—"}</span>
+                <span className="min-w-0"><RemedyChip r={remedyFor(f, s)} /></span>
                 <span className={`w-fit rounded px-1.5 py-0.5 text-[10.5px] ${f.confidence?.band === "high" ? "bg-ok/10 text-ok" : f.confidence?.band === "medium" ? "bg-med/12 text-med" : "bg-crit/12 text-crit"}`}>{f.confidence?.band ?? "?"}</span>
               </motion.button>))}
           </AnimatePresence>

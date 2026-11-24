@@ -20,7 +20,8 @@ import { Summary } from "./run/Summary";
 import { Validate } from "./run/Validate";
 import { api, journey, type StepId } from "./run/shared";
 import { useRunModel } from "./run/useRunModel";
-import { OutdatedRun } from "./run/OutdatedRun";
+import { OutdatedRun, ScanningRun } from "./run/OutdatedRun";
+import { TourBar } from "./run/TourBar";
 import { useMeta, useRun } from "./useRun";
 
 type View = StepId | "scan" | "replay";
@@ -49,6 +50,7 @@ function Replay() {
 export default function App() {
   const [project, setProject] = useState<string | null>(() => new URLSearchParams(window.location.search).get("run"));
   const [prRuns, setPrRuns] = useState<PrRun[]>([]);
+  const [tour, setTour] = useState(() => new URLSearchParams(window.location.search).has("tour"));
   const loadPrRuns = () => api("/api/pr-runs").then(setPrRuns).catch(() => undefined);
   useEffect(() => { loadPrRuns(); }, []);
   useEffect(() => {  // keep ?run= in the address bar, so a PR comment link or Buddy can open the same run
@@ -77,8 +79,10 @@ export default function App() {
         <LiveToasts project={project} onRunsChanged={loadPrRuns} onCurrentChanged={refresh}
           onOpen={(p, v) => { setProject(p); setView(v ?? "summary"); }} />
         {s && <Journey steps={steps} active={isStep ? view : ""} onPick={setView} />}
+        {tour && isStep && <TourBar view={view} setView={setView} onEnd={() => { setTour(false); const u = new URL(window.location.href); u.searchParams.delete("tour"); window.history.replaceState(null, "", u.toString()); }} />}
         <main id="main" className="flex-1 px-6 pb-10 pt-5">
-          {isStep && err && (err.startsWith("outdated")
+          {isStep && err && err.startsWith("scanning") && <ScanningRun message={err} refresh={refresh} />}
+          {isStep && err && !err.startsWith("scanning") && (err.startsWith("outdated")
             ? <OutdatedRun project={project} message={err} onDone={() => { loadPrRuns(); refresh(); }} />
             : <div role="alert" className="panel p-8 text-[13px] text-muted">{err === "no run yet" ? "No run yet. Use “Scan a project”, or run `guardian check` in the terminal." : `Could not load the run: ${err}`}</div>)}
           {isStep && !s && !err && <div className="panel h-48 animate-pulse" aria-busy="true" />}

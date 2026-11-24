@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { ArrowRight, Fingerprint } from "@phosphor-icons/react";
 import { spring } from "../ui";
 import { Verdict } from "./Shell";
+import { remedySummary } from "./scoring/Remedy";
 import { Badge, st, type Finding, type Sections, type Step, type StepId } from "./shared";
 
 function CountUp({ to }: { to: number }) {
@@ -36,6 +37,7 @@ export function Summary({ s, steps, onPick }: { s: Sections; steps: Step[]; onPi
               <motion.li key={r} initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ ...spring, delay: 0.15 + i * 0.05 }} className="flex gap-2 text-muted">
                 <span className="mt-2 size-1 shrink-0 rounded-full bg-crit" />{r}</motion.li>))}
           </ul>
+          {remedySummary(s) && <p className="mt-3 text-[12.5px] text-muted"><span className="text-ink">Remedy</span> (rules): {remedySummary(s)} · {s.remediation?.status === "approved" ? "approved" : "waiting for your approval"}</p>}
           {!s.run.complete && (s.run.incomplete_reasons ?? []).length > 0 && <p className="mt-3 text-[12px] text-high">Incomplete: {s.run.incomplete_reasons.join("; ")}</p>}
         </div>
         <dl className="grid grid-cols-[130px_minmax(0,1fr)] content-start gap-x-4 gap-y-2 rounded-xl bg-canvas/50 p-4 text-[12.5px] ring-1 ring-line">

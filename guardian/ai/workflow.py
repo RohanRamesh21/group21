@@ -44,6 +44,10 @@ Return one JSON object:
  "missed_risks": [{"case_id": str, "risk": str, "evidence_ids": [str]}] (max 3)}"""
 
 
+class Stopped(Exception):
+    """The user pressed Stop: no further model call is made."""
+
+
 def _check_text(text: str, ids: list, evidence: dict[str, dict], require_ids: bool = True) -> str | None:
     """Return a rejection reason, or None when the text passes."""
     ids = [i for i in ids or [] if isinstance(i, str)]
@@ -67,6 +71,8 @@ def _investigate_case(case: dict, chat: Callable, run_id: str) -> dict:
     try:
         raw, meta = chat("CASE:\n" + json.dumps(view, indent=1), system=INVESTIGATOR_SYSTEM, max_tokens=1500,
                          purpose="investigate", run_id=run_id)
+    except Stopped:
+        return {**res, "status": "cancelled", "error": "stopped by the user"}
     except llm_budget.BudgetExceeded as e:
         return {**res, "status": "budget_reached", "error": str(e)}
     except Exception as e:  # model outage: findings and rules verdict stand on their own
@@ -108,6 +114,8 @@ def _verify(cases: list[dict], packet: dict, chat: Callable, run_id: str) -> dic
     try:
         raw, meta = chat("CASES:\n" + json.dumps(view, indent=1), system=VERIFIER_SYSTEM, max_tokens=4000,
                          purpose="verify", run_id=run_id)
+    except Stopped:
+        return {"status": "cancelled", "error": "stopped by the user", "challenges": [], "missed_risks": [], "rejected": []}
     except llm_budget.BudgetExceeded as e:
         return {"status": "budget_reached", "error": str(e), "challenges": [], "missed_risks": [], "rejected": []}
     except Exception as e:
@@ -133,9 +141,19 @@ def _verify(cases: list[dict], packet: dict, chat: Callable, run_id: str) -> dic
 
 
 def investigate(out: Path, chat: Callable | None = None, max_cases: int = 6, workers: int = 3,
-                on_event: Callable[[dict], None] | None = None) -> dict:
+                on_event: Callable[[dict], None] | None = None, should_stop: Callable[[], bool] | None = None) -> dict:
     out = Path(out)
-    chat = chat or llm_client.chat_json
+    inner = chat or llm_client.chat_json
+    used: list[tuple[str, str]] = []  # (provider, model) that actually answered: shown instead of the configured name
+
+    stop = should_stop or (lambda: False)
+
+    def chat(prompt, **k):
+        if stop():
+            raise Stopped()
+        data, meta = inner(prompt, **k)
+        used.append((meta.get("provider") or "", meta.get("model") or ""))
+        return data, meta
     emit = on_event or (lambda e: None)
     t0 = time.time()
     packet = build_packets(out)
@@ -156,16 +174,21 @@ def investigate(out: Path, chat: Callable | None = None, max_cases: int = 6, wor
         cases = list(pool.map(one, todo))
     cases += [{"case_id": c["case_id"], "component": c["component"], "finding_ids": c["finding_ids"],
                "status": "not_investigated", "error": f"case limit {max_cases}", "claims": [], "rejected": []} for c in skipped]
-    emit({"agent": "verifier", "state": "running"})
-    verifier = _verify(cases, packet, chat, run_id)
+    if stop():
+        verifier = {"status": "cancelled", "error": "stopped by the user", "challenges": [], "missed_risks": [], "rejected": []}
+    else:
+        emit({"agent": "verifier", "state": "running"})
+        verifier = _verify(cases, packet, chat, run_id)
     emit({"agent": "verifier", "state": verifier["status"], "challenges": len(verifier["challenges"]),
           "missed_risks": len(verifier["missed_risks"])})
     kept = sum(len(c["claims"]) for c in cases) + len(verifier["challenges"]) + len(verifier["missed_risks"])
     rejected = sum(len(c["rejected"]) for c in cases) + len(verifier["rejected"])
     complete = all(c["status"] == "done" for c in cases) and verifier["status"] == "done"
     result = {
-        "status": "done" if complete else "partial", "mode": "workflow", "prompt_version": PROMPT_VERSION,
-        "model": os.environ.get("GUARDIAN_MODEL", llm_client.DEFAULT_MODEL), "effort": os.environ.get("GUARDIAN_EFFORT", "medium"),
+        "status": "cancelled" if stop() else "done" if complete else "partial", "mode": "workflow", "prompt_version": PROMPT_VERSION,
+        "model": ", ".join(sorted({m for _, m in used if m})) or os.environ.get("GUARDIAN_MODEL", llm_client.DEFAULT_MODEL),
+        "provider": ", ".join(sorted({p for p, _ in used if p})) or None,
+        "effort": os.environ.get("GUARDIAN_EFFORT", "medium"),
         "created": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()), "seconds": round(time.time() - t0, 1),
         "run_id": run_id, "packet_sha256": packet["sha256"], "base_sha": packet["base_sha"], "head_sha": packet["head_sha"],
         "rules_verdict": packet["rules_verdict"],

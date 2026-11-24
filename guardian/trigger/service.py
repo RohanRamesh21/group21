@@ -82,13 +82,19 @@ class Service:
         self._post(lambda: self.github.set_status(e["repo"], e["head_sha"], {"state": "pending", "context": "guardian/scan",
                                                                             "description": "Guardian: scanning…"}, self.run_url(rid)))
         self.queue.start(rid)
+        stopped = lambda: (self.queue.get(rid) or {}).get("status") == "cancelled"  # noqa: E731  (Buddy 'Stop')
         mirror, actual = self.fetch(e["repo"], e["pr"], e["head_sha"], e.get("base_sha"))
         if actual != e["head_sha"]:
             self.queue.finish(rid, {"stale": True})
             self.events.append(rid, "run_stale", {"expected": e["head_sha"], "found": actual})
             return {"status": "stale", "run": run, "reason": "the PR moved after the event; the newer event starts a new run"}
+        if stopped():
+            return {"status": "cancelled", "run": self.queue.get(rid)}
         self.events.append(rid, "scan_started", {"commit": actual})
         rep = self.engine(mirror, e.get("base_sha"), e["head_sha"], self.root / "runs" / rid, e["repo"].split("/")[-1])
+        if stopped():  # stopped while the engine ran: its result is kept on disk, but no verdict is posted or acted on
+            self.queue.finish(rid, {"stopped": True})
+            return {"status": "cancelled", "run": self.queue.get(rid)}
         h = {**rep["headline"], "head_sha": e["head_sha"]}
         self.queue.finish(rid, {k: h.get(k) for k in ("verdict", "complete", "verdict_reasons", "incomplete_reasons")})
         self.events.append(rid, "scan_finished", {"verdict": h.get("verdict"), "complete": h.get("complete"), "repo": e["repo"],

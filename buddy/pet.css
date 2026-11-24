@@ -11,7 +11,7 @@ body[data-kind="scanning"], body[data-kind="agents"], body[data-kind="validating
 body[data-kind="block"], body[data-kind="not_verified"] { --c1: #ff8a93; --c2: #d63545; --glow: #f0525f; }
 body[data-kind="review"], body[data-kind="approval"], body[data-kind="nightly"], body[data-kind="incomplete"] { --c1: #ffd08a; --c2: #e08a1e; --glow: #f59e3b; }
 body[data-kind="allow"], body[data-kind="verified"], body[data-kind="approved"] { --c1: #8af0c2; --c2: #22a86e; --glow: #3ccf91; }
-body[data-kind="offline"], body[data-kind="connecting"], body[data-kind="rejected"] { --c1: #b3b8c2; --c2: #6b717c; --glow: #8a909c; }
+body[data-kind="offline"], body[data-kind="connecting"], body[data-kind="rejected"], body[data-kind="stopped"] { --c1: #b3b8c2; --c2: #6b717c; --glow: #8a909c; }
 
 /* robot */
 #robot { grid-column: 2; grid-row: 1; width: 128px; height: 150px; display: block; cursor: pointer; filter: drop-shadow(0 10px 18px rgb(0 0 0 / .45)); -webkit-app-region: no-drag; }
@@ -68,6 +68,10 @@ body[data-kind="idle"] .bubble, body[data-kind="connecting"] .bubble, body[data-
 button { font: inherit; font-size: 12px; border-radius: 8px; padding: 5px 10px; border: 1px solid rgb(255 255 255 / .12); background: transparent; color: #c9ced8; cursor: pointer; transition: transform .15s, background .2s; }
 button:hover { background: rgb(255 255 255 / .06); } button:active { transform: scale(.97); }
 button.primary { background: var(--glow); border-color: transparent; color: #0a0b0e; font-weight: 600; }
+button.danger { border-color: rgb(255 107 107 / .45); color: #ff9b9b; }
+button.danger:hover { background: rgb(255 107 107 / .12); }
+button.danger.armed { background: #e5484d; border-color: transparent; color: #fff; font-weight: 600; }
+button[hidden] { display: none; }
 button.primary:hover { filter: brightness(1.1); background: var(--glow); }
 
 @keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }

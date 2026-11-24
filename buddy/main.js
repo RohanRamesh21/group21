@@ -1,8 +1,9 @@
 "use strict";
 /* Guardian Buddy: main process.
  * Owns the connection to the Guardian server (snapshot → ordered server-sent events → resume with Last-Event-ID),
- * turns events into one Buddy state, and controls the windows. Buddy only displays: it has no approval buttons and
- * changes nothing in Guardian. The renderer (pet.html) only draws the state it is given.
+ * turns events into one Buddy state, and controls the windows. Buddy has no approval buttons; its only action on
+ * Guardian is "Stop session" (stops a running scan, agent run or validation, never approves or fakes a result).
+ * The renderer (pet.html) only draws the state it is given.
  */
 const { app, BrowserWindow, ipcMain, Notification, Tray, Menu, nativeImage, screen, shell } = require("electron");
 const path = require("node:path");
@@ -63,8 +64,10 @@ function setSize(name) {
   pet.setBounds({ x: right - b.width, y: bottom - b.height, width: b.width, height: b.height }, true);
 }
 
-function openDashboard(project, view = "summary") {
-  const url = `${SERVER}/${project ? `?run=${encodeURIComponent(project)}` : ""}#${view}`;
+function openDashboard(project, view = "summary", tour = true) {
+  // Clicking the pet starts the guided flow from the beginning (Summary), with the tour bar for the presenter.
+  const q = [project ? `run=${encodeURIComponent(project)}` : "", tour ? "tour=1" : ""].filter(Boolean).join("&");
+  const url = `${SERVER}/${q ? `?${q}` : ""}#${tour ? "summary" : view}`;
   const wa = screen.getPrimaryDisplay().workArea;
   const target = { width: Math.min(1440, wa.width - 80), height: Math.min(920, wa.height - 60) };
   target.x = wa.x + Math.round((wa.width - target.width) / 2);
@@ -150,7 +153,13 @@ function onEvent(kind, d) {
       return setState({ ...base, kind: d.decision === "approve" ? "approved" : "rejected", text: d.decision === "approve" ? `Approved by ${d.approver} · validate next` : `Rejected by ${d.approver}`, view: "validate" });
     case "validation_started":
       return setState({ ...base, kind: "validating", text: "Validating the fix in an isolated container", view: "validate" });
+    case "session_stopped":
+      return setState({ ...base, kind: "stopped", text: `Session stopped (${(d.stopped || []).join(", ") || "nothing was running"})`, view: state.view });
+    case "agents_finished":
+      if (d.status === "cancelled" && isCurrent(d)) return setState({ ...base, kind: "stopped", text: "Agents stopped · no approval requested" });
+      return;
     case "validation_finished":
+      if (d.state === "cancelled") return setState({ ...base, kind: "stopped", text: "Validation stopped · no PR status posted", view: "validate" });
       return setState({ ...base, kind: d.state === "success" ? "verified" : d.state === "failure" ? "not_verified" : "incomplete", text: d.description || "Validation finished", view: "validate" });
     case "nightly_finished":
       if (d.newly_disclosed > 0) return setState({ ...base, kind: "nightly", text: `Nightly: ${d.newly_disclosed} newly disclosed advisories on main` });
@@ -221,6 +230,7 @@ function updateTray() {
     { label: state.text || state.kind, enabled: false },
     { type: "separator" },
     { label: "Open dashboard", click: () => openDashboard(state.project, state.view) },
+    { label: "Stop current session", enabled: RUNNING.has(state.kind), click: () => stopSession() },
     { label: pet && pet.isVisible() ? "Hide Buddy" : "Show Buddy", click: () => { if (pet.isVisible()) pet.hide(); else pet.showInactive(); updateTray(); } },
     { label: Date.now() < snoozeUntil ? "Unsnooze" : "Snooze 1 hour (only red interrupts)", click: () => { snoozeUntil = Date.now() < snoozeUntil ? 0 : Date.now() + 3600e3; push(); } },
     { type: "separator" },
@@ -228,9 +238,25 @@ function updateTray() {
   ]));
 }
 
-// ------------------------------------------------------------------ IPC from the renderer (display actions only)
+// ------------------------------------------------------------------ stop session
+const RUNNING = new Set(["scanning", "agents", "validating"]);
+async function stopSession() {
+  if (!state.project) return setState({ ...state, kind: "idle", text: "Watching pull requests", warning: null });
+  try {
+    const res = await fetch(`${SERVER}/api/session/stop`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ project: state.project }) });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(body.detail || `HTTP ${res.status}`);
+    console.log(`[buddy] stop session ${state.project}: ${(body.stopped || []).join(", ") || "nothing running"}`);
+    setState({ ...state, kind: "stopped", text: body.stopped && body.stopped.length ? `Session stopped (${body.stopped.join(", ")})` : "Nothing was running · session closed", warning: null });
+  } catch (e) {
+    setState({ ...state, warning: `Could not stop: ${String(e.message || e).slice(0, 80)}` });
+  }
+}
+
+// ------------------------------------------------------------------ IPC from the renderer
 ipcMain.on("open-dashboard", () => openDashboard(state.project, state.view));
 ipcMain.on("dismiss", () => setState({ ...state, kind: "idle", text: "Watching pull requests", warning: null }));
+ipcMain.on("stop-session", () => { stopSession(); });
 ipcMain.on("toggle-size", () => { const b = pet.getBounds(); setSize(b.width > SIZES.compact.width ? "compact" : "expanded"); });
 
 app.whenReady().then(() => {

@@ -206,3 +206,14 @@ def test_a_reused_run_reposts_its_result_to_github(tmp_path):
     res = svc.handle(_event())
     assert res["status"] == "reused"
     assert ("b" * 40, "guardian/scan", "success") in gh.statuses and gh.comments
+
+
+def test_a_pr_run_still_scanning_says_so_instead_of_no_run(monkeypatch, tmp_path):
+    """Found live: Buddy's 'Open dashboard' during a scan showed 'No run yet. Use Scan a project'."""
+    from guardian import server
+    svc, _ = _svc(tmp_path)
+    monkeypatch.setattr(server, "_trigger_service", lambda: svc)
+    run = svc.queue.submit({**_event(), "title": "t"}, **IDN)
+    svc.queue.start(run["id"])
+    r = TestClient(server.app).get(f"/api/run?project=gh-{run['id']}")
+    assert r.status_code == 409 and r.json()["detail"].startswith("scanning")

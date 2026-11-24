@@ -205,3 +205,14 @@ def test_verifier_may_link_cases_with_evidence_from_this_run(run):
     ver = {"challenges": [], "missed_risks": [{"case_id": npmrc, "risk": "Same host as the axois tarball: one incident.", "evidence_ids": [other]}]}
     v = workflow.investigate(run, chat=_fake_chat([], verifier=ver))
     assert len(v["verifier"]["missed_risks"]) == 1 and v["verifier"]["rejected"] == []
+
+
+def test_result_names_the_provider_and_model_that_actually_answered(run):
+    from guardian.ai import workflow
+    base = _fake_chat([])
+
+    def chat(prompt, **k):
+        data, meta = base(prompt, **k)
+        return data, {**meta, "provider": "deepseek", "model": "deepseek-flash"}
+    v = workflow.investigate(run, chat=chat)
+    assert v["model"] == "deepseek-flash" and v["provider"] == "deepseek"

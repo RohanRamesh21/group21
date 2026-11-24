@@ -132,7 +132,7 @@ def warm(findings: list[dict], limit: int = 12) -> None:
     picked = [f for f in picked[:limit] if not is_cached(f)]
     if not picked:
         return
-    if config.provider() == "freemodel":
+    if config.provider() in ("freemodel", "deepseek"):  # OpenAI-compatible client with fallback
         try:
             explain_batch(picked)
         except Exception:  # budget or outage: explanations stay "not generated"; scores stand on their own
@@ -155,7 +155,7 @@ def explain(finding: dict, force: bool = False) -> dict:
     path = CACHE / f"{key}.json"
     if path.exists() and not force:
         return {**json.loads(path.read_text()), "cached": True}
-    if config.provider() == "freemodel":
+    if config.provider() in ("freemodel", "deepseek"):  # OpenAI-compatible client with fallback
         try:
             raw, meta = llm_client.chat_json(PROMPT.format(allowed=", ".join(_allowed(card)), card=json.dumps(card, indent=1)),
                                              max_tokens=1200, purpose="explain", run_id=f"explain-{int(time.time())}",

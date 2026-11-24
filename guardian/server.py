@@ -494,6 +494,11 @@ class ValidateReq(BaseModel):
 
 
 _VALIDATING: dict[str, str] = {}
+stop_session_flags: dict[str, bool] = {}  # run folder -> Stop pressed (agents and validation check it between steps)
+
+
+class SessionStopped(Exception):
+    pass
 
 
 @app.post("/api/validate")
@@ -507,16 +512,28 @@ def validate_start(req: ValidateReq):
     if _VALIDATING.get(key) == "running":
         raise HTTPException(409, "validation already running")
     _VALIDATING[key] = "running"
+    stop_session_flags.pop(key, None)
 
     profile = _profile_of(req.project, req.profile)
     _gh_event(req.project, "validation_started", {"profile": profile})
 
+    def log(m):
+        if stop_session_flags.get(key):
+            raise SessionStopped()  # Stop pressed: leave at the next step (containers are removed by run_profile)
+        _VALIDATING[key + ":msg"] = m
+
     def work():
         try:
-            res = validate(out, profile, log=lambda m: _VALIDATING.__setitem__(key + ":msg", m))
+            res = validate(out, profile, log=log)
+            if stop_session_flags.get(key):
+                raise SessionStopped()
             _VALIDATING[key] = "done"
             _gh_validation_status(req.project, res if isinstance(res, dict) else json.loads((out / "validation.json").read_text()))
         except Exception as e:  # recorded, never hidden
+            if stop_session_flags.get(key):  # stopped by the user: not a result, no PR status
+                _VALIDATING[key] = "cancelled"
+                _gh_event(req.project, "validation_finished", {"state": "cancelled", "description": "Validation stopped by you"})
+                return
             _VALIDATING[key] = f"error: {type(e).__name__}: {e}"[:300]
             _gh_event(req.project, "validation_finished", {"status": "error", "error": _VALIDATING[key]})
     threading.Thread(target=work, daemon=True).start()
@@ -556,11 +573,15 @@ def investigate_start(req: InvestigateReq):
     if not (out / "latest.json").exists():
         raise HTTPException(404, "no run yet")
     _INVESTIGATING[key] = {"status": "running", "events": []}
+    stop_session_flags.pop(key, None)
 
     def work():
         st = _INVESTIGATING[key]
         try:
-            workflow.investigate(out, on_event=lambda e: st["events"].append(e))
+            workflow.investigate(out, on_event=lambda e: st["events"].append(e), should_stop=lambda: bool(stop_session_flags.get(key)))
+            if stop_session_flags.get(key):
+                st["status"] = "cancelled"
+                return
             if req.fix_review:
                 _fixer(out, st["events"].append)
             if req.explain:
@@ -633,6 +654,9 @@ def run_view(project: str | None = None):
     from guardian import projects
     out = _check_dir(project)
     if not (out / "latest.json").exists():
+        run = _gh_run(project)
+        if run and run["status"] in ("queued", "running"):  # opened from Buddy/toast while the scan is still running
+            raise HTTPException(409, f"scanning: Guardian is scanning PR #{run['pr']} ({run.get('title', '')[:80]}) right now.")
         raise HTTPException(404, "no run yet")
     if projects.is_outdated(out):
         raise HTTPException(409, "outdated: this scan was made by an older Guardian version. Rescan it to use the current engine.")
@@ -717,6 +741,8 @@ def _auto_agents(svc, rid: str, out: Path, h: dict, e: dict, background: bool = 
     from guardian.ai import workflow
     st = _INVESTIGATING.setdefault(str(out), {"status": "running", "events": []})
     st.update(status="running", events=[])
+    stop_session_flags.pop(str(out), None)
+    stopped = lambda: bool(stop_session_flags.get(str(out)))  # noqa: E731  (Buddy 'Stop')
 
     def emit(ev: dict) -> None:
         st["events"].append(ev)
@@ -725,7 +751,12 @@ def _auto_agents(svc, rid: str, out: Path, h: dict, e: dict, background: bool = 
     def work():
         svc.events.append(rid, "agents_started", {"project": f"gh-{rid}", "pr": e.get("pr"), "repo": e.get("repo"), "verdict": h.get("verdict")})
         try:
-            res = workflow.investigate(out, on_event=emit)
+            res = workflow.investigate(out, on_event=emit, should_stop=stopped)
+            if stopped():  # no Fixer, no approval request: the session was stopped by the user
+                st["status"] = "cancelled"
+                svc.events.append(rid, "agents_finished", {"project": f"gh-{rid}", "pr": e.get("pr"), "status": "cancelled",
+                                                           "tokens": (res.get("usage") or {}).get("run", {}).get("tokens")})
+                return
             _fixer(out, emit)
             st["status"] = "finished"
             svc.events.append(rid, "agents_finished", {"project": f"gh-{rid}", "pr": e.get("pr"), "status": res.get("status"),
@@ -756,6 +787,40 @@ def _gh_validation_status(project: str | None, res: dict) -> None:
     st = validation_status(res)
     posted = svc._post(lambda: svc.github.set_status(run["repo"], run["head_sha"], st, svc.run_url(run["id"])))
     _gh_event(project, "validation_finished", {"state": st["state"], "description": st["description"], "github": posted})
+
+
+class StopReq(BaseModel):
+    project: str | None = None
+
+
+@app.post("/api/session/stop")
+def session_stop(req: StopReq):
+    """Buddy 'Stop session': stop what is running for this run (scan, agents, validation). Nothing is approved,
+    rejected or faked; a stopped scan posts no verdict (its PR check says 'stopped'), stopped agents ask for no approval."""
+    out = _check_dir(req.project)
+    key, stopped = str(out), []
+    run = _gh_run(req.project)
+    if run and run["status"] in ("queued", "running"):
+        svc = _trigger_service()
+        if svc.queue.cancel(run["id"]):
+            stopped.append("scan")
+            svc._post(lambda: svc.github.set_status(run["repo"], run["head_sha"], {
+                "state": "error", "context": "guardian/scan", "description": "Guardian: scan stopped by the user (no result)"},
+                svc.run_url(run["id"])))
+    if (_INVESTIGATING.get(key) or {}).get("status") == "running":
+        stop_session_flags[key] = True
+        stopped.append("agents")
+    if _VALIDATING.get(key) == "running":
+        stop_session_flags[key] = True
+        stopped.append("validation")
+        if sum(v == "running" for k, v in _VALIDATING.items() if not k.endswith(":msg")) == 1:
+            import subprocess as sp  # the only validation running: remove its sandbox containers now, not after the stage
+            names = sp.run(["docker", "ps", "-q", "--filter", "name=guardian-val-"], capture_output=True, text=True).stdout.split()
+            if names:
+                sp.run(["docker", "rm", "-f", *names], capture_output=True)
+    if stopped:
+        _gh_event(req.project, "session_stopped", {"stopped": stopped})
+    return {"stopped": stopped}
 
 
 @app.get("/api/pr-runs")

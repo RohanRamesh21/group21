@@ -162,6 +162,9 @@ class FreeModelBackend(OpenRouterBackend):
 
     URL = "https://freemodel.in/v1/chat/completions"
     MODEL = "deepseek-v4-flash-0731"
+    KEY_ENV = "FM_API_KEY"
+    MODEL_ENV = "GUARDIAN_MODEL"
+    LABEL = "FreeModel"
 
     def __init__(self, model: str | None = None, timeout: int = 240):
         import os
@@ -171,8 +174,8 @@ class FreeModelBackend(OpenRouterBackend):
         from guardian import config
         config.load_env()
         self.session = requests.Session()
-        self.key = os.environ["FM_API_KEY"]
-        self.model = model or os.environ.get("GUARDIAN_MODEL", self.MODEL)
+        self.key = os.environ[self.KEY_ENV]
+        self.model = model or os.environ.get(self.MODEL_ENV, self.MODEL)
         self.timeout = timeout
         self.usage = {"calls": 0, "prompt_tokens": 0, "completion_tokens": 0}
         self.effort = os.environ.get("GUARDIAN_EFFORT")
@@ -203,14 +206,55 @@ class FreeModelBackend(OpenRouterBackend):
                 break
             last = f"HTTP {r.status_code}: {r.text[:200]}"
             if r.status_code not in (429, 500, 502, 503, 504):
-                raise RuntimeError(f"FreeModel error {last}")
+                raise RuntimeError(f"{self.LABEL} error {last}")
             time.sleep(3 * (attempt + 1))
         else:
-            raise RuntimeError(f"FreeModel error after retries: {last}")
+            raise RuntimeError(f"{self.LABEL} error after retries: {last}")
         data = r.json()
         llm_budget.record(run_id=self.run_id, purpose=f"deep:{agent}", model=self.model, usage=data.get("usage"),
                           cached=False, seconds=time.time() - t0)
         return self._parse_openai(data)
+
+
+class DeepSeekBackend(FreeModelBackend):
+    """DeepSeek's own API (OpenAI-compatible, tool calling), V4 Flash."""
+
+    URL = "https://api.deepseek.com/chat/completions"
+    MODEL = "deepseek-flash"
+    KEY_ENV = "DEEPSEEK_API_KEY"
+    MODEL_ENV = "GUARDIAN_DEEPSEEK_MODEL"
+    LABEL = "DeepSeek"
+
+
+class FallbackBackend:
+    """Tries each back end in order; moves on only when a provider's quota is used up (HTTP 402) or it stays
+    unavailable after retries (429/5xx). A provider that ran out is skipped for the rest of this run.
+    Any other error (bad request, parse error) is raised, not hidden behind another provider."""
+
+    def __init__(self, chain: list[tuple[str, object]]):
+        self.chain, self.used, self.skipped = chain, [], set()
+
+    @property
+    def usage(self):
+        return {"calls": sum(getattr(b, "usage", {}).get("calls", 0) for _, b in self.chain)}
+
+    def step(self, agent, system, messages, tools, effort):
+        last = None
+        for name, be in self.chain:
+            if name in self.skipped:
+                continue
+            try:
+                turn = be.step(agent, system, messages, tools, effort)
+                self.used.append(name)
+                return turn
+            except RuntimeError as e:
+                msg = str(e)
+                if "HTTP 402" in msg or "after retries" in msg:
+                    self.skipped.add(name)
+                    last = e
+                    continue
+                raise
+        raise last or RuntimeError("no AI back end available")
 
 
 class GeminiBackend(OpenRouterBackend):
@@ -331,13 +375,24 @@ class GeminiBackend(OpenRouterBackend):
 
 
 def make_backend(provider: str):
-    """One place that turns the configured provider name (guardian.config.provider()) into a model back end."""
-    if provider == "freemodel":
-        return FreeModelBackend()
+    """One place that turns the configured provider name (guardian.config.provider()) into a model back end.
+    DeepSeek / FreeModel / Gemini become a fallback chain: DeepSeek first when its key is set, then FreeModel, then Gemini."""
+    import os
+
+    from guardian import config
+    config.load_env()
+    if provider in ("deepseek", "freemodel", "gemini", "auto"):
+        chain = []
+        if os.environ.get("DEEPSEEK_API_KEY"):
+            chain.append(("deepseek", DeepSeekBackend()))
+        if os.environ.get("FM_API_KEY"):
+            chain.append(("freemodel", FreeModelBackend()))
+        if os.environ.get("GOOGLE_API_KEY"):
+            chain.append(("gemini", GeminiBackend()))
+        if chain:
+            return FallbackBackend(chain)
     if provider == "openrouter":
         return OpenRouterBackend()
-    if provider == "gemini":
-        return GeminiBackend()
     if provider == "claude":
         return ClaudeBackend()
     raise RuntimeError(f"no LLM provider configured (got '{provider}'): set a key in guardian/.env or use a scripted/rule-based mode")
