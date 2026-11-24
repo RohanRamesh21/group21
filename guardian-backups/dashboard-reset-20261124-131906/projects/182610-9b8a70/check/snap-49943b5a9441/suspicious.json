@@ -1,0 +1,12 @@
+[
+ {
+  "detector": "D11",
+  "type": "remote_script_no_sri",
+  "severity": "medium",
+  "hard_signal": false,
+  "component": "jquery@3.3.1",
+  "file": "examples/javascript/js_example/templates/jquery.html",
+  "line": 10,
+  "summary": "examples/javascript/js_example/templates/jquery.html:10 loads https://code.jquery.com/jquery-3.3.1.min.js from code.jquery.com without an integrity hash: whoever controls that server can change the code your users run"
+ }
+]

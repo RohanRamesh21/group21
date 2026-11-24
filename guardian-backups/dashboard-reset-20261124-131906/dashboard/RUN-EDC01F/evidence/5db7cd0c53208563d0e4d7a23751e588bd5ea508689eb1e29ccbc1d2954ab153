@@ -1,0 +1,6 @@
++ "node_modules/axois": {
++   "version": "1.0.0",
++   "resolved": "http://10.0.0.5:4873/axois/-/axois-1.0.0.tgz",
++   "integrity": "sha512-Zm9v...",
++   "hasInstallScript": true }
+~ "node_modules/kuma-helper": "version": "1.0.0" -> "1.0.1"

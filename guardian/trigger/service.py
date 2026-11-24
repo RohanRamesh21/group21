@@ -70,6 +70,12 @@ class Service:
             return {"status": "ignored", "reason": "draft, closed or unsupported action"}
         rid = run["id"]
         if run["status"] == "done" and run.get("result"):
+            h = {**run["result"], "head_sha": e["head_sha"]}
+            if self.github is not None and h.get("verdict") is not None:  # re-post: an earlier post may have failed
+                posted = self._post(lambda: self.github.set_status(e["repo"], e["head_sha"], status_for(h), self.run_url(rid)))
+                commented = self._post(lambda: self.github.upsert_comment(e["repo"], e["pr"], comment_body(h, self.run_url(rid))))
+                self.events.append(rid, "github_post", {"what": "status", "result": posted, "pr": e["pr"], "project": f"gh-{rid}", "reused": True})
+                self.events.append(rid, "github_post", {"what": "comment", "result": commented, "pr": e["pr"], "project": f"gh-{rid}", "reused": True})
             return {"status": "reused", "run": run, "headline": run["result"]}
         self.events.append(rid, "run_queued", {**{k: run[k] for k in ("repo", "pr", "head_sha", "base_sha", "action")},
                                                "title": run.get("title", ""), "project": f"gh-{rid}"})

@@ -1,0 +1,61 @@
+{
+ "bomFormat": "CycloneDX",
+ "specVersion": "1.5",
+ "version": 1,
+ "metadata": {
+  "timestamp": "2026-11-24T07:12:33Z",
+  "tools": [
+   {
+    "name": "guardian"
+   },
+   {
+    "name": "syft"
+   }
+  ],
+  "component": {
+   "type": "application",
+   "bom-ref": "app",
+   "name": "ARKABROAD",
+   "version": "1c54273fc48b"
+  }
+ },
+ "components": [
+  {
+   "type": "application",
+   "bom-ref": "extension:ark-outreach-coach@4.0.2#linkedin extention/manifest.json",
+   "name": "ark-outreach-coach",
+   "version": "4.0.2",
+   "purl": "pkg:generic/ark-outreach-coach@4.0.2",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "linkedin extention/manifest.json"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "this repository"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "guardian browser-extension manifest check"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  }
+ ],
+ "dependencies": [
+  {
+   "ref": "app",
+   "dependsOn": [
+    "extension:ark-outreach-coach@4.0.2#linkedin extention/manifest.json"
+   ]
+  }
+ ]
+}

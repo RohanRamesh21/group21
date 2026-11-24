@@ -1,0 +1,3 @@
+<untrusted-data>const fs = require('node:fs'); const os = require('node:os'); const path = require('node:path');
+fs.writeFileSync(path.join(os.tmpdir(), 'guardian-canary-axois.txt'), 'install script ran');
+</untrusted-data>

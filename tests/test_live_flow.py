@@ -146,3 +146,63 @@ def test_failed_github_posts_are_visible_events_not_silent(tmp_path):
     svc.handle(_event())
     ev = [e for e in svc.events.since(0) if e["kind"] == "github_post" and e["data"]["what"] == "status"]
     assert ev and ev[-1]["data"]["result"].startswith("post failed") and "403" in ev[-1]["data"]["result"]
+
+
+def test_each_repository_can_have_its_own_token(monkeypatch):
+    from guardian.trigger.github import GitHubRouter, token_env_name
+    assert token_env_name("kirankishoreV-07/uptime-kuma") == "GUARDIAN_GITHUB_TOKEN__KIRANKISHOREV_07__UPTIME_KUMA"
+    seen = []
+
+    class Fake:
+        def __init__(self, token):
+            self.token = token
+
+        def set_status(self, repo, sha, status, target_url=None):
+            seen.append((repo, self.token))
+    env = {"GUARDIAN_GITHUB_TOKEN": "default", "GUARDIAN_GITHUB_TOKEN__KIRANKISHOREV_07__UPTIME_KUMA": "kuma"}
+    r = GitHubRouter(env, client=Fake)
+    r.set_status("kirankishoreV-07/uptime-kuma", "a" * 40, {"state": "success", "context": "c"})
+    r.set_status("kirankishoreV-07/PIPELINE_CHECK", "a" * 40, {"state": "success", "context": "c"})
+    assert seen == [("kirankishoreV-07/uptime-kuma", "kuma"), ("kirankishoreV-07/PIPELINE_CHECK", "default")]
+    assert "kuma" not in repr(r) and "default" not in repr(r)
+    assert GitHubRouter({}, client=Fake).configured is False
+
+
+def test_a_403_token_falls_back_to_another_configured_token(monkeypatch):
+    from guardian.trigger.github import GitHubRouter
+    calls = []
+
+    class Fake:
+        def __init__(self, token):
+            self.token = token
+
+        def set_status(self, repo, sha, status, target_url=None):
+            calls.append(self.token)
+            if self.token == "old":
+                raise RuntimeError("status update failed with 403: Resource not accessible by personal access token")
+    env = {"GUARDIAN_GITHUB_TOKEN": "old", "GUARDIAN_GITHUB_TOKEN__ME__OTHER": "new"}
+    r = GitHubRouter(env, client=Fake)
+    r.set_status("me/app", "a" * 40, {"state": "success", "context": "c"})
+    assert calls == ["old", "new"]
+    r.set_status("me/app", "a" * 40, {"state": "success", "context": "c"})
+    assert calls == ["old", "new", "new"]  # the token that worked is remembered for this repo
+    calls.clear()
+
+    class AllFail(Fake):
+        def set_status(self, *a, **k):
+            raise RuntimeError("status update failed with 403")
+    import pytest
+    with pytest.raises(RuntimeError, match="403"):
+        GitHubRouter(env, client=AllFail).set_status("me/x", "a" * 40, {"state": "success", "context": "c"})
+
+
+def test_a_reused_run_reposts_its_result_to_github(tmp_path):
+    """Found live: a post failed (403), the token was fixed, the workflow was re-run on the same commit, and the reused
+    result was never posted. Reuse must post the stored result again (statuses/comments are idempotent)."""
+    gh = Recorder()
+    svc, _ = _svc(tmp_path, gh=gh, verdict="allow")
+    svc.handle(_event())
+    gh.statuses.clear(); gh.comments.clear()
+    res = svc.handle(_event())
+    assert res["status"] == "reused"
+    assert ("b" * 40, "guardian/scan", "success") in gh.statuses and gh.comments

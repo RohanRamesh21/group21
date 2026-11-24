@@ -1,0 +1,3771 @@
+{
+ "bomFormat": "CycloneDX",
+ "specVersion": "1.5",
+ "version": 1,
+ "metadata": {
+  "timestamp": "2026-11-24T07:12:17Z",
+  "tools": [
+   {
+    "name": "guardian"
+   },
+   {
+    "name": "syft"
+   }
+  ],
+  "component": {
+   "type": "application",
+   "bom-ref": "app",
+   "name": "flask",
+   "version": "49943b5a9441"
+  }
+ },
+ "components": [
+  {
+   "type": "library",
+   "bom-ref": "github:actions/cache@v6.1.0#.github/workflows/pre-commit.yaml",
+   "name": "actions/cache",
+   "version": "v6.1.0",
+   "purl": "pkg:github/actions/cache@v6.1.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": ".github/workflows/pre-commit.yaml"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "github-actions-usage-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "github:actions/cache@v6.1.0#.github/workflows/tests.yaml",
+   "name": "actions/cache",
+   "version": "v6.1.0",
+   "purl": "pkg:github/actions/cache@v6.1.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": ".github/workflows/tests.yaml"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "github-actions-usage-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "True"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "github:actions/checkout@v7.0.1#.github/workflows/pre-commit.yaml",
+   "name": "actions/checkout",
+   "version": "v7.0.1",
+   "purl": "pkg:github/actions/checkout@v7.0.1",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": ".github/workflows/pre-commit.yaml"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "github-actions-usage-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "github:actions/checkout@v7.0.1#.github/workflows/publish.yaml",
+   "name": "actions/checkout",
+   "version": "v7.0.1",
+   "purl": "pkg:github/actions/checkout@v7.0.1",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": ".github/workflows/publish.yaml"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "github-actions-usage-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "github:actions/checkout@v7.0.1#.github/workflows/tests.yaml",
+   "name": "actions/checkout",
+   "version": "v7.0.1",
+   "purl": "pkg:github/actions/checkout@v7.0.1",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": ".github/workflows/tests.yaml"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "github-actions-usage-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "True"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "github:actions/checkout@v7.0.1#.github/workflows/zizmor.yaml",
+   "name": "actions/checkout",
+   "version": "v7.0.1",
+   "purl": "pkg:github/actions/checkout@v7.0.1",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": ".github/workflows/zizmor.yaml"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "github-actions-usage-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "github:actions/download-artifact@v8.0.1#.github/workflows/publish.yaml",
+   "name": "actions/download-artifact",
+   "version": "v8.0.1",
+   "purl": "pkg:github/actions/download-artifact@v8.0.1",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": ".github/workflows/publish.yaml"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "github-actions-usage-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "github:actions/setup-python@v7.0.0#.github/workflows/pre-commit.yaml",
+   "name": "actions/setup-python",
+   "version": "v7.0.0",
+   "purl": "pkg:github/actions/setup-python@v7.0.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": ".github/workflows/pre-commit.yaml"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "github-actions-usage-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "github:actions/setup-python@v7.0.0#.github/workflows/publish.yaml",
+   "name": "actions/setup-python",
+   "version": "v7.0.0",
+   "purl": "pkg:github/actions/setup-python@v7.0.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": ".github/workflows/publish.yaml"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "github-actions-usage-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "github:actions/setup-python@v7.0.0#.github/workflows/tests.yaml",
+   "name": "actions/setup-python",
+   "version": "v7.0.0",
+   "purl": "pkg:github/actions/setup-python@v7.0.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": ".github/workflows/tests.yaml"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "github-actions-usage-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "True"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "github:actions/upload-artifact@v7.0.1#.github/workflows/publish.yaml",
+   "name": "actions/upload-artifact",
+   "version": "v7.0.1",
+   "purl": "pkg:github/actions/upload-artifact@v7.0.1",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": ".github/workflows/publish.yaml"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "github-actions-usage-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:alabaster@1.0.0#uv.lock",
+   "name": "alabaster",
+   "version": "1.0.0",
+   "purl": "pkg:pypi/alabaster@1.0.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:amqp@5.1.1#examples/celery/requirements.txt",
+   "name": "amqp",
+   "version": "5.1.1",
+   "purl": "pkg:pypi/amqp@5.1.1",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:anyio@4.14.2#uv.lock",
+   "name": "anyio",
+   "version": "4.14.2",
+   "purl": "pkg:pypi/anyio@4.14.2",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:asgiref@3.12.1#uv.lock",
+   "name": "asgiref",
+   "version": "3.12.1",
+   "purl": "pkg:pypi/asgiref@3.12.1",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:ast-serialize@0.6.0#uv.lock",
+   "name": "ast-serialize",
+   "version": "0.6.0",
+   "purl": "pkg:pypi/ast-serialize@0.6.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "github:astral-sh/setup-uv@v9.0.0#.github/workflows/pre-commit.yaml",
+   "name": "astral-sh/setup-uv",
+   "version": "v9.0.0",
+   "purl": "pkg:github/astral-sh/setup-uv@v9.0.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": ".github/workflows/pre-commit.yaml"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "github-actions-usage-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "github:astral-sh/setup-uv@v9.0.0#.github/workflows/publish.yaml",
+   "name": "astral-sh/setup-uv",
+   "version": "v9.0.0",
+   "purl": "pkg:github/astral-sh/setup-uv@v9.0.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": ".github/workflows/publish.yaml"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "github-actions-usage-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "github:astral-sh/setup-uv@v9.0.0#.github/workflows/tests.yaml",
+   "name": "astral-sh/setup-uv",
+   "version": "v9.0.0",
+   "purl": "pkg:github/astral-sh/setup-uv@v9.0.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": ".github/workflows/tests.yaml"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "github-actions-usage-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "True"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:async-timeout@4.0.2#examples/celery/requirements.txt",
+   "name": "async-timeout",
+   "version": "4.0.2",
+   "purl": "pkg:pypi/async-timeout@4.0.2",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:babel@2.18.0#uv.lock",
+   "name": "babel",
+   "version": "2.18.0",
+   "purl": "pkg:pypi/babel@2.18.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:billiard@3.6.4.0#examples/celery/requirements.txt",
+   "name": "billiard",
+   "version": "3.6.4.0",
+   "purl": "pkg:pypi/billiard@3.6.4.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:blinker@1.6.2#examples/celery/requirements.txt",
+   "name": "blinker",
+   "version": "1.6.2",
+   "purl": "pkg:pypi/blinker@1.6.2",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:blinker@1.9.0#uv.lock",
+   "name": "blinker",
+   "version": "1.9.0",
+   "purl": "pkg:pypi/blinker@1.9.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:cachetools@7.1.6#uv.lock",
+   "name": "cachetools",
+   "version": "7.1.6",
+   "purl": "pkg:pypi/cachetools@7.1.6",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:celery@5.2.7#examples/celery/requirements.txt",
+   "name": "celery",
+   "version": "5.2.7",
+   "purl": "pkg:pypi/celery@5.2.7",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:certifi@2026.7.22#uv.lock",
+   "name": "certifi",
+   "version": "2026.7.22",
+   "purl": "pkg:pypi/certifi@2026.7.22",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:cffi@2.1.0#uv.lock",
+   "name": "cffi",
+   "version": "2.1.0",
+   "purl": "pkg:pypi/cffi@2.1.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:cfgv@3.5.0#uv.lock",
+   "name": "cfgv",
+   "version": "3.5.0",
+   "purl": "pkg:pypi/cfgv@3.5.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:charset-normalizer@3.4.9#uv.lock",
+   "name": "charset-normalizer",
+   "version": "3.4.9",
+   "purl": "pkg:pypi/charset-normalizer@3.4.9",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:click@8.1.3#examples/celery/requirements.txt",
+   "name": "click",
+   "version": "8.1.3",
+   "purl": "pkg:pypi/click@8.1.3",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:click@8.4.2#uv.lock",
+   "name": "click",
+   "version": "8.4.2",
+   "purl": "pkg:pypi/click@8.4.2",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:click-didyoumean@0.3.0#examples/celery/requirements.txt",
+   "name": "click-didyoumean",
+   "version": "0.3.0",
+   "purl": "pkg:pypi/click-didyoumean@0.3.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:click-plugins@1.1.1#examples/celery/requirements.txt",
+   "name": "click-plugins",
+   "version": "1.1.1",
+   "purl": "pkg:pypi/click-plugins@1.1.1",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:click-repl@0.2.0#examples/celery/requirements.txt",
+   "name": "click-repl",
+   "version": "0.2.0",
+   "purl": "pkg:pypi/click-repl@0.2.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:colorama@0.4.6#uv.lock",
+   "name": "colorama",
+   "version": "0.4.6",
+   "purl": "pkg:pypi/colorama@0.4.6",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:cryptography@49.0.0#uv.lock",
+   "name": "cryptography",
+   "version": "49.0.0",
+   "purl": "pkg:pypi/cryptography@49.0.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "github:dessant/lock-threads@v6.0.2#.github/workflows/lock.yaml",
+   "name": "dessant/lock-threads",
+   "version": "v6.0.2",
+   "purl": "pkg:github/dessant/lock-threads@v6.0.2",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": ".github/workflows/lock.yaml"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "github-actions-usage-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:distlib@0.4.3#uv.lock",
+   "name": "distlib",
+   "version": "0.4.3",
+   "purl": "pkg:pypi/distlib@0.4.3",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:docutils@0.21.2#uv.lock",
+   "name": "docutils",
+   "version": "0.21.2",
+   "purl": "pkg:pypi/docutils@0.21.2",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:filelock@3.32.2#uv.lock",
+   "name": "filelock",
+   "version": "3.32.2",
+   "purl": "pkg:pypi/filelock@3.32.2",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:flask@2.3.2#examples/celery/requirements.txt",
+   "name": "flask",
+   "version": "2.3.2",
+   "purl": "pkg:pypi/flask@2.3.2",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:flask@3.2.0.dev0#uv.lock",
+   "name": "flask",
+   "version": "3.2.0.dev0",
+   "purl": "pkg:pypi/flask@3.2.0.dev0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:gha-update@0.2.0#uv.lock",
+   "name": "gha-update",
+   "version": "0.2.0",
+   "purl": "pkg:pypi/gha-update@0.2.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:h11@0.16.0#uv.lock",
+   "name": "h11",
+   "version": "0.16.0",
+   "purl": "pkg:pypi/h11@0.16.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:httpcore@1.0.9#uv.lock",
+   "name": "httpcore",
+   "version": "1.0.9",
+   "purl": "pkg:pypi/httpcore@1.0.9",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:httpx@0.28.1#uv.lock",
+   "name": "httpx",
+   "version": "0.28.1",
+   "purl": "pkg:pypi/httpx@0.28.1",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:identify@2.6.19#uv.lock",
+   "name": "identify",
+   "version": "2.6.19",
+   "purl": "pkg:pypi/identify@2.6.19",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:idna@3.18#uv.lock",
+   "name": "idna",
+   "version": "3.18",
+   "purl": "pkg:pypi/idna@3.18",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:imagesize@2.0.0#uv.lock",
+   "name": "imagesize",
+   "version": "2.0.0",
+   "purl": "pkg:pypi/imagesize@2.0.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:iniconfig@2.3.0#uv.lock",
+   "name": "iniconfig",
+   "version": "2.3.0",
+   "purl": "pkg:pypi/iniconfig@2.3.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:itsdangerous@2.1.2#examples/celery/requirements.txt",
+   "name": "itsdangerous",
+   "version": "2.1.2",
+   "purl": "pkg:pypi/itsdangerous@2.1.2",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:itsdangerous@2.2.0#uv.lock",
+   "name": "itsdangerous",
+   "version": "2.2.0",
+   "purl": "pkg:pypi/itsdangerous@2.2.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:jinja2@3.1.2#examples/celery/requirements.txt",
+   "name": "jinja2",
+   "version": "3.1.2",
+   "purl": "pkg:pypi/jinja2@3.1.2",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:jinja2@3.1.6#uv.lock",
+   "name": "jinja2",
+   "version": "3.1.6",
+   "purl": "pkg:pypi/jinja2@3.1.6",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:kombu@5.2.4#examples/celery/requirements.txt",
+   "name": "kombu",
+   "version": "5.2.4",
+   "purl": "pkg:pypi/kombu@5.2.4",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:librt@0.13.0#uv.lock",
+   "name": "librt",
+   "version": "0.13.0",
+   "purl": "pkg:pypi/librt@0.13.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:markupsafe@2.1.2#examples/celery/requirements.txt",
+   "name": "markupsafe",
+   "version": "2.1.2",
+   "purl": "pkg:pypi/markupsafe@2.1.2",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:markupsafe@3.0.3#uv.lock",
+   "name": "markupsafe",
+   "version": "3.0.3",
+   "purl": "pkg:pypi/markupsafe@3.0.3",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:mypy@2.3.0#uv.lock",
+   "name": "mypy",
+   "version": "2.3.0",
+   "purl": "pkg:pypi/mypy@2.3.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:mypy-extensions@1.1.0#uv.lock",
+   "name": "mypy-extensions",
+   "version": "1.1.0",
+   "purl": "pkg:pypi/mypy-extensions@1.1.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:nodeenv@1.10.0#uv.lock",
+   "name": "nodeenv",
+   "version": "1.10.0",
+   "purl": "pkg:pypi/nodeenv@1.10.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:packaging@26.2#uv.lock",
+   "name": "packaging",
+   "version": "26.2",
+   "purl": "pkg:pypi/packaging@26.2",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+   "name": "pallets-sphinx-themes",
+   "version": "2.5.0",
+   "purl": "pkg:pypi/pallets-sphinx-themes@2.5.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:pathspec@1.1.1#uv.lock",
+   "name": "pathspec",
+   "version": "1.1.1",
+   "purl": "pkg:pypi/pathspec@1.1.1",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:platformdirs@4.11.0#uv.lock",
+   "name": "platformdirs",
+   "version": "4.11.0",
+   "purl": "pkg:pypi/platformdirs@4.11.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:pluggy@1.6.0#uv.lock",
+   "name": "pluggy",
+   "version": "1.6.0",
+   "purl": "pkg:pypi/pluggy@1.6.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:pre-commit@4.6.1#uv.lock",
+   "name": "pre-commit",
+   "version": "4.6.1",
+   "purl": "pkg:pypi/pre-commit@4.6.1",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:pre-commit-uv@4.3.0#uv.lock",
+   "name": "pre-commit-uv",
+   "version": "4.3.0",
+   "purl": "pkg:pypi/pre-commit-uv@4.3.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:prompt-toolkit@3.0.38#examples/celery/requirements.txt",
+   "name": "prompt-toolkit",
+   "version": "3.0.38",
+   "purl": "pkg:pypi/prompt-toolkit@3.0.38",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:pycparser@3.0#uv.lock",
+   "name": "pycparser",
+   "version": "3.0",
+   "purl": "pkg:pypi/pycparser@3.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:pygments@2.20.0#uv.lock",
+   "name": "pygments",
+   "version": "2.20.0",
+   "purl": "pkg:pypi/pygments@2.20.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "github:pypa/gh-action-pypi-publish@v1.14.2#.github/workflows/publish.yaml",
+   "name": "pypa/gh-action-pypi-publish",
+   "version": "v1.14.2",
+   "purl": "pkg:github/pypa/gh-action-pypi-publish@v1.14.2",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": ".github/workflows/publish.yaml"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "github-actions-usage-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:pyproject-api@1.11.0#uv.lock",
+   "name": "pyproject-api",
+   "version": "1.11.0",
+   "purl": "pkg:pypi/pyproject-api@1.11.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:pyright@1.1.411#uv.lock",
+   "name": "pyright",
+   "version": "1.1.411",
+   "purl": "pkg:pypi/pyright@1.1.411",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:pytest@9.1.1#uv.lock",
+   "name": "pytest",
+   "version": "9.1.1",
+   "purl": "pkg:pypi/pytest@9.1.1",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:python-discovery@1.5.0#uv.lock",
+   "name": "python-discovery",
+   "version": "1.5.0",
+   "purl": "pkg:pypi/python-discovery@1.5.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:python-dotenv@1.2.2#uv.lock",
+   "name": "python-dotenv",
+   "version": "1.2.2",
+   "purl": "pkg:pypi/python-dotenv@1.2.2",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:pytz@2023.3#examples/celery/requirements.txt",
+   "name": "pytz",
+   "version": "2023.3",
+   "purl": "pkg:pypi/pytz@2023.3",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:pyyaml@6.0.3#uv.lock",
+   "name": "pyyaml",
+   "version": "6.0.3",
+   "purl": "pkg:pypi/pyyaml@6.0.3",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:redis@4.5.4#examples/celery/requirements.txt",
+   "name": "redis",
+   "version": "4.5.4",
+   "purl": "pkg:pypi/redis@4.5.4",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:requests@2.34.2#uv.lock",
+   "name": "requests",
+   "version": "2.34.2",
+   "purl": "pkg:pypi/requests@2.34.2",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:roman-numerals@4.1.0#uv.lock",
+   "name": "roman-numerals",
+   "version": "4.1.0",
+   "purl": "pkg:pypi/roman-numerals@4.1.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:roman-numerals-py@4.1.0#uv.lock",
+   "name": "roman-numerals-py",
+   "version": "4.1.0",
+   "purl": "pkg:pypi/roman-numerals-py@4.1.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:ruff@0.16.0#uv.lock",
+   "name": "ruff",
+   "version": "0.16.0",
+   "purl": "pkg:pypi/ruff@0.16.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:six@1.16.0#examples/celery/requirements.txt",
+   "name": "six",
+   "version": "1.16.0",
+   "purl": "pkg:pypi/six@1.16.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:snowballstemmer@3.1.1#uv.lock",
+   "name": "snowballstemmer",
+   "version": "3.1.1",
+   "purl": "pkg:pypi/snowballstemmer@3.1.1",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:sphinx@8.2.3#uv.lock",
+   "name": "sphinx",
+   "version": "8.2.3",
+   "purl": "pkg:pypi/sphinx@8.2.3",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:sphinx-autobuild@2025.8.25#uv.lock",
+   "name": "sphinx-autobuild",
+   "version": "2025.8.25",
+   "purl": "pkg:pypi/sphinx-autobuild@2025.8.25",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:sphinx-notfound-page@1.1.0#uv.lock",
+   "name": "sphinx-notfound-page",
+   "version": "1.1.0",
+   "purl": "pkg:pypi/sphinx-notfound-page@1.1.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:sphinx-tabs@3.5.0#uv.lock",
+   "name": "sphinx-tabs",
+   "version": "3.5.0",
+   "purl": "pkg:pypi/sphinx-tabs@3.5.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:sphinxcontrib-applehelp@2.0.0#uv.lock",
+   "name": "sphinxcontrib-applehelp",
+   "version": "2.0.0",
+   "purl": "pkg:pypi/sphinxcontrib-applehelp@2.0.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:sphinxcontrib-devhelp@2.0.0#uv.lock",
+   "name": "sphinxcontrib-devhelp",
+   "version": "2.0.0",
+   "purl": "pkg:pypi/sphinxcontrib-devhelp@2.0.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:sphinxcontrib-htmlhelp@2.1.0#uv.lock",
+   "name": "sphinxcontrib-htmlhelp",
+   "version": "2.1.0",
+   "purl": "pkg:pypi/sphinxcontrib-htmlhelp@2.1.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:sphinxcontrib-jsmath@1.0.1#uv.lock",
+   "name": "sphinxcontrib-jsmath",
+   "version": "1.0.1",
+   "purl": "pkg:pypi/sphinxcontrib-jsmath@1.0.1",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:sphinxcontrib-log-cabinet@1.0.1#uv.lock",
+   "name": "sphinxcontrib-log-cabinet",
+   "version": "1.0.1",
+   "purl": "pkg:pypi/sphinxcontrib-log-cabinet@1.0.1",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:sphinxcontrib-qthelp@2.0.0#uv.lock",
+   "name": "sphinxcontrib-qthelp",
+   "version": "2.0.0",
+   "purl": "pkg:pypi/sphinxcontrib-qthelp@2.0.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:sphinxcontrib-serializinghtml@2.0.0#uv.lock",
+   "name": "sphinxcontrib-serializinghtml",
+   "version": "2.0.0",
+   "purl": "pkg:pypi/sphinxcontrib-serializinghtml@2.0.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:starlette@1.3.1#uv.lock",
+   "name": "starlette",
+   "version": "1.3.1",
+   "purl": "pkg:pypi/starlette@1.3.1",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:tomli-w@1.2.0#uv.lock",
+   "name": "tomli-w",
+   "version": "1.2.0",
+   "purl": "pkg:pypi/tomli-w@1.2.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:tox@4.58.0#uv.lock",
+   "name": "tox",
+   "version": "4.58.0",
+   "purl": "pkg:pypi/tox@4.58.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:tox-uv@1.36.0#uv.lock",
+   "name": "tox-uv",
+   "version": "1.36.0",
+   "purl": "pkg:pypi/tox-uv@1.36.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:tox-uv-bare@1.36.0#uv.lock",
+   "name": "tox-uv-bare",
+   "version": "1.36.0",
+   "purl": "pkg:pypi/tox-uv-bare@1.36.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:types-contextvars@2.4.7.3#uv.lock",
+   "name": "types-contextvars",
+   "version": "2.4.7.3",
+   "purl": "pkg:pypi/types-contextvars@2.4.7.3",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:types-dataclasses@0.6.6#uv.lock",
+   "name": "types-dataclasses",
+   "version": "0.6.6",
+   "purl": "pkg:pypi/types-dataclasses@0.6.6",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:typing-extensions@4.16.0#uv.lock",
+   "name": "typing-extensions",
+   "version": "4.16.0",
+   "purl": "pkg:pypi/typing-extensions@4.16.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:urllib3@2.7.0#uv.lock",
+   "name": "urllib3",
+   "version": "2.7.0",
+   "purl": "pkg:pypi/urllib3@2.7.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:uv@0.12.0#uv.lock",
+   "name": "uv",
+   "version": "0.12.0",
+   "purl": "pkg:pypi/uv@0.12.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:uvicorn@0.52.0#uv.lock",
+   "name": "uvicorn",
+   "version": "0.52.0",
+   "purl": "pkg:pypi/uvicorn@0.52.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:vine@5.0.0#examples/celery/requirements.txt",
+   "name": "vine",
+   "version": "5.0.0",
+   "purl": "pkg:pypi/vine@5.0.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:virtualenv@21.7.1#uv.lock",
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "purl": "pkg:pypi/virtualenv@21.7.1",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:watchfiles@1.2.0#uv.lock",
+   "name": "watchfiles",
+   "version": "1.2.0",
+   "purl": "pkg:pypi/watchfiles@1.2.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:wcwidth@0.2.6#examples/celery/requirements.txt",
+   "name": "wcwidth",
+   "version": "0.2.6",
+   "purl": "pkg:pypi/wcwidth@0.2.6",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:websockets@17.0#uv.lock",
+   "name": "websockets",
+   "version": "17.0",
+   "purl": "pkg:pypi/websockets@17.0",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:werkzeug@2.3.3#examples/celery/requirements.txt",
+   "name": "werkzeug",
+   "version": "2.3.3",
+   "purl": "pkg:pypi/werkzeug@2.3.3",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/celery/requirements.txt"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "pypi:werkzeug@3.1.8#uv.lock",
+   "name": "werkzeug",
+   "version": "3.1.8",
+   "purl": "pkg:pypi/werkzeug@3.1.8",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "uv.lock"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "python-package-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "False"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "github:zizmorcore/zizmor-action@v0.6.1#.github/workflows/zizmor.yaml",
+   "name": "zizmorcore/zizmor-action",
+   "version": "v0.6.1",
+   "purl": "pkg:github/zizmorcore/zizmor-action@v0.6.1",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": ".github/workflows/zizmor.yaml"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "registry"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "github-actions-usage-cataloger"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  },
+  {
+   "type": "library",
+   "bom-ref": "cdn:jquery@3.3.1#examples/javascript/js_example/templates/jquery.html",
+   "name": "jquery",
+   "version": "3.3.1",
+   "purl": "pkg:npm/jquery@3.3.1",
+   "properties": [
+    {
+     "name": "guardian:source_file",
+     "value": "examples/javascript/js_example/templates/jquery.html"
+    },
+    {
+     "name": "guardian:origin",
+     "value": "code.jquery.com"
+    },
+    {
+     "name": "guardian:found_by",
+     "value": "guardian HTML <script src> check"
+    },
+    {
+     "name": "guardian:direct",
+     "value": "True"
+    },
+    {
+     "name": "guardian:dev",
+     "value": "False"
+    }
+   ]
+  }
+ ],
+ "dependencies": [
+  {
+   "ref": "pypi:anyio@4.14.2#uv.lock",
+   "dependsOn": [
+    "pypi:idna@3.18#uv.lock",
+    "pypi:typing-extensions@4.16.0#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:cffi@2.1.0#uv.lock",
+   "dependsOn": [
+    "pypi:pycparser@3.0#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:click@8.4.2#uv.lock",
+   "dependsOn": [
+    "pypi:colorama@0.4.6#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:cryptography@49.0.0#uv.lock",
+   "dependsOn": [
+    "pypi:cffi@2.1.0#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:flask@3.2.0.dev0#uv.lock",
+   "dependsOn": [
+    "pypi:asgiref@3.12.1#uv.lock",
+    "pypi:blinker@1.9.0#uv.lock",
+    "pypi:click@8.4.2#uv.lock",
+    "pypi:itsdangerous@2.2.0#uv.lock",
+    "pypi:jinja2@3.1.6#uv.lock",
+    "pypi:markupsafe@3.0.3#uv.lock",
+    "pypi:python-dotenv@1.2.2#uv.lock",
+    "pypi:werkzeug@3.1.8#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:gha-update@0.2.0#uv.lock",
+   "dependsOn": [
+    "pypi:click@8.4.2#uv.lock",
+    "pypi:httpx@0.28.1#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:httpcore@1.0.9#uv.lock",
+   "dependsOn": [
+    "pypi:certifi@2026.7.22#uv.lock",
+    "pypi:h11@0.16.0#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:httpx@0.28.1#uv.lock",
+   "dependsOn": [
+    "pypi:anyio@4.14.2#uv.lock",
+    "pypi:certifi@2026.7.22#uv.lock",
+    "pypi:httpcore@1.0.9#uv.lock",
+    "pypi:idna@3.18#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:jinja2@3.1.6#uv.lock",
+   "dependsOn": [
+    "pypi:markupsafe@3.0.3#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:mypy@2.3.0#uv.lock",
+   "dependsOn": [
+    "pypi:ast-serialize@0.6.0#uv.lock",
+    "pypi:librt@0.13.0#uv.lock",
+    "pypi:mypy-extensions@1.1.0#uv.lock",
+    "pypi:pathspec@1.1.1#uv.lock",
+    "pypi:typing-extensions@4.16.0#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+   "dependsOn": [
+    "pypi:packaging@26.2#uv.lock",
+    "pypi:sphinx-notfound-page@1.1.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:pre-commit-uv@4.3.0#uv.lock",
+   "dependsOn": [
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:uv@0.12.0#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:pre-commit@4.6.1#uv.lock",
+   "dependsOn": [
+    "pypi:cfgv@3.5.0#uv.lock",
+    "pypi:identify@2.6.19#uv.lock",
+    "pypi:nodeenv@1.10.0#uv.lock",
+    "pypi:pyyaml@6.0.3#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:pyproject-api@1.11.0#uv.lock",
+   "dependsOn": [
+    "pypi:packaging@26.2#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:pyright@1.1.411#uv.lock",
+   "dependsOn": [
+    "pypi:nodeenv@1.10.0#uv.lock",
+    "pypi:typing-extensions@4.16.0#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:pytest@9.1.1#uv.lock",
+   "dependsOn": [
+    "pypi:colorama@0.4.6#uv.lock",
+    "pypi:iniconfig@2.3.0#uv.lock",
+    "pypi:packaging@26.2#uv.lock",
+    "pypi:pluggy@1.6.0#uv.lock",
+    "pypi:pygments@2.20.0#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:python-discovery@1.5.0#uv.lock",
+   "dependsOn": [
+    "pypi:filelock@3.32.2#uv.lock",
+    "pypi:platformdirs@4.11.0#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:requests@2.34.2#uv.lock",
+   "dependsOn": [
+    "pypi:certifi@2026.7.22#uv.lock",
+    "pypi:charset-normalizer@3.4.9#uv.lock",
+    "pypi:idna@3.18#uv.lock",
+    "pypi:urllib3@2.7.0#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:roman-numerals-py@4.1.0#uv.lock",
+   "dependsOn": [
+    "pypi:roman-numerals@4.1.0#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:sphinx-autobuild@2025.8.25#uv.lock",
+   "dependsOn": [
+    "pypi:colorama@0.4.6#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:starlette@1.3.1#uv.lock",
+    "pypi:uvicorn@0.52.0#uv.lock",
+    "pypi:watchfiles@1.2.0#uv.lock",
+    "pypi:websockets@17.0#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:sphinx-notfound-page@1.1.0#uv.lock",
+   "dependsOn": [
+    "pypi:sphinx@8.2.3#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:sphinx-tabs@3.5.0#uv.lock",
+   "dependsOn": [
+    "pypi:docutils@0.21.2#uv.lock",
+    "pypi:pygments@2.20.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:sphinx@8.2.3#uv.lock",
+   "dependsOn": [
+    "pypi:alabaster@1.0.0#uv.lock",
+    "pypi:babel@2.18.0#uv.lock",
+    "pypi:colorama@0.4.6#uv.lock",
+    "pypi:docutils@0.21.2#uv.lock",
+    "pypi:imagesize@2.0.0#uv.lock",
+    "pypi:jinja2@3.1.6#uv.lock",
+    "pypi:packaging@26.2#uv.lock",
+    "pypi:pygments@2.20.0#uv.lock",
+    "pypi:requests@2.34.2#uv.lock",
+    "pypi:roman-numerals-py@4.1.0#uv.lock",
+    "pypi:snowballstemmer@3.1.1#uv.lock",
+    "pypi:sphinxcontrib-applehelp@2.0.0#uv.lock",
+    "pypi:sphinxcontrib-devhelp@2.0.0#uv.lock",
+    "pypi:sphinxcontrib-htmlhelp@2.1.0#uv.lock",
+    "pypi:sphinxcontrib-jsmath@1.0.1#uv.lock",
+    "pypi:sphinxcontrib-qthelp@2.0.0#uv.lock",
+    "pypi:sphinxcontrib-serializinghtml@2.0.0#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:sphinxcontrib-log-cabinet@1.0.1#uv.lock",
+   "dependsOn": [
+    "pypi:sphinx@8.2.3#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:starlette@1.3.1#uv.lock",
+   "dependsOn": [
+    "pypi:anyio@4.14.2#uv.lock",
+    "pypi:typing-extensions@4.16.0#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:tox-uv-bare@1.36.0#uv.lock",
+   "dependsOn": [
+    "pypi:packaging@26.2#uv.lock",
+    "pypi:tox@4.58.0#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:tox-uv@1.36.0#uv.lock",
+   "dependsOn": [
+    "pypi:tox-uv-bare@1.36.0#uv.lock",
+    "pypi:uv@0.12.0#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:tox@4.58.0#uv.lock",
+   "dependsOn": [
+    "pypi:cachetools@7.1.6#uv.lock",
+    "pypi:colorama@0.4.6#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock",
+    "pypi:packaging@26.2#uv.lock",
+    "pypi:platformdirs@4.11.0#uv.lock",
+    "pypi:pluggy@1.6.0#uv.lock",
+    "pypi:pyproject-api@1.11.0#uv.lock",
+    "pypi:python-discovery@1.5.0#uv.lock",
+    "pypi:tomli-w@1.2.0#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:uvicorn@0.52.0#uv.lock",
+   "dependsOn": [
+    "pypi:click@8.4.2#uv.lock",
+    "pypi:h11@0.16.0#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:virtualenv@21.7.1#uv.lock",
+   "dependsOn": [
+    "pypi:distlib@0.4.3#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock",
+    "pypi:platformdirs@4.11.0#uv.lock",
+    "pypi:python-discovery@1.5.0#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:watchfiles@1.2.0#uv.lock",
+   "dependsOn": [
+    "pypi:anyio@4.14.2#uv.lock"
+   ]
+  },
+  {
+   "ref": "pypi:werkzeug@3.1.8#uv.lock",
+   "dependsOn": [
+    "pypi:markupsafe@3.0.3#uv.lock"
+   ]
+  },
+  {
+   "ref": "app",
+   "dependsOn": [
+    "cdn:jquery@3.3.1#examples/javascript/js_example/templates/jquery.html",
+    "github:actions/cache@v6.1.0#.github/workflows/pre-commit.yaml",
+    "github:actions/cache@v6.1.0#.github/workflows/tests.yaml",
+    "github:actions/checkout@v7.0.1#.github/workflows/pre-commit.yaml",
+    "github:actions/checkout@v7.0.1#.github/workflows/publish.yaml",
+    "github:actions/checkout@v7.0.1#.github/workflows/tests.yaml",
+    "github:actions/checkout@v7.0.1#.github/workflows/zizmor.yaml",
+    "github:actions/download-artifact@v8.0.1#.github/workflows/publish.yaml",
+    "github:actions/setup-python@v7.0.0#.github/workflows/pre-commit.yaml",
+    "github:actions/setup-python@v7.0.0#.github/workflows/publish.yaml",
+    "github:actions/setup-python@v7.0.0#.github/workflows/tests.yaml",
+    "github:actions/upload-artifact@v7.0.1#.github/workflows/publish.yaml",
+    "github:astral-sh/setup-uv@v9.0.0#.github/workflows/pre-commit.yaml",
+    "github:astral-sh/setup-uv@v9.0.0#.github/workflows/publish.yaml",
+    "github:astral-sh/setup-uv@v9.0.0#.github/workflows/tests.yaml",
+    "github:dessant/lock-threads@v6.0.2#.github/workflows/lock.yaml",
+    "github:pypa/gh-action-pypi-publish@v1.14.2#.github/workflows/publish.yaml",
+    "github:zizmorcore/zizmor-action@v0.6.1#.github/workflows/zizmor.yaml",
+    "pypi:amqp@5.1.1#examples/celery/requirements.txt",
+    "pypi:async-timeout@4.0.2#examples/celery/requirements.txt",
+    "pypi:billiard@3.6.4.0#examples/celery/requirements.txt",
+    "pypi:blinker@1.6.2#examples/celery/requirements.txt",
+    "pypi:celery@5.2.7#examples/celery/requirements.txt",
+    "pypi:click-didyoumean@0.3.0#examples/celery/requirements.txt",
+    "pypi:click-plugins@1.1.1#examples/celery/requirements.txt",
+    "pypi:click-repl@0.2.0#examples/celery/requirements.txt",
+    "pypi:click@8.1.3#examples/celery/requirements.txt",
+    "pypi:cryptography@49.0.0#uv.lock",
+    "pypi:flask@2.3.2#examples/celery/requirements.txt",
+    "pypi:flask@3.2.0.dev0#uv.lock",
+    "pypi:gha-update@0.2.0#uv.lock",
+    "pypi:itsdangerous@2.1.2#examples/celery/requirements.txt",
+    "pypi:jinja2@3.1.2#examples/celery/requirements.txt",
+    "pypi:kombu@5.2.4#examples/celery/requirements.txt",
+    "pypi:markupsafe@2.1.2#examples/celery/requirements.txt",
+    "pypi:mypy@2.3.0#uv.lock",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:prompt-toolkit@3.0.38#examples/celery/requirements.txt",
+    "pypi:pyright@1.1.411#uv.lock",
+    "pypi:pytest@9.1.1#uv.lock",
+    "pypi:pytz@2023.3#examples/celery/requirements.txt",
+    "pypi:redis@4.5.4#examples/celery/requirements.txt",
+    "pypi:ruff@0.16.0#uv.lock",
+    "pypi:six@1.16.0#examples/celery/requirements.txt",
+    "pypi:sphinx-autobuild@2025.8.25#uv.lock",
+    "pypi:sphinx-tabs@3.5.0#uv.lock",
+    "pypi:sphinxcontrib-log-cabinet@1.0.1#uv.lock",
+    "pypi:tox-uv@1.36.0#uv.lock",
+    "pypi:types-contextvars@2.4.7.3#uv.lock",
+    "pypi:types-dataclasses@0.6.6#uv.lock",
+    "pypi:vine@5.0.0#examples/celery/requirements.txt",
+    "pypi:wcwidth@0.2.6#examples/celery/requirements.txt",
+    "pypi:werkzeug@2.3.3#examples/celery/requirements.txt"
+   ]
+  }
+ ]
+}

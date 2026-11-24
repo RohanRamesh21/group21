@@ -4,10 +4,25 @@ import type { Risk } from "../types";
 /* Shared helpers and types for the run views. Every view renders only what the backend returns. */
 
 export type Dim = { status: string; why: string };
+export type Reach = { tier: "dev_only" | "declared" | "imported" | "unknown"; evidence: string[]; via?: string | null; method: string;
+  estimated: boolean; note?: string; possibly_shipped?: boolean };
 export type Finding = {
   id: string; title: string; kind: string; label: string; level: Risk; severity?: string; decision: string; score: number; component?: string;
-  floor?: string | null; confidence?: { band: string; dimensions: Record<string, Dim>; missing: string[] };
-  evidence?: Record<string, unknown>; contributions?: { factor: string; points: number; why: string }[];
+  floor?: string | null; summary?: string;
+  // confidence: contextual AHP-weighted evidence signals (value, band, signals, missing) + our data-quality checks (dimensions)
+  confidence?: { band: string; value?: number; signals?: Record<string, number | null>; dimensions?: Record<string, Dim>; missing: string[];
+    data_checks?: { band: string; missing: string[] } };
+  evidence?: Record<string, unknown>; contributions?: { factor: string; value?: number; weight?: number; points: number; why: string }[];
+  ssvc?: { exploitation: string; automatable: string; technical_impact: string; mission: string; rule: string } | null;
+  counterfactuals?: { if: string; then: string }[];
+  reachability?: Reach | null;
+  rank_stability?: { baseline_rank: number; rank_p05: number; rank_p95: number; top5_share: number | null; draws: number; delta: number; seed: number };
+};
+export type Fix = {
+  id: string; finding: string; type: string; target: string | null; resolves: string[]; method: string; fix_score: number;
+  criteria: Record<string, number>; rollback: string; forecast: boolean; approval_required: boolean; checks_not_run: string[];
+  expected_risk_reduction: { component_share: number; share_of_total_index: number; findings_cleared: number; note: string };
+  compat: { risk: number; semver?: string | null; via_direct_parents?: string[]; reason?: string };
 };
 export type Sections = Record<string, any>;
 export type RunModel = { run_id: string; generated: number; sections: Sections };

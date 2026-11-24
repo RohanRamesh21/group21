@@ -1,0 +1,14 @@
+{
+  "has_install_script": true,
+  "host_on_allow_list": false,
+  "maintainers": 0,
+  "name": "axois",
+  "package_created": "2019-08-29T17:20:17.606Z",
+  "published": "2026-11-23T10:18:41.016Z",
+  "repository": null,
+  "resolved": "http://127.0.0.1:4873/axois/-/axois-1.0.0.tgz",
+  "resolved_host": "127.0.0.1:4873",
+  "version": "1.0.0",
+  "versions_published": 2,
+  "weekly_downloads": null
+}

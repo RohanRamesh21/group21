@@ -1,0 +1,112 @@
+[
+ {
+  "dockerfile": "compose.yaml",
+  "stage": null,
+  "ref": "louislam/uptime-kuma:2",
+  "registry": "docker.io",
+  "repository": "louislam/uptime-kuma",
+  "tag": "2",
+  "digest": null,
+  "line": 3
+ },
+ {
+  "dockerfile": "docker/builder-go.dockerfile",
+  "stage": null,
+  "ref": "golang:1-trixie",
+  "registry": "docker.io",
+  "repository": "library/golang",
+  "tag": "1-trixie",
+  "digest": null,
+  "line": 4
+ },
+ {
+  "dockerfile": "docker/debian-base.dockerfile",
+  "stage": "base3-slim",
+  "ref": "node:26-trixie-slim",
+  "registry": "docker.io",
+  "repository": "library/node",
+  "tag": "26-trixie-slim",
+  "digest": null,
+  "line": 3
+ },
+ {
+  "dockerfile": "docker/debian-base.dockerfile",
+  "stage": "base3",
+  "ref": "louislam/uptime-kuma:base3-slim",
+  "registry": "docker.io",
+  "repository": "louislam/uptime-kuma",
+  "tag": "base3-slim",
+  "digest": null,
+  "line": 68
+ },
+ {
+  "dockerfile": "docker/docker-compose-dev.yml",
+  "stage": null,
+  "ref": "louislam/uptime-kuma:nightly3",
+  "registry": "docker.io",
+  "repository": "louislam/uptime-kuma",
+  "tag": "nightly3",
+  "digest": null,
+  "line": 6
+ },
+ {
+  "dockerfile": "extra/docker-latest-warning/Dockerfile.latest-warning",
+  "stage": null,
+  "ref": "louislam/uptime-kuma:1.23.17-debian",
+  "registry": "docker.io",
+  "repository": "louislam/uptime-kuma",
+  "tag": "1.23.17-debian",
+  "digest": null,
+  "line": 4
+ },
+ {
+  "dockerfile": "extra/uptime-kuma-push/Dockerfile",
+  "stage": "build",
+  "ref": "node:22-bookworm-slim",
+  "registry": "docker.io",
+  "repository": "library/node",
+  "tag": "22-bookworm-slim",
+  "digest": null,
+  "line": 1
+ },
+ {
+  "dockerfile": "extra/uptime-kuma-push/Dockerfile",
+  "stage": "release",
+  "ref": "debian:bookworm-slim",
+  "registry": "docker.io",
+  "repository": "library/debian",
+  "tag": "bookworm-slim",
+  "digest": null,
+  "line": 10
+ },
+ {
+  "dockerfile": "test/manual-test-radius-tls/compose.yaml",
+  "stage": null,
+  "ref": "redis:latest",
+  "registry": "docker.io",
+  "repository": "library/redis",
+  "tag": "latest",
+  "digest": null,
+  "line": 5
+ },
+ {
+  "dockerfile": "test/manual-test-radius/compose.yaml",
+  "stage": null,
+  "ref": "redis:latest",
+  "registry": "docker.io",
+  "repository": "library/redis",
+  "tag": "latest",
+  "digest": null,
+  "line": 5
+ },
+ {
+  "dockerfile": "test/test-radius.dockerfile",
+  "stage": null,
+  "ref": "freeradius/freeradius-server:latest",
+  "registry": "docker.io",
+  "repository": "freeradius/freeradius-server",
+  "tag": "latest",
+  "digest": null,
+  "line": 4
+ }
+]

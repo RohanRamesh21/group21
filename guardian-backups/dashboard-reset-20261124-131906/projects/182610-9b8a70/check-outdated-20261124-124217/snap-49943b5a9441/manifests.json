@@ -1,0 +1,57 @@
+[
+ {
+  "path": ".github/workflows/lock.yaml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/pre-commit.yaml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/publish.yaml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/tests.yaml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/zizmor.yaml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": "examples/celery/requirements.txt",
+  "ecosystem": "pypi",
+  "role": "lockfile"
+ },
+ {
+  "path": "uv.lock",
+  "ecosystem": "pypi",
+  "role": "lockfile"
+ },
+ {
+  "path": "examples/celery/pyproject.toml",
+  "ecosystem": "pypi",
+  "role": "manifest"
+ },
+ {
+  "path": "examples/javascript/pyproject.toml",
+  "ecosystem": "pypi",
+  "role": "manifest"
+ },
+ {
+  "path": "examples/tutorial/pyproject.toml",
+  "ecosystem": "pypi",
+  "role": "manifest"
+ },
+ {
+  "path": "pyproject.toml",
+  "ecosystem": "pypi",
+  "role": "manifest"
+ }
+]

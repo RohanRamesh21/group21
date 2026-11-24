@@ -113,6 +113,15 @@ def validate(out: Path, profile: str = "uptime-kuma", log=print) -> dict:
     targets = sorted({fid for c in plan["candidates"] if c["type"] != "escalate" for fid in c["finding_ids"]})
     new_high = [f["title"] for f in rs["scores"]["findings"]
                 if f["label"] == "introduced" and (f["level"] in SEVERE or f.get("severity") in SEVERE)]
+    try:  # contextual scoring's before/after delta: risk index and per-target status (informational; the gate decides)
+        from guardian.scoring.contextual import delta
+        orig = json.loads(Path(json.loads((out / "latest.json").read_text())["scores"]).read_text())
+        req = [s for s in result["candidate"]["stages"] if s.get("required")]
+        bt = "pass" if req and all(s["status"] == "passed" for s in req) else "fail"
+        known = {f["id"] for f in orig["findings"]}
+        result["delta"] = delta.before_after(orig, rs["scores"], [t for t in targets if t in known], bt)
+    except Exception as e:
+        result["delta"] = {"error": f"before/after delta not computed ({type(e).__name__}: {e})"[:200]}
     db_after = _grype_db()
     result["rescan"] = {"verdict": rs["scores"].get("verdict"), "complete": rs["complete"],
                         "resolved": sorted(t for t in targets if t not in after_ids),

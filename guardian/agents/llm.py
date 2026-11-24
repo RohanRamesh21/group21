@@ -330,6 +330,19 @@ class GeminiBackend(OpenRouterBackend):
         return Turn(text=text, tool_calls=calls, stop_reason=stop, raw_content=raw or [{"type": "text", "text": ""}])
 
 
+def make_backend(provider: str):
+    """One place that turns the configured provider name (guardian.config.provider()) into a model back end."""
+    if provider == "freemodel":
+        return FreeModelBackend()
+    if provider == "openrouter":
+        return OpenRouterBackend()
+    if provider == "gemini":
+        return GeminiBackend()
+    if provider == "claude":
+        return ClaudeBackend()
+    raise RuntimeError(f"no LLM provider configured (got '{provider}'): set a key in guardian/.env or use a scripted/rule-based mode")
+
+
 class ScriptedBackend:
     """Replays a script: {agent: [turn, ...]} where a turn is a list of [tool_name, input] pairs
     (empty list = the agent ends its turn). Inputs may contain placeholders resolved at runtime:

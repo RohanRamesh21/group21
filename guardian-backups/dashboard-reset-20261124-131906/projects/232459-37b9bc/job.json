@@ -1,0 +1,71 @@
+{
+ "id": "232459-37b9bc",
+ "kind": "git",
+ "label": "github.com/kirankishoreV-07/KIRAN-S_PORTFOLIO",
+ "status": "done",
+ "message": "done",
+ "created": 1795456499.504998,
+ "steps": [
+  {
+   "t": 47862.2,
+   "msg": "Rescan with the current engine: same commits (488fe0d8ec4c -> b61a17450f81)"
+  },
+  {
+   "t": 47862.2,
+   "msg": "Day 1 pipeline: components -> SBOM -> dependency graph -> vulnerabilities -> suspicious changes -> evidence (comparing 488fe0d8ec4c099651b693523e0a5651002ee094 -> b61a17450f811f9967d0925e7f327117983a2428)"
+  },
+  {
+   "t": 47862.2,
+   "msg": "Exporting commit b61a1745 (git archive: no hooks, no symlinks)"
+  },
+  {
+   "t": 47862.4,
+   "msg": "Building the SBOM with Syft (CycloneDX + SPDX), all ecosystems"
+  },
+  {
+   "t": 47863.0,
+   "msg": "Checking CI workflows and container images"
+  },
+  {
+   "t": 47863.0,
+   "msg": "Looking up vulnerabilities: OSV.dev (all ecosystems) + Grype (local DB)"
+  },
+  {
+   "t": 47867.6,
+   "msg": "Scanning the previous state 488fe0d8 to find what changed"
+  },
+  {
+   "t": 47867.9,
+   "msg": "Building the SBOM with Syft (CycloneDX + SPDX), all ecosystems"
+  },
+  {
+   "t": 47869.3,
+   "msg": "Checking CI workflows and container images"
+  },
+  {
+   "t": 47869.3,
+   "msg": "Looking up vulnerabilities: OSV.dev (all ecosystems) + Grype (local DB)"
+  }
+ ],
+ "url": "https://github.com/kirankishoreV-07/KIRAN-S_PORTFOLIO",
+ "base": null,
+ "head": null,
+ "updated": 1795504373.990887,
+ "base_default": true,
+ "mode": "compare",
+ "out": "/Users/kirankishorev/Documents/BOSCH/guardian/guardian-out/projects/232459-37b9bc/check",
+ "summary": {
+  "packages": 89,
+  "ecosystems": {
+   "npm": 89
+  },
+  "verdict": "allow",
+  "reasons": [
+   "no high or critical risk introduced by this change"
+  ],
+  "head_commit": "b61a17450f81",
+  "base_commit": "488fe0d8ec4c",
+  "scores": true
+ },
+ "rescanned": 1795504361.696369
+}

@@ -1,0 +1,76 @@
+{
+ "id": "232503-d2bf6e",
+ "kind": "local",
+ "label": "sandbox/uptime-kuma",
+ "status": "done",
+ "message": "done",
+ "created": 1795456503.235616,
+ "steps": [
+  {
+   "t": 47873.8,
+   "msg": "Rescan with the current engine: same commits (scenario/bas -> scenario/s3-)"
+  },
+  {
+   "t": 47873.8,
+   "msg": "Same engine as `guardian check`: comparing scenario/base -> scenario/s3-s9 (lockfile, SBOM, OSV + Grype, detectors, CI)"
+  },
+  {
+   "t": 47873.9,
+   "msg": "Exporting commit 576752d0 (git archive: no hooks, no symlinks)"
+  },
+  {
+   "t": 47875.3,
+   "msg": "Building the SBOM with Syft (CycloneDX + SPDX), all ecosystems"
+  },
+  {
+   "t": 47876.4,
+   "msg": "85 dev-listed packages are imported by frontend code and treated as shipped (inferred)"
+  },
+  {
+   "t": 47876.4,
+   "msg": "Checking CI workflows and container images"
+  },
+  {
+   "t": 47876.6,
+   "msg": "Looking up vulnerabilities: OSV.dev (all ecosystems) + Grype (local DB)"
+  },
+  {
+   "t": 47884.7,
+   "msg": "Scanning the previous state da938350 to find what changed"
+  },
+  {
+   "t": 47886.2,
+   "msg": "Building the SBOM with Syft (CycloneDX + SPDX), all ecosystems"
+  },
+  {
+   "t": 47887.2,
+   "msg": "85 dev-listed packages are imported by frontend code and treated as shipped (inferred)"
+  },
+  {
+   "t": 47887.3,
+   "msg": "Checking CI workflows and container images"
+  },
+  {
+   "t": 47887.6,
+   "msg": "Looking up vulnerabilities: OSV.dev (all ecosystems) + Grype (local DB)"
+  }
+ ],
+ "base": "scenario/base",
+ "head": "scenario/s3-s9",
+ "updated": 1795504401.718844,
+ "mode": "compare",
+ "out": "/Users/kirankishorev/Documents/BOSCH/guardian/guardian-out/projects/232503-d2bf6e/check",
+ "summary": {
+  "packages": 1369,
+  "verdict": "block",
+  "reasons": [
+   "axois@1.0.0: MAL-2025-15245 (Known malicious package (OSV MAL- advisory))",
+   "axois@1.0.0: untrusted source (Package downloaded from a server that is not on the registry allow-list)",
+   "axois@1.0.0: typosquat (Look-alike name AND install-time code)"
+  ],
+  "head_commit": "576752d0a257",
+  "base_commit": "da938350cc85",
+  "scores": true
+ },
+ "rescanned": 1795504377.041037
+}

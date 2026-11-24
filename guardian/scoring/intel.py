@@ -104,3 +104,25 @@ def kev(max_age: float = DAY) -> tuple[dict[str, dict], str | None]:
         except Exception as e:
             err = f"KEV unavailable ({type(e).__name__}); using cached catalog" if cache["data"] else f"KEV unavailable ({type(e).__name__})"
     return cache["data"], err
+
+
+def osv_affected(ids: list[str]) -> dict[str, list | None]:
+    """advisory id -> OSV `affected[]` entries (name, ecosystem, ranges, versions); None when it could not be fetched.
+
+    Same sources as `osv_details` (offline OSV copy first, then the OSV.dev API) and cached, so a demo works offline
+    after one online run. A failed lookup is NOT cached and stays None: callers must say "unknown", not guess.
+    """
+    cache_p = CACHE / "osv-affected.json"
+    cache = _read_json(cache_p, {})
+    missing = [i for i in ids if i not in cache]
+    if missing:
+        z = zipfile.ZipFile(OSV_ZIP) if OSV_ZIP.exists() else None
+        names = set(z.namelist()) if z else set()
+        for i in missing:
+            d = json.loads(z.read(f"{i}.json")) if f"{i}.json" in names else _osv_api(i)
+            if d is not None:
+                cache[i] = [{"ecosystem": (a.get("package") or {}).get("ecosystem"), "name": (a.get("package") or {}).get("name"),
+                             "ranges": a.get("ranges") or [], "versions": a.get("versions") or []} for a in d.get("affected") or []]
+        CACHE.mkdir(exist_ok=True)
+        cache_p.write_text(json.dumps(cache))
+    return {i: cache.get(i) for i in ids}

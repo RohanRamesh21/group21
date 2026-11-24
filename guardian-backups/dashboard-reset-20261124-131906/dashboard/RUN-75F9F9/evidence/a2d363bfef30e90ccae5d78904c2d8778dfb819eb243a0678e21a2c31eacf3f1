@@ -1,0 +1,11 @@
+{
+  "files_changed": [
+    "lib/format.js"
+  ],
+  "from": "1.0.0",
+  "maintainer_change": false,
+  "new_install_hooks": false,
+  "package": "kuma-helper",
+  "size_delta_pct": 2,
+  "to": "1.0.1"
+}

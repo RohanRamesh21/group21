@@ -1,6 +1,9 @@
 """The agent team (AGENTIC_CORE §3): Lead, Dependency Hunter, Change Forensics, Skeptic."""
 from __future__ import annotations
 
+import re
+from pathlib import Path
+
 from dataclasses import dataclass, field
 
 from guardian.agents.llm import Backend
@@ -44,6 +47,16 @@ nobody examined and report it with kind 'missed_risk' to the Lead. Corroborate (
 'clear' a NON-hard finding only when evidence shows it is benign. Max 2 challenge rounds per hypothesis."""),
 }
 
+
+PROMPTS = Path(__file__).parent / "prompts"
+
+
+def _prompt(name: str) -> str:
+    """Role briefs kept in version-controlled files (guardian/agents/prompts/<name>.md); the version comment is stripped."""
+    return re.sub(r"^<!--.*?-->\s*", "", (PROMPTS / f"{name}.md").read_text(encoding="utf-8"), flags=re.S)
+
+
+ROLES["scoring_advisor"] = ("Scoring Advisor", "medium", _prompt("scoring_advisor"))
 
 @dataclass
 class Agent:

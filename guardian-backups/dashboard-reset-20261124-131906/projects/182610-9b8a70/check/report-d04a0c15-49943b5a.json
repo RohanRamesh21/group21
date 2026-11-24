@@ -1,0 +1,6152 @@
+{
+ "headline": {
+  "base": "d04a0c15a83c78186cf31dc5d226b3110321b9e5",
+  "head": "49943b5a94413a530761350f04e896f76e8d620e",
+  "app": "flask",
+  "base_commit": "d04a0c15a83c",
+  "head_commit": "49943b5a9441",
+  "mode": "universal",
+  "repo_path": "/Users/kirankishorev/Documents/BOSCH/guardian/guardian-out/projects/182610-9b8a70/src",
+  "base_sha": "d04a0c15a83c78186cf31dc5d226b3110321b9e5",
+  "head_sha": "49943b5a94413a530761350f04e896f76e8d620e",
+  "inventory": {
+   "packages": 118,
+   "unique_name_versions": 110,
+   "direct": 54,
+   "transitive": 64,
+   "runtime": 114,
+   "dev_only": 4,
+   "install_scripts": 0,
+   "unpinned": 0,
+   "ecosystems": {
+    "github": 17,
+    "pypi": 100,
+    "npm": 1
+   },
+   "manifests": 6,
+   "lockfiles": 2,
+   "workflows": 5,
+   "actions": 21,
+   "base_images": 0,
+   "edges": 158,
+   "unresolved_manifests": {},
+   "graph_files": [
+    "uv.lock"
+   ],
+   "resolved_lockfiles": []
+  },
+  "sbom_agreement_pct": null,
+  "changes": {
+   "files": [
+    "src/flask/app.py"
+   ],
+   "added": 0,
+   "removed": 0,
+   "updated": 0
+  },
+  "vulnerabilities": {
+   "introduced": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "info": 0
+   },
+   "pre_existing": {
+    "critical": 3,
+    "high": 21,
+    "medium": 29,
+    "low": 4,
+    "info": 0
+   },
+   "fixed": {
+    "critical": 0,
+    "high": 0,
+    "medium": 0,
+    "low": 0,
+    "info": 0
+   },
+   "malicious_introduced": [],
+   "scanners": {
+    "osv": 94,
+    "grype": 56,
+    "merged": 57,
+    "both": 55,
+    "packages": 12,
+    "by_severity": {
+     "critical": 3,
+     "high": 21,
+     "medium": 29,
+     "low": 4,
+     "info": 0
+    }
+   },
+   "errors": {}
+  },
+  "ci_image": {
+   "introduced": 0,
+   "pre_existing": 0,
+   "fixed": 0,
+   "actions": {
+    "total": 21,
+    "pinned": 21
+   },
+   "images": {
+    "total": 0,
+    "pinned": 0
+   },
+   "errors": {}
+  },
+  "suspicious_changes": [
+   "[medium] remote_script_no_sri: jquery@3.3.1 - examples/javascript/js_example/templates/jquery.html:10 loads https://code.jquery.com/jquery-3.3.1.min.js from code.jquery.com without an integrity hash: whoever controls that server can change the code your users run"
+  ],
+  "suspicious_error": null,
+  "syft_error": null,
+  "verdict": "allow",
+  "verdict_reasons": [
+   "no high or critical risk introduced by this change"
+  ],
+  "complete": true,
+  "incomplete_reasons": [],
+  "blocking": false,
+  "stages": [
+   {
+    "id": "snapshot",
+    "name": "Snapshot",
+    "status": "complete",
+    "detail": "files read from git objects; nothing executed"
+   },
+   {
+    "id": "discover",
+    "name": "Discover components",
+    "status": "complete",
+    "detail": "118 components"
+   },
+   {
+    "id": "vulnerabilities",
+    "name": "Known vulnerabilities",
+    "status": "complete",
+    "detail": "OSV + Grype"
+   },
+   {
+    "id": "detectors",
+    "name": "Supply-chain detectors",
+    "status": "complete",
+    "detail": "look-alike, install scripts, sources, config, integrity"
+   },
+   {
+    "id": "ci_image",
+    "name": "CI and images",
+    "status": "complete",
+    "detail": "21 actions/images"
+   },
+   {
+    "id": "compare",
+    "name": "Compare with base",
+    "status": "complete",
+    "detail": "introduced / pre-existing / fixed"
+   },
+   {
+    "id": "scoring",
+    "name": "Score and decide",
+    "status": "complete",
+    "detail": "floors \u2192 SSVC \u2192 priority \u2192 verdict"
+   }
+  ]
+ },
+ "package_changes": {
+  "added": [],
+  "removed": [],
+  "updated": []
+ },
+ "suspicious_changes": [
+  {
+   "detector": "D11",
+   "type": "remote_script_no_sri",
+   "severity": "medium",
+   "hard_signal": false,
+   "component": "jquery@3.3.1",
+   "file": "examples/javascript/js_example/templates/jquery.html",
+   "line": 10,
+   "summary": "examples/javascript/js_example/templates/jquery.html:10 loads https://code.jquery.com/jquery-3.3.1.min.js from code.jquery.com without an integrity hash: whoever controls that server can change the code your users run",
+   "label": "pre_existing"
+  }
+ ],
+ "vulnerabilities": [
+  {
+   "name": "certifi",
+   "version": "2026.7.22",
+   "ids": [
+    "GHSA-6q48-6c7w-9gw2",
+    "PYSEC-2026-4320"
+   ],
+   "summary": "certifi bundles emSign root CAs with compromised intermediate CA keys",
+   "severity": "critical",
+   "severity_known": true,
+   "fixed": [
+    "2026.10.18"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-6q48-6c7w-9gw2",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "critical",
+    "grype": "critical"
+   },
+   "id": "GHSA-6q48-6c7w-9gw2",
+   "key": "pypi:certifi@2026.7.22#GHSA-6q48-6c7w-9gw2",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:certifi@2026.7.22#uv.lock",
+   "path": [
+    "flask",
+    "pypi:gha-update@0.2.0#uv.lock",
+    "pypi:httpx@0.28.1#uv.lock",
+    "pypi:certifi@2026.7.22#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "pypa/gh-action-pypi-publish",
+   "version": "v1.14.2",
+   "ids": [
+    "GHSA-5xjx-3w67-w9x9"
+   ],
+   "summary": "pypi-publish action revocation of CA in the chain that Sigstore uses in Trusted Publishing and Digital Attestations for PyPI",
+   "severity": "critical",
+   "severity_known": true,
+   "fixed": [
+    "1.14.3",
+    "7245906fb61fa33a13554f9d5fb856fe61758086"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-5xjx-3w67-w9x9",
+   "ecosystem": "github",
+   "sources": [
+    "osv"
+   ],
+   "severity_by_source": {
+    "osv": "critical"
+   },
+   "id": "GHSA-5xjx-3w67-w9x9",
+   "key": "github:pypa/gh-action-pypi-publish@v1.14.2#GHSA-5xjx-3w67-w9x9",
+   "direct": true,
+   "runtime": true,
+   "exposure": null,
+   "source_file": ".github/workflows/publish.yaml",
+   "component_key": "github:pypa/gh-action-pypi-publish@v1.14.2#.github/workflows/publish.yaml",
+   "path": [
+    "flask",
+    "github:pypa/gh-action-pypi-publish@v1.14.2#.github/workflows/publish.yaml"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "uv",
+   "version": "0.12.0",
+   "ids": [
+    "GHSA-hq85-5cpj-mr62",
+    "PYSEC-2026-4321"
+   ],
+   "summary": "uv's bundled CA store trusts an emSign root whose intermediate CA keys are compromised",
+   "severity": "critical",
+   "severity_known": true,
+   "fixed": [
+    "0.13.4"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-hq85-5cpj-mr62",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "critical",
+    "grype": "critical"
+   },
+   "id": "GHSA-hq85-5cpj-mr62",
+   "key": "pypi:uv@0.12.0#GHSA-hq85-5cpj-mr62",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:uv@0.12.0#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:uv@0.12.0#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "cryptography",
+   "version": "49.0.0",
+   "ids": [
+    "GHSA-g6cj-pr64-35w5",
+    "CVE-2026-69247",
+    "PYSEC-2026-3552"
+   ],
+   "summary": "cryptography: PKCS#7 EnvelopedData decryption exposes a Bleichenbacher oracle through distinguishable errors and timing",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "50.0.0"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-g6cj-pr64-35w5",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "high"
+   },
+   "id": "GHSA-g6cj-pr64-35w5",
+   "key": "pypi:cryptography@49.0.0#GHSA-g6cj-pr64-35w5",
+   "direct": true,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:cryptography@49.0.0#uv.lock",
+   "path": [
+    "flask",
+    "pypi:cryptography@49.0.0#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-v4x8-3wr5-3wq8",
+    "CVE-2026-112940"
+   ],
+   "summary": "filelock ReadWriteLock: SQLite reopens the lock database by name, so a planted symlink or journal file makes the lock user's process overwrite or unlink its own files",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-v4x8-3wr5-3wq8",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "high"
+   },
+   "id": "GHSA-v4x8-3wr5-3wq8",
+   "key": "pypi:filelock@3.32.2#GHSA-v4x8-3wr5-3wq8",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "jinja2",
+   "version": "3.1.2",
+   "ids": [
+    "GHSA-gmj6-6f8f-6699",
+    "CVE-2024-56201",
+    "PYSEC-2026-1472"
+   ],
+   "summary": "Jinja has a sandbox breakout through malicious filenames",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "3.1.5"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-gmj6-6f8f-6699",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "medium"
+   },
+   "id": "GHSA-gmj6-6f8f-6699",
+   "key": "pypi:jinja2@3.1.2#GHSA-gmj6-6f8f-6699",
+   "direct": true,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:jinja2@3.1.2#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:jinja2@3.1.2#examples/celery/requirements.txt"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "jinja2",
+   "version": "3.1.2",
+   "ids": [
+    "GHSA-q2x7-8rv6-6q7h",
+    "CVE-2024-56326",
+    "PYSEC-2026-1475"
+   ],
+   "summary": "Jinja has a sandbox breakout through indirect reference to format method",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "3.1.5"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-q2x7-8rv6-6q7h",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "medium"
+   },
+   "id": "GHSA-q2x7-8rv6-6q7h",
+   "key": "pypi:jinja2@3.1.2#GHSA-q2x7-8rv6-6q7h",
+   "direct": true,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:jinja2@3.1.2#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:jinja2@3.1.2#examples/celery/requirements.txt"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "urllib3",
+   "version": "2.7.0",
+   "ids": [
+    "GHSA-8988-9cw3-xx77",
+    "CVE-2026-97687",
+    "PYSEC-2026-4175"
+   ],
+   "summary": "urllib3: HTTPS proxy TLS configuration may be ignored or overridden",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "2.8.0"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-8988-9cw3-xx77",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "high"
+   },
+   "id": "GHSA-8988-9cw3-xx77",
+   "key": "pypi:urllib3@2.7.0#GHSA-8988-9cw3-xx77",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:urllib3@2.7.0#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:requests@2.34.2#uv.lock",
+    "pypi:urllib3@2.7.0#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "urllib3",
+   "version": "2.7.0",
+   "ids": [
+    "GHSA-vxq7-64xx-v4gw",
+    "CVE-2026-97689",
+    "PYSEC-2026-4177"
+   ],
+   "summary": "urllib3: HTTPResponse.stream()/read_chunked() buffers an unbounded chunk-size line into memory",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "2.8.0"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-vxq7-64xx-v4gw",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "high"
+   },
+   "id": "GHSA-vxq7-64xx-v4gw",
+   "key": "pypi:urllib3@2.7.0#GHSA-vxq7-64xx-v4gw",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:urllib3@2.7.0#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:requests@2.34.2#uv.lock",
+    "pypi:urllib3@2.7.0#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-394h-qwmc-48pf",
+    "BIT-virtualenv-2026-113718",
+    "CVE-2026-113718",
+    "PYSEC-2026-4377"
+   ],
+   "summary": "virtualenv: Xonsh activation literals depend on the script decoding codec",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-394h-qwmc-48pf",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "high"
+   },
+   "id": "GHSA-394h-qwmc-48pf",
+   "key": "pypi:virtualenv@21.7.1#GHSA-394h-qwmc-48pf",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-5vjq-rrrf-7h2q",
+    "BIT-virtualenv-2026-113726",
+    "CVE-2026-113726",
+    "PYSEC-2026-4385"
+   ],
+   "summary": "virtualenv activate runs commands from the environment name in zsh with PROMPT_SUBST",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.14.4"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-5vjq-rrrf-7h2q",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "high"
+   },
+   "id": "GHSA-5vjq-rrrf-7h2q",
+   "key": "pypi:virtualenv@21.7.1#GHSA-5vjq-rrrf-7h2q",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-6w3r-xr62-4xcp",
+    "BIT-virtualenv-2026-113723",
+    "CVE-2026-113723",
+    "PYSEC-2026-4382"
+   ],
+   "summary": "virtualenv: Bash prompt values can change meaning under older compatibility modes",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-6w3r-xr62-4xcp",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "high"
+   },
+   "id": "GHSA-6w3r-xr62-4xcp",
+   "key": "pypi:virtualenv@21.7.1#GHSA-6w3r-xr62-4xcp",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-8rjx-v5ww-45pp",
+    "BIT-virtualenv-2026-113776",
+    "CVE-2026-113776",
+    "PYSEC-2026-4387"
+   ],
+   "summary": "virtualenv activation scripts run code from a path that contains a placeholder name",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.14.2"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-8rjx-v5ww-45pp",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "high"
+   },
+   "id": "GHSA-8rjx-v5ww-45pp",
+   "key": "pypi:virtualenv@21.7.1#GHSA-8rjx-v5ww-45pp",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-94p9-xgh2-xp45",
+    "BIT-virtualenv-2026-102930",
+    "CVE-2026-102930",
+    "PYSEC-2026-4011"
+   ],
+   "summary": "virtualenv: Downloaded seed wheels (pip/setuptools) are not integrity-checked before use",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.7.12"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-94p9-xgh2-xp45",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "high"
+   },
+   "id": "GHSA-94p9-xgh2-xp45",
+   "key": "pypi:virtualenv@21.7.1#GHSA-94p9-xgh2-xp45",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-c947-3pg5-gm8q",
+    "BIT-virtualenv-2026-113732",
+    "CVE-2026-113732",
+    "PYSEC-2026-4386"
+   ],
+   "summary": "virtualenv activate.fish runs commands from a path or prompt with a backslash before a quote",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.14.2"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-c947-3pg5-gm8q",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "high"
+   },
+   "id": "GHSA-c947-3pg5-gm8q",
+   "key": "pypi:virtualenv@21.7.1#GHSA-c947-3pg5-gm8q",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-c978-59m8-c77v",
+    "BIT-virtualenv-2026-113722",
+    "CVE-2026-113722",
+    "PYSEC-2026-4381"
+   ],
+   "summary": "virtualenv: Generated POSIX console launchers interpret destination paths as shell syntax",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-c978-59m8-c77v",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "high"
+   },
+   "id": "GHSA-c978-59m8-c77v",
+   "key": "pypi:virtualenv@21.7.1#GHSA-c978-59m8-c77v",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-fc2g-4w5p-6whm",
+    "BIT-virtualenv-2026-113720",
+    "CVE-2026-113720",
+    "PYSEC-2026-4379"
+   ],
+   "summary": "virtualenv: Seeded files retain permissions from an older cache",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-fc2g-4w5p-6whm",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "medium"
+   },
+   "id": "GHSA-fc2g-4w5p-6whm",
+   "key": "pypi:virtualenv@21.7.1#GHSA-fc2g-4w5p-6whm",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-p58f-9548-mpm2",
+    "BIT-virtualenv-2026-102925",
+    "CVE-2026-102925",
+    "PYSEC-2026-4013"
+   ],
+   "summary": "virtualenv bash and fish activation scripts execute commands embedded in paths",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.7.13"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-p58f-9548-mpm2",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "high"
+   },
+   "id": "GHSA-p58f-9548-mpm2",
+   "key": "pypi:virtualenv@21.7.1#GHSA-p58f-9548-mpm2",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-qmx5-4p3x-wvqf",
+    "BIT-virtualenv-2026-113715",
+    "CVE-2026-113715",
+    "PYSEC-2026-4374"
+   ],
+   "summary": "virtualenv: Venv configuration readback can reinterpret path boundaries",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-qmx5-4p3x-wvqf",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "low"
+   },
+   "id": "GHSA-qmx5-4p3x-wvqf",
+   "key": "pypi:virtualenv@21.7.1#GHSA-qmx5-4p3x-wvqf",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-vxj4-q4g9-crj7",
+    "BIT-virtualenv-2026-113725",
+    "CVE-2026-113725",
+    "PYSEC-2026-4384"
+   ],
+   "summary": "virtualenv bash activate runs commands from an environment name with a backslash before $",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.14.7"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-vxj4-q4g9-crj7",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "high"
+   },
+   "id": "GHSA-vxj4-q4g9-crj7",
+   "key": "pypi:virtualenv@21.7.1#GHSA-vxj4-q4g9-crj7",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-x78j-v8h9-3j2q",
+    "BIT-virtualenv-2026-102937",
+    "CVE-2026-102937",
+    "PYSEC-2026-4014"
+   ],
+   "summary": "virtualenv: Command injection via --prompt in activate.bat (batch activator)",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.7.12"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-x78j-v8h9-3j2q",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "high"
+   },
+   "id": "GHSA-x78j-v8h9-3j2q",
+   "key": "pypi:virtualenv@21.7.1#GHSA-x78j-v8h9-3j2q",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "werkzeug",
+   "version": "2.3.3",
+   "ids": [
+    "GHSA-2g68-c3qc-8985",
+    "CVE-2024-34069",
+    "PYSEC-2026-2043"
+   ],
+   "summary": "Werkzeug debugger vulnerable to remote execution when interacting with attacker controlled domain",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "3.0.3"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-2g68-c3qc-8985",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "high"
+   },
+   "id": "GHSA-2g68-c3qc-8985",
+   "key": "pypi:werkzeug@2.3.3#GHSA-2g68-c3qc-8985",
+   "direct": true,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:werkzeug@2.3.3#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:werkzeug@2.3.3#examples/celery/requirements.txt"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "werkzeug",
+   "version": "2.3.3",
+   "ids": [
+    "GHSA-hrfv-mqp8-q5rw",
+    "CVE-2023-46136",
+    "PYSEC-2023-221"
+   ],
+   "summary": "Werkzeug DoS: High resource usage when parsing multipart/form-data containing a large part with CR/LF character at the beginning",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "2.3.8",
+    "3.0.1",
+    "f2300208d5e2a5076cbbb4c2aad71096fd040ef9",
+    "f3c803b3ade485a45f12b6d6617595350c0f03e2"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-hrfv-mqp8-q5rw",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "medium"
+   },
+   "id": "GHSA-hrfv-mqp8-q5rw",
+   "key": "pypi:werkzeug@2.3.3#GHSA-hrfv-mqp8-q5rw",
+   "direct": true,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:werkzeug@2.3.3#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:werkzeug@2.3.3#examples/celery/requirements.txt"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "werkzeug",
+   "version": "2.3.3",
+   "ids": [
+    "GHSA-q34m-jh98-gwm2",
+    "CVE-2024-49767",
+    "PYSEC-2026-1860",
+    "PYSEC-2026-3417"
+   ],
+   "summary": "Werkzeug possible resource exhaustion when parsing file data in forms",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "3.0.6"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-q34m-jh98-gwm2",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "medium"
+   },
+   "id": "GHSA-q34m-jh98-gwm2",
+   "key": "pypi:werkzeug@2.3.3#GHSA-q34m-jh98-gwm2",
+   "direct": true,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:werkzeug@2.3.3#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:werkzeug@2.3.3#examples/celery/requirements.txt"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-6627-m3xw-93mp",
+    "CVE-2026-112908"
+   ],
+   "summary": "filelock: StrictSoftFileLock creates its claim directories without the lock mode, so another local user with a write bit on them can end a live hold",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-6627-m3xw-93mp",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-6627-m3xw-93mp",
+   "key": "pypi:filelock@3.32.2#GHSA-6627-m3xw-93mp",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-69hj-f68j-2879",
+    "CVE-2026-112909"
+   ],
+   "summary": "filelock: UnixFileLock truncates and chmods any regular file another user renames or hard-links onto the lock path",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-69hj-f68j-2879",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-69hj-f68j-2879",
+   "key": "pypi:filelock@3.32.2#GHSA-69hj-f68j-2879",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-8mx5-7m5m-r77g",
+    "CVE-2026-112910"
+   ],
+   "summary": "filelock: WindowsFileLock ignores mode: a 0o600 lock file and the ReadWriteLock database inherit the directory ACL",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-8mx5-7m5m-r77g",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-8mx5-7m5m-r77g",
+   "key": "pypi:filelock@3.32.2#GHSA-8mx5-7m5m-r77g",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-9c4x-gm8v-wgc4",
+    "CVE-2026-112911"
+   ],
+   "summary": "filelock: StrictSoftFileLock and SoftReadWriteLock adopt a protocol directory another user created first, losing mutual exclusion",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-9c4x-gm8v-wgc4",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-9c4x-gm8v-wgc4",
+   "key": "pypi:filelock@3.32.2#GHSA-9c4x-gm8v-wgc4",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-cwqr-hh33-gh44",
+    "CVE-2026-112915"
+   ],
+   "summary": "filelock ReadWriteLock: a crafted lock database makes every acquire stall or hang regardless of timeout",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-cwqr-hh33-gh44",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-cwqr-hh33-gh44",
+   "key": "pypi:filelock@3.32.2#GHSA-cwqr-hh33-gh44",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-fq56-3cx3-fjxp",
+    "CVE-2026-112935"
+   ],
+   "summary": "filelock: SoftFileLock stale-lock break removes a live lock file on a reused inode number and admits two holders",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-fq56-3cx3-fjxp",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-fq56-3cx3-fjxp",
+   "key": "pypi:filelock@3.32.2#GHSA-fq56-3cx3-fjxp",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-j8f7-rjxc-mr56",
+    "CVE-2026-112936"
+   ],
+   "summary": "filelock: ReadWriteLock follows a symlink at the lock path into SQLite",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "4.0.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-j8f7-rjxc-mr56",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-j8f7-rjxc-mr56",
+   "key": "pypi:filelock@3.32.2#GHSA-j8f7-rjxc-mr56",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-m462-7rxw-wvpg",
+    "CVE-2026-112938"
+   ],
+   "summary": "filelock: StrictSoftFileLock follows a symbolic link swapped in at <path>.filelock and creates claim files in a directory another local user chooses",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-m462-7rxw-wvpg",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-m462-7rxw-wvpg",
+   "key": "pypi:filelock@3.32.2#GHSA-m462-7rxw-wvpg",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-rfpc-qcw5-3pc4",
+    "CVE-2026-112939"
+   ],
+   "summary": "filelock: SoftFileLock removes a live holder's marker when another user forges the PID in a writable marker",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-rfpc-qcw5-3pc4",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-rfpc-qcw5-3pc4",
+   "key": "pypi:filelock@3.32.2#GHSA-rfpc-qcw5-3pc4",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "flask",
+   "version": "2.3.2",
+   "ids": [
+    "GHSA-68rp-wp8r-4726",
+    "CVE-2026-27205",
+    "PYSEC-2026-2151"
+   ],
+   "summary": "Flask session does not add `Vary: Cookie` header when accessed in some ways",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.1.3"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-68rp-wp8r-4726",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "low"
+   },
+   "id": "GHSA-68rp-wp8r-4726",
+   "key": "pypi:flask@2.3.2#GHSA-68rp-wp8r-4726",
+   "direct": true,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:flask@2.3.2#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:flask@2.3.2#examples/celery/requirements.txt"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "jinja2",
+   "version": "3.1.2",
+   "ids": [
+    "GHSA-cpwx-vrp4-4pq7",
+    "CVE-2025-27516",
+    "PYSEC-2026-1471"
+   ],
+   "summary": "Jinja2 vulnerable to sandbox breakout through attr filter selecting format method",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.1.6"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-cpwx-vrp4-4pq7",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-cpwx-vrp4-4pq7",
+   "key": "pypi:jinja2@3.1.2#GHSA-cpwx-vrp4-4pq7",
+   "direct": true,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:jinja2@3.1.2#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:jinja2@3.1.2#examples/celery/requirements.txt"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "jinja2",
+   "version": "3.1.2",
+   "ids": [
+    "GHSA-h5c8-rqwp-cp95",
+    "CVE-2024-22195",
+    "PYSEC-2026-1473"
+   ],
+   "summary": "Jinja vulnerable to HTML attribute injection when passing user input as keys to xmlattr filter",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.1.3"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-h5c8-rqwp-cp95",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-h5c8-rqwp-cp95",
+   "key": "pypi:jinja2@3.1.2#GHSA-h5c8-rqwp-cp95",
+   "direct": true,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:jinja2@3.1.2#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:jinja2@3.1.2#examples/celery/requirements.txt"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "jinja2",
+   "version": "3.1.2",
+   "ids": [
+    "GHSA-h75v-3vvj-5mfj",
+    "CVE-2024-34064",
+    "PYSEC-2026-1474"
+   ],
+   "summary": "Jinja vulnerable to HTML attribute injection when passing user input as keys to xmlattr filter",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.1.4"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-h75v-3vvj-5mfj",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-h75v-3vvj-5mfj",
+   "key": "pypi:jinja2@3.1.2#GHSA-h75v-3vvj-5mfj",
+   "direct": true,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:jinja2@3.1.2#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:jinja2@3.1.2#examples/celery/requirements.txt"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "jquery",
+   "version": "3.3.1",
+   "ids": [
+    "GHSA-6c3j-c64m-qhgq",
+    "CVE-2019-11358",
+    "DRUPAL-CORE-2019-006",
+    "PYSEC-2026-628",
+    "SNYK-JS-JQUERY-174006"
+   ],
+   "summary": "XSS in jQuery as used in Drupal, Backdrop CMS, and other products",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.4.0"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-6c3j-c64m-qhgq",
+   "ecosystem": "npm",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-6c3j-c64m-qhgq",
+   "key": "jquery@3.3.1#GHSA-6c3j-c64m-qhgq",
+   "direct": true,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "examples/javascript/js_example/templates/jquery.html",
+   "component_key": "cdn:jquery@3.3.1#examples/javascript/js_example/templates/jquery.html",
+   "path": [
+    "flask",
+    "cdn:jquery@3.3.1#examples/javascript/js_example/templates/jquery.html"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "jquery",
+   "version": "3.3.1",
+   "ids": [
+    "GHSA-gxr4-xjj5-5px2",
+    "BIT-drupal-2020-11022",
+    "CVE-2020-11022"
+   ],
+   "summary": "Potential XSS vulnerability in jQuery",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.5.0"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-gxr4-xjj5-5px2",
+   "ecosystem": "npm",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-gxr4-xjj5-5px2",
+   "key": "jquery@3.3.1#GHSA-gxr4-xjj5-5px2",
+   "direct": true,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "examples/javascript/js_example/templates/jquery.html",
+   "component_key": "cdn:jquery@3.3.1#examples/javascript/js_example/templates/jquery.html",
+   "path": [
+    "flask",
+    "cdn:jquery@3.3.1#examples/javascript/js_example/templates/jquery.html"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "jquery",
+   "version": "3.3.1",
+   "ids": [
+    "GHSA-jpcq-cgw6-v4j6",
+    "BIT-drupal-2020-11023",
+    "CVE-2020-11023"
+   ],
+   "summary": "Potential XSS vulnerability in jQuery",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.5.0"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-jpcq-cgw6-v4j6",
+   "ecosystem": "npm",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-jpcq-cgw6-v4j6",
+   "key": "jquery@3.3.1#GHSA-jpcq-cgw6-v4j6",
+   "direct": true,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "examples/javascript/js_example/templates/jquery.html",
+   "component_key": "cdn:jquery@3.3.1#examples/javascript/js_example/templates/jquery.html",
+   "path": [
+    "flask",
+    "cdn:jquery@3.3.1#examples/javascript/js_example/templates/jquery.html"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "urllib3",
+   "version": "2.7.0",
+   "ids": [
+    "GHSA-gh4c-6fx4-qh6g",
+    "CVE-2026-97688",
+    "PYSEC-2026-4176"
+   ],
+   "summary": "urllib3: Chunked Deflate streaming can enter an infinite loop",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "2.8.0"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-gh4c-6fx4-qh6g",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-gh4c-6fx4-qh6g",
+   "key": "pypi:urllib3@2.7.0#GHSA-gh4c-6fx4-qh6g",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:urllib3@2.7.0#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:requests@2.34.2#uv.lock",
+    "pypi:urllib3@2.7.0#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-43mp-35q3-x3fq",
+    "BIT-virtualenv-2026-113724",
+    "CVE-2026-113724",
+    "PYSEC-2026-4383"
+   ],
+   "summary": "virtualenv: Deletion recovery can change a symlink target's mode",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-43mp-35q3-x3fq",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-43mp-35q3-x3fq",
+   "key": "pypi:virtualenv@21.7.1#GHSA-43mp-35q3-x3fq",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-558c-9hv2-4prj",
+    "BIT-virtualenv-2026-113721",
+    "CVE-2026-113721",
+    "PYSEC-2026-4380"
+   ],
+   "summary": "virtualenv: Generated files can follow existing destination links",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-558c-9hv2-4prj",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-558c-9hv2-4prj",
+   "key": "pypi:virtualenv@21.7.1#GHSA-558c-9hv2-4prj",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-9h9j-4vrj-gf7g",
+    "BIT-virtualenv-2026-102938",
+    "CVE-2026-102938",
+    "PYSEC-2026-4012"
+   ],
+   "summary": "virtualenv writes prompt values into pyvenv.cfg without sanitizing line boundaries, allowing configuration injection",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "21.7.11"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-9h9j-4vrj-gf7g",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-9h9j-4vrj-gf7g",
+   "key": "pypi:virtualenv@21.7.1#GHSA-9h9j-4vrj-gf7g",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-cw65-gx24-rc82",
+    "BIT-virtualenv-2026-113716",
+    "CVE-2026-113716",
+    "PYSEC-2026-4375"
+   ],
+   "summary": "virtualenv: Builtin creation follows linked environment directories",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-cw65-gx24-rc82",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-cw65-gx24-rc82",
+   "key": "pypi:virtualenv@21.7.1#GHSA-cw65-gx24-rc82",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-hhxq-47xx-j5xx",
+    "BIT-virtualenv-2026-113719",
+    "CVE-2026-113719",
+    "PYSEC-2026-4378"
+   ],
+   "summary": "virtualenv: Seed replacement does not contain metadata deletion paths",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-hhxq-47xx-j5xx",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-hhxq-47xx-j5xx",
+   "key": "pypi:virtualenv@21.7.1#GHSA-hhxq-47xx-j5xx",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "PYSEC-2026-4372",
+    "BIT-virtualenv-2026-113713",
+    "CVE-2026-113713",
+    "GHSA-4f8h-vr72-p32c"
+   ],
+   "summary": "virtualenv is a tool for creating isolated virtual python environments. From 21.14.8 until 21.14.10, the app-data seeder can leave an environment linked to temporary package files that virtualenv dele",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "21.14.10"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/PYSEC-2026-4372",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv"
+   ],
+   "severity_by_source": {
+    "osv": "medium"
+   },
+   "id": "GHSA-4f8h-vr72-p32c",
+   "key": "pypi:virtualenv@21.7.1#GHSA-4f8h-vr72-p32c",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "werkzeug",
+   "version": "2.3.3",
+   "ids": [
+    "GHSA-29vq-49wr-vm6x",
+    "CVE-2026-27199",
+    "PYSEC-2026-2320"
+   ],
+   "summary": " Werkzeug safe_join() allows Windows special device names",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.1.6"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-29vq-49wr-vm6x",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-29vq-49wr-vm6x",
+   "key": "pypi:werkzeug@2.3.3#GHSA-29vq-49wr-vm6x",
+   "direct": true,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:werkzeug@2.3.3#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:werkzeug@2.3.3#examples/celery/requirements.txt"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "werkzeug",
+   "version": "2.3.3",
+   "ids": [
+    "GHSA-87hc-h4r5-73f7",
+    "CVE-2026-21860",
+    "PYSEC-2026-2044"
+   ],
+   "summary": " Werkzeug safe_join() allows Windows special device names with compound extensions",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.1.5"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-87hc-h4r5-73f7",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-87hc-h4r5-73f7",
+   "key": "pypi:werkzeug@2.3.3#GHSA-87hc-h4r5-73f7",
+   "direct": true,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:werkzeug@2.3.3#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:werkzeug@2.3.3#examples/celery/requirements.txt"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "werkzeug",
+   "version": "2.3.3",
+   "ids": [
+    "GHSA-f9vj-2wh5-fj8j",
+    "CVE-2024-49766",
+    "PYSEC-2026-2045"
+   ],
+   "summary": "Werkzeug safe_join not safe on Windows",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.0.6"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-f9vj-2wh5-fj8j",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-f9vj-2wh5-fj8j",
+   "key": "pypi:werkzeug@2.3.3#GHSA-f9vj-2wh5-fj8j",
+   "direct": true,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:werkzeug@2.3.3#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:werkzeug@2.3.3#examples/celery/requirements.txt"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "werkzeug",
+   "version": "2.3.3",
+   "ids": [
+    "GHSA-g6x2-hccm-hh4m",
+    "CVE-2026-102598",
+    "PYSEC-2026-4312"
+   ],
+   "summary": "Werkzeug safe_join() allows Windows special device names",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.1.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-g6x2-hccm-hh4m",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-g6x2-hccm-hh4m",
+   "key": "pypi:werkzeug@2.3.3#GHSA-g6x2-hccm-hh4m",
+   "direct": true,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:werkzeug@2.3.3#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:werkzeug@2.3.3#examples/celery/requirements.txt"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "werkzeug",
+   "version": "2.3.3",
+   "ids": [
+    "GHSA-hgf8-39gv-g3f2",
+    "CVE-2025-66221",
+    "PYSEC-2026-2046"
+   ],
+   "summary": "Werkzeug safe_join() allows Windows special device names",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.1.4"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-hgf8-39gv-g3f2",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-hgf8-39gv-g3f2",
+   "key": "pypi:werkzeug@2.3.3#GHSA-hgf8-39gv-g3f2",
+   "direct": true,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:werkzeug@2.3.3#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:werkzeug@2.3.3#examples/celery/requirements.txt"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "werkzeug",
+   "version": "3.1.8",
+   "ids": [
+    "GHSA-g6x2-hccm-hh4m",
+    "CVE-2026-102598",
+    "PYSEC-2026-4312"
+   ],
+   "summary": "Werkzeug safe_join() allows Windows special device names",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.1.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-g6x2-hccm-hh4m",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-g6x2-hccm-hh4m",
+   "key": "pypi:werkzeug@3.1.8#GHSA-g6x2-hccm-hh4m",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:werkzeug@3.1.8#uv.lock",
+   "path": [
+    "flask",
+    "pypi:flask@3.2.0.dev0#uv.lock",
+    "pypi:werkzeug@3.1.8#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-567q-5qvw-pf92",
+    "CVE-2026-112907"
+   ],
+   "summary": "filelock: On Windows an oplock on a soft lock's marker holds SoftFileLock.acquire() past its timeout and blocks the stale break",
+   "severity": "low",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-567q-5qvw-pf92",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "low",
+    "grype": "low"
+   },
+   "id": "GHSA-567q-5qvw-pf92",
+   "key": "pypi:filelock@3.32.2#GHSA-567q-5qvw-pf92",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-9vhv-jxww-xfm5",
+    "CVE-2026-112913"
+   ],
+   "summary": "filelock: ReadWriteLock on Windows acts on SQLite side files another local user places beside its database",
+   "severity": "low",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-9vhv-jxww-xfm5",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "low",
+    "grype": "low"
+   },
+   "id": "GHSA-9vhv-jxww-xfm5",
+   "key": "pypi:filelock@3.32.2#GHSA-9vhv-jxww-xfm5",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-494p-63j8-28p3",
+    "BIT-virtualenv-2026-113714",
+    "CVE-2026-113714",
+    "PYSEC-2026-4373"
+   ],
+   "summary": "virtualenv: Downloaded wheel selection and caching precede verification",
+   "severity": "low",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-494p-63j8-28p3",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "low",
+    "grype": "low"
+   },
+   "id": "GHSA-494p-63j8-28p3",
+   "key": "pypi:virtualenv@21.7.1#GHSA-494p-63j8-28p3",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "label": "pre_existing"
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-cx28-75q4-x26q",
+    "BIT-virtualenv-2026-113717",
+    "CVE-2026-113717",
+    "PYSEC-2026-4376"
+   ],
+   "summary": "virtualenv: Pip seeding with download omits wheel digest verification",
+   "severity": "low",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-cx28-75q4-x26q",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "low",
+    "grype": "low"
+   },
+   "id": "GHSA-cx28-75q4-x26q",
+   "key": "pypi:virtualenv@21.7.1#GHSA-cx28-75q4-x26q",
+   "direct": false,
+   "runtime": true,
+   "exposure": null,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "label": "pre_existing"
+  }
+ ],
+ "ci_image": [],
+ "inventory": [
+  {
+   "key": "github:actions/cache@v6.1.0#.github/workflows/pre-commit.yaml",
+   "name": "actions/cache",
+   "version": "v6.1.0",
+   "declared": "v6.1.0",
+   "purl": "pkg:github/actions/cache@v6.1.0",
+   "ecosystem": "github",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": ".github/workflows/pre-commit.yaml",
+   "origin": "registry",
+   "found_by": "github-actions-usage-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "github:actions/cache@v6.1.0#.github/workflows/pre-commit.yaml"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "github:actions/cache@v6.1.0#.github/workflows/tests.yaml",
+   "name": "actions/cache",
+   "version": "v6.1.0",
+   "declared": "v6.1.0",
+   "purl": "pkg:github/actions/cache@v6.1.0",
+   "ecosystem": "github",
+   "direct": true,
+   "dev": true,
+   "runtime": false,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": ".github/workflows/tests.yaml",
+   "origin": "registry",
+   "found_by": "github-actions-usage-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "github:actions/cache@v6.1.0#.github/workflows/tests.yaml"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "github:actions/checkout@v7.0.1#.github/workflows/pre-commit.yaml",
+   "name": "actions/checkout",
+   "version": "v7.0.1",
+   "declared": "v7.0.1",
+   "purl": "pkg:github/actions/checkout@v7.0.1",
+   "ecosystem": "github",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": ".github/workflows/pre-commit.yaml",
+   "origin": "registry",
+   "found_by": "github-actions-usage-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "github:actions/checkout@v7.0.1#.github/workflows/pre-commit.yaml"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "github:actions/checkout@v7.0.1#.github/workflows/publish.yaml",
+   "name": "actions/checkout",
+   "version": "v7.0.1",
+   "declared": "v7.0.1",
+   "purl": "pkg:github/actions/checkout@v7.0.1",
+   "ecosystem": "github",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": ".github/workflows/publish.yaml",
+   "origin": "registry",
+   "found_by": "github-actions-usage-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "github:actions/checkout@v7.0.1#.github/workflows/publish.yaml"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "github:actions/checkout@v7.0.1#.github/workflows/tests.yaml",
+   "name": "actions/checkout",
+   "version": "v7.0.1",
+   "declared": "v7.0.1",
+   "purl": "pkg:github/actions/checkout@v7.0.1",
+   "ecosystem": "github",
+   "direct": true,
+   "dev": true,
+   "runtime": false,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": ".github/workflows/tests.yaml",
+   "origin": "registry",
+   "found_by": "github-actions-usage-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "github:actions/checkout@v7.0.1#.github/workflows/tests.yaml"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "github:actions/checkout@v7.0.1#.github/workflows/zizmor.yaml",
+   "name": "actions/checkout",
+   "version": "v7.0.1",
+   "declared": "v7.0.1",
+   "purl": "pkg:github/actions/checkout@v7.0.1",
+   "ecosystem": "github",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": ".github/workflows/zizmor.yaml",
+   "origin": "registry",
+   "found_by": "github-actions-usage-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "github:actions/checkout@v7.0.1#.github/workflows/zizmor.yaml"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "github:actions/download-artifact@v8.0.1#.github/workflows/publish.yaml",
+   "name": "actions/download-artifact",
+   "version": "v8.0.1",
+   "declared": "v8.0.1",
+   "purl": "pkg:github/actions/download-artifact@v8.0.1",
+   "ecosystem": "github",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": ".github/workflows/publish.yaml",
+   "origin": "registry",
+   "found_by": "github-actions-usage-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "github:actions/download-artifact@v8.0.1#.github/workflows/publish.yaml"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "github:actions/setup-python@v7.0.0#.github/workflows/pre-commit.yaml",
+   "name": "actions/setup-python",
+   "version": "v7.0.0",
+   "declared": "v7.0.0",
+   "purl": "pkg:github/actions/setup-python@v7.0.0",
+   "ecosystem": "github",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": ".github/workflows/pre-commit.yaml",
+   "origin": "registry",
+   "found_by": "github-actions-usage-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "github:actions/setup-python@v7.0.0#.github/workflows/pre-commit.yaml"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "github:actions/setup-python@v7.0.0#.github/workflows/publish.yaml",
+   "name": "actions/setup-python",
+   "version": "v7.0.0",
+   "declared": "v7.0.0",
+   "purl": "pkg:github/actions/setup-python@v7.0.0",
+   "ecosystem": "github",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": ".github/workflows/publish.yaml",
+   "origin": "registry",
+   "found_by": "github-actions-usage-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "github:actions/setup-python@v7.0.0#.github/workflows/publish.yaml"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "github:actions/setup-python@v7.0.0#.github/workflows/tests.yaml",
+   "name": "actions/setup-python",
+   "version": "v7.0.0",
+   "declared": "v7.0.0",
+   "purl": "pkg:github/actions/setup-python@v7.0.0",
+   "ecosystem": "github",
+   "direct": true,
+   "dev": true,
+   "runtime": false,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": ".github/workflows/tests.yaml",
+   "origin": "registry",
+   "found_by": "github-actions-usage-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "github:actions/setup-python@v7.0.0#.github/workflows/tests.yaml"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "github:actions/upload-artifact@v7.0.1#.github/workflows/publish.yaml",
+   "name": "actions/upload-artifact",
+   "version": "v7.0.1",
+   "declared": "v7.0.1",
+   "purl": "pkg:github/actions/upload-artifact@v7.0.1",
+   "ecosystem": "github",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": ".github/workflows/publish.yaml",
+   "origin": "registry",
+   "found_by": "github-actions-usage-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "github:actions/upload-artifact@v7.0.1#.github/workflows/publish.yaml"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:alabaster@1.0.0#uv.lock",
+   "name": "alabaster",
+   "version": "1.0.0",
+   "declared": "1.0.0",
+   "purl": "pkg:pypi/alabaster@1.0.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:alabaster@1.0.0#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:amqp@5.1.1#examples/celery/requirements.txt",
+   "name": "amqp",
+   "version": "5.1.1",
+   "declared": "5.1.1",
+   "purl": "pkg:pypi/amqp@5.1.1",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:amqp@5.1.1#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:anyio@4.14.2#uv.lock",
+   "name": "anyio",
+   "version": "4.14.2",
+   "declared": "4.14.2",
+   "purl": "pkg:pypi/anyio@4.14.2",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:gha-update@0.2.0#uv.lock",
+    "pypi:httpx@0.28.1#uv.lock",
+    "pypi:anyio@4.14.2#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:asgiref@3.12.1#uv.lock",
+   "name": "asgiref",
+   "version": "3.12.1",
+   "declared": "3.12.1",
+   "purl": "pkg:pypi/asgiref@3.12.1",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:flask@3.2.0.dev0#uv.lock",
+    "pypi:asgiref@3.12.1#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:ast-serialize@0.6.0#uv.lock",
+   "name": "ast-serialize",
+   "version": "0.6.0",
+   "declared": "0.6.0",
+   "purl": "pkg:pypi/ast-serialize@0.6.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:mypy@2.3.0#uv.lock",
+    "pypi:ast-serialize@0.6.0#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "github:astral-sh/setup-uv@v9.0.0#.github/workflows/pre-commit.yaml",
+   "name": "astral-sh/setup-uv",
+   "version": "v9.0.0",
+   "declared": "v9.0.0",
+   "purl": "pkg:github/astral-sh/setup-uv@v9.0.0",
+   "ecosystem": "github",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": ".github/workflows/pre-commit.yaml",
+   "origin": "registry",
+   "found_by": "github-actions-usage-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "github:astral-sh/setup-uv@v9.0.0#.github/workflows/pre-commit.yaml"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "github:astral-sh/setup-uv@v9.0.0#.github/workflows/publish.yaml",
+   "name": "astral-sh/setup-uv",
+   "version": "v9.0.0",
+   "declared": "v9.0.0",
+   "purl": "pkg:github/astral-sh/setup-uv@v9.0.0",
+   "ecosystem": "github",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": ".github/workflows/publish.yaml",
+   "origin": "registry",
+   "found_by": "github-actions-usage-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "github:astral-sh/setup-uv@v9.0.0#.github/workflows/publish.yaml"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "github:astral-sh/setup-uv@v9.0.0#.github/workflows/tests.yaml",
+   "name": "astral-sh/setup-uv",
+   "version": "v9.0.0",
+   "declared": "v9.0.0",
+   "purl": "pkg:github/astral-sh/setup-uv@v9.0.0",
+   "ecosystem": "github",
+   "direct": true,
+   "dev": true,
+   "runtime": false,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": ".github/workflows/tests.yaml",
+   "origin": "registry",
+   "found_by": "github-actions-usage-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "github:astral-sh/setup-uv@v9.0.0#.github/workflows/tests.yaml"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:async-timeout@4.0.2#examples/celery/requirements.txt",
+   "name": "async-timeout",
+   "version": "4.0.2",
+   "declared": "4.0.2",
+   "purl": "pkg:pypi/async-timeout@4.0.2",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:async-timeout@4.0.2#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:babel@2.18.0#uv.lock",
+   "name": "babel",
+   "version": "2.18.0",
+   "declared": "2.18.0",
+   "purl": "pkg:pypi/babel@2.18.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:babel@2.18.0#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:billiard@3.6.4.0#examples/celery/requirements.txt",
+   "name": "billiard",
+   "version": "3.6.4.0",
+   "declared": "3.6.4.0",
+   "purl": "pkg:pypi/billiard@3.6.4.0",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:billiard@3.6.4.0#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:blinker@1.6.2#examples/celery/requirements.txt",
+   "name": "blinker",
+   "version": "1.6.2",
+   "declared": "1.6.2",
+   "purl": "pkg:pypi/blinker@1.6.2",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:blinker@1.6.2#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:blinker@1.9.0#uv.lock",
+   "name": "blinker",
+   "version": "1.9.0",
+   "declared": "1.9.0",
+   "purl": "pkg:pypi/blinker@1.9.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:flask@3.2.0.dev0#uv.lock",
+    "pypi:blinker@1.9.0#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:cachetools@7.1.6#uv.lock",
+   "name": "cachetools",
+   "version": "7.1.6",
+   "declared": "7.1.6",
+   "purl": "pkg:pypi/cachetools@7.1.6",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:tox-uv@1.36.0#uv.lock",
+    "pypi:tox-uv-bare@1.36.0#uv.lock",
+    "pypi:tox@4.58.0#uv.lock",
+    "pypi:cachetools@7.1.6#uv.lock"
+   ],
+   "depth": 4
+  },
+  {
+   "key": "pypi:celery@5.2.7#examples/celery/requirements.txt",
+   "name": "celery",
+   "version": "5.2.7",
+   "declared": "5.2.7",
+   "purl": "pkg:pypi/celery@5.2.7",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:celery@5.2.7#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:certifi@2026.7.22#uv.lock",
+   "name": "certifi",
+   "version": "2026.7.22",
+   "declared": "2026.7.22",
+   "purl": "pkg:pypi/certifi@2026.7.22",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:gha-update@0.2.0#uv.lock",
+    "pypi:httpx@0.28.1#uv.lock",
+    "pypi:certifi@2026.7.22#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:cffi@2.1.0#uv.lock",
+   "name": "cffi",
+   "version": "2.1.0",
+   "declared": "2.1.0",
+   "purl": "pkg:pypi/cffi@2.1.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:cryptography@49.0.0#uv.lock",
+    "pypi:cffi@2.1.0#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:cfgv@3.5.0#uv.lock",
+   "name": "cfgv",
+   "version": "3.5.0",
+   "declared": "3.5.0",
+   "purl": "pkg:pypi/cfgv@3.5.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:cfgv@3.5.0#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:charset-normalizer@3.4.9#uv.lock",
+   "name": "charset-normalizer",
+   "version": "3.4.9",
+   "declared": "3.4.9",
+   "purl": "pkg:pypi/charset-normalizer@3.4.9",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:requests@2.34.2#uv.lock",
+    "pypi:charset-normalizer@3.4.9#uv.lock"
+   ],
+   "depth": 4
+  },
+  {
+   "key": "pypi:click@8.1.3#examples/celery/requirements.txt",
+   "name": "click",
+   "version": "8.1.3",
+   "declared": "8.1.3",
+   "purl": "pkg:pypi/click@8.1.3",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:click@8.1.3#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:click@8.4.2#uv.lock",
+   "name": "click",
+   "version": "8.4.2",
+   "declared": "8.4.2",
+   "purl": "pkg:pypi/click@8.4.2",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:flask@3.2.0.dev0#uv.lock",
+    "pypi:click@8.4.2#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:click-didyoumean@0.3.0#examples/celery/requirements.txt",
+   "name": "click-didyoumean",
+   "version": "0.3.0",
+   "declared": "0.3.0",
+   "purl": "pkg:pypi/click-didyoumean@0.3.0",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:click-didyoumean@0.3.0#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:click-plugins@1.1.1#examples/celery/requirements.txt",
+   "name": "click-plugins",
+   "version": "1.1.1",
+   "declared": "1.1.1",
+   "purl": "pkg:pypi/click-plugins@1.1.1",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:click-plugins@1.1.1#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:click-repl@0.2.0#examples/celery/requirements.txt",
+   "name": "click-repl",
+   "version": "0.2.0",
+   "declared": "0.2.0",
+   "purl": "pkg:pypi/click-repl@0.2.0",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:click-repl@0.2.0#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:colorama@0.4.6#uv.lock",
+   "name": "colorama",
+   "version": "0.4.6",
+   "declared": "0.4.6",
+   "purl": "pkg:pypi/colorama@0.4.6",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pytest@9.1.1#uv.lock",
+    "pypi:colorama@0.4.6#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:cryptography@49.0.0#uv.lock",
+   "name": "cryptography",
+   "version": "49.0.0",
+   "declared": "49.0.0",
+   "purl": "pkg:pypi/cryptography@49.0.0",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:cryptography@49.0.0#uv.lock"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "github:dessant/lock-threads@v6.0.2#.github/workflows/lock.yaml",
+   "name": "dessant/lock-threads",
+   "version": "v6.0.2",
+   "declared": "v6.0.2",
+   "purl": "pkg:github/dessant/lock-threads@v6.0.2",
+   "ecosystem": "github",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": ".github/workflows/lock.yaml",
+   "origin": "registry",
+   "found_by": "github-actions-usage-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "github:dessant/lock-threads@v6.0.2#.github/workflows/lock.yaml"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:distlib@0.4.3#uv.lock",
+   "name": "distlib",
+   "version": "0.4.3",
+   "declared": "0.4.3",
+   "purl": "pkg:pypi/distlib@0.4.3",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:distlib@0.4.3#uv.lock"
+   ],
+   "depth": 4
+  },
+  {
+   "key": "pypi:docutils@0.21.2#uv.lock",
+   "name": "docutils",
+   "version": "0.21.2",
+   "declared": "0.21.2",
+   "purl": "pkg:pypi/docutils@0.21.2",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:sphinx-tabs@3.5.0#uv.lock",
+    "pypi:docutils@0.21.2#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:filelock@3.32.2#uv.lock",
+   "name": "filelock",
+   "version": "3.32.2",
+   "declared": "3.32.2",
+   "purl": "pkg:pypi/filelock@3.32.2",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ],
+   "depth": 4
+  },
+  {
+   "key": "pypi:flask@2.3.2#examples/celery/requirements.txt",
+   "name": "flask",
+   "version": "2.3.2",
+   "declared": "2.3.2",
+   "purl": "pkg:pypi/flask@2.3.2",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:flask@2.3.2#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:flask@3.2.0.dev0#uv.lock",
+   "name": "flask",
+   "version": "3.2.0.dev0",
+   "declared": "3.2.0.dev0",
+   "purl": "pkg:pypi/flask@3.2.0.dev0",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:flask@3.2.0.dev0#uv.lock"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:gha-update@0.2.0#uv.lock",
+   "name": "gha-update",
+   "version": "0.2.0",
+   "declared": "0.2.0",
+   "purl": "pkg:pypi/gha-update@0.2.0",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:gha-update@0.2.0#uv.lock"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:h11@0.16.0#uv.lock",
+   "name": "h11",
+   "version": "0.16.0",
+   "declared": "0.16.0",
+   "purl": "pkg:pypi/h11@0.16.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:sphinx-autobuild@2025.8.25#uv.lock",
+    "pypi:uvicorn@0.52.0#uv.lock",
+    "pypi:h11@0.16.0#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:httpcore@1.0.9#uv.lock",
+   "name": "httpcore",
+   "version": "1.0.9",
+   "declared": "1.0.9",
+   "purl": "pkg:pypi/httpcore@1.0.9",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:gha-update@0.2.0#uv.lock",
+    "pypi:httpx@0.28.1#uv.lock",
+    "pypi:httpcore@1.0.9#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:httpx@0.28.1#uv.lock",
+   "name": "httpx",
+   "version": "0.28.1",
+   "declared": "0.28.1",
+   "purl": "pkg:pypi/httpx@0.28.1",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:gha-update@0.2.0#uv.lock",
+    "pypi:httpx@0.28.1#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:identify@2.6.19#uv.lock",
+   "name": "identify",
+   "version": "2.6.19",
+   "declared": "2.6.19",
+   "purl": "pkg:pypi/identify@2.6.19",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:identify@2.6.19#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:idna@3.18#uv.lock",
+   "name": "idna",
+   "version": "3.18",
+   "declared": "3.18",
+   "purl": "pkg:pypi/idna@3.18",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:gha-update@0.2.0#uv.lock",
+    "pypi:httpx@0.28.1#uv.lock",
+    "pypi:idna@3.18#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:imagesize@2.0.0#uv.lock",
+   "name": "imagesize",
+   "version": "2.0.0",
+   "declared": "2.0.0",
+   "purl": "pkg:pypi/imagesize@2.0.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:imagesize@2.0.0#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:iniconfig@2.3.0#uv.lock",
+   "name": "iniconfig",
+   "version": "2.3.0",
+   "declared": "2.3.0",
+   "purl": "pkg:pypi/iniconfig@2.3.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pytest@9.1.1#uv.lock",
+    "pypi:iniconfig@2.3.0#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:itsdangerous@2.1.2#examples/celery/requirements.txt",
+   "name": "itsdangerous",
+   "version": "2.1.2",
+   "declared": "2.1.2",
+   "purl": "pkg:pypi/itsdangerous@2.1.2",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:itsdangerous@2.1.2#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:itsdangerous@2.2.0#uv.lock",
+   "name": "itsdangerous",
+   "version": "2.2.0",
+   "declared": "2.2.0",
+   "purl": "pkg:pypi/itsdangerous@2.2.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:flask@3.2.0.dev0#uv.lock",
+    "pypi:itsdangerous@2.2.0#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:jinja2@3.1.2#examples/celery/requirements.txt",
+   "name": "jinja2",
+   "version": "3.1.2",
+   "declared": "3.1.2",
+   "purl": "pkg:pypi/jinja2@3.1.2",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:jinja2@3.1.2#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:jinja2@3.1.6#uv.lock",
+   "name": "jinja2",
+   "version": "3.1.6",
+   "declared": "3.1.6",
+   "purl": "pkg:pypi/jinja2@3.1.6",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:flask@3.2.0.dev0#uv.lock",
+    "pypi:jinja2@3.1.6#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:kombu@5.2.4#examples/celery/requirements.txt",
+   "name": "kombu",
+   "version": "5.2.4",
+   "declared": "5.2.4",
+   "purl": "pkg:pypi/kombu@5.2.4",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:kombu@5.2.4#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:librt@0.13.0#uv.lock",
+   "name": "librt",
+   "version": "0.13.0",
+   "declared": "0.13.0",
+   "purl": "pkg:pypi/librt@0.13.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:mypy@2.3.0#uv.lock",
+    "pypi:librt@0.13.0#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:markupsafe@2.1.2#examples/celery/requirements.txt",
+   "name": "markupsafe",
+   "version": "2.1.2",
+   "declared": "2.1.2",
+   "purl": "pkg:pypi/markupsafe@2.1.2",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:markupsafe@2.1.2#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:markupsafe@3.0.3#uv.lock",
+   "name": "markupsafe",
+   "version": "3.0.3",
+   "declared": "3.0.3",
+   "purl": "pkg:pypi/markupsafe@3.0.3",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:flask@3.2.0.dev0#uv.lock",
+    "pypi:markupsafe@3.0.3#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:mypy@2.3.0#uv.lock",
+   "name": "mypy",
+   "version": "2.3.0",
+   "declared": "2.3.0",
+   "purl": "pkg:pypi/mypy@2.3.0",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:mypy@2.3.0#uv.lock"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:mypy-extensions@1.1.0#uv.lock",
+   "name": "mypy-extensions",
+   "version": "1.1.0",
+   "declared": "1.1.0",
+   "purl": "pkg:pypi/mypy-extensions@1.1.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:mypy@2.3.0#uv.lock",
+    "pypi:mypy-extensions@1.1.0#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:nodeenv@1.10.0#uv.lock",
+   "name": "nodeenv",
+   "version": "1.10.0",
+   "declared": "1.10.0",
+   "purl": "pkg:pypi/nodeenv@1.10.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pyright@1.1.411#uv.lock",
+    "pypi:nodeenv@1.10.0#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:packaging@26.2#uv.lock",
+   "name": "packaging",
+   "version": "26.2",
+   "declared": "26.2",
+   "purl": "pkg:pypi/packaging@26.2",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:packaging@26.2#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+   "name": "pallets-sphinx-themes",
+   "version": "2.5.0",
+   "declared": "2.5.0",
+   "purl": "pkg:pypi/pallets-sphinx-themes@2.5.0",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:pathspec@1.1.1#uv.lock",
+   "name": "pathspec",
+   "version": "1.1.1",
+   "declared": "1.1.1",
+   "purl": "pkg:pypi/pathspec@1.1.1",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:mypy@2.3.0#uv.lock",
+    "pypi:pathspec@1.1.1#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:platformdirs@4.11.0#uv.lock",
+   "name": "platformdirs",
+   "version": "4.11.0",
+   "declared": "4.11.0",
+   "purl": "pkg:pypi/platformdirs@4.11.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:platformdirs@4.11.0#uv.lock"
+   ],
+   "depth": 4
+  },
+  {
+   "key": "pypi:pluggy@1.6.0#uv.lock",
+   "name": "pluggy",
+   "version": "1.6.0",
+   "declared": "1.6.0",
+   "purl": "pkg:pypi/pluggy@1.6.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pytest@9.1.1#uv.lock",
+    "pypi:pluggy@1.6.0#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:pre-commit@4.6.1#uv.lock",
+   "name": "pre-commit",
+   "version": "4.6.1",
+   "declared": "4.6.1",
+   "purl": "pkg:pypi/pre-commit@4.6.1",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:pre-commit-uv@4.3.0#uv.lock",
+   "name": "pre-commit-uv",
+   "version": "4.3.0",
+   "declared": "4.3.0",
+   "purl": "pkg:pypi/pre-commit-uv@4.3.0",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:prompt-toolkit@3.0.38#examples/celery/requirements.txt",
+   "name": "prompt-toolkit",
+   "version": "3.0.38",
+   "declared": "3.0.38",
+   "purl": "pkg:pypi/prompt-toolkit@3.0.38",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:prompt-toolkit@3.0.38#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:pycparser@3.0#uv.lock",
+   "name": "pycparser",
+   "version": "3.0",
+   "declared": "3.0",
+   "purl": "pkg:pypi/pycparser@3.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:cryptography@49.0.0#uv.lock",
+    "pypi:cffi@2.1.0#uv.lock",
+    "pypi:pycparser@3.0#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:pygments@2.20.0#uv.lock",
+   "name": "pygments",
+   "version": "2.20.0",
+   "declared": "2.20.0",
+   "purl": "pkg:pypi/pygments@2.20.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pytest@9.1.1#uv.lock",
+    "pypi:pygments@2.20.0#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "github:pypa/gh-action-pypi-publish@v1.14.2#.github/workflows/publish.yaml",
+   "name": "pypa/gh-action-pypi-publish",
+   "version": "v1.14.2",
+   "declared": "v1.14.2",
+   "purl": "pkg:github/pypa/gh-action-pypi-publish@v1.14.2",
+   "ecosystem": "github",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": ".github/workflows/publish.yaml",
+   "origin": "registry",
+   "found_by": "github-actions-usage-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "github:pypa/gh-action-pypi-publish@v1.14.2#.github/workflows/publish.yaml"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:pyproject-api@1.11.0#uv.lock",
+   "name": "pyproject-api",
+   "version": "1.11.0",
+   "declared": "1.11.0",
+   "purl": "pkg:pypi/pyproject-api@1.11.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:tox-uv@1.36.0#uv.lock",
+    "pypi:tox-uv-bare@1.36.0#uv.lock",
+    "pypi:tox@4.58.0#uv.lock",
+    "pypi:pyproject-api@1.11.0#uv.lock"
+   ],
+   "depth": 4
+  },
+  {
+   "key": "pypi:pyright@1.1.411#uv.lock",
+   "name": "pyright",
+   "version": "1.1.411",
+   "declared": "1.1.411",
+   "purl": "pkg:pypi/pyright@1.1.411",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pyright@1.1.411#uv.lock"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:pytest@9.1.1#uv.lock",
+   "name": "pytest",
+   "version": "9.1.1",
+   "declared": "9.1.1",
+   "purl": "pkg:pypi/pytest@9.1.1",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pytest@9.1.1#uv.lock"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:python-discovery@1.5.0#uv.lock",
+   "name": "python-discovery",
+   "version": "1.5.0",
+   "declared": "1.5.0",
+   "purl": "pkg:pypi/python-discovery@1.5.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:python-discovery@1.5.0#uv.lock"
+   ],
+   "depth": 4
+  },
+  {
+   "key": "pypi:python-dotenv@1.2.2#uv.lock",
+   "name": "python-dotenv",
+   "version": "1.2.2",
+   "declared": "1.2.2",
+   "purl": "pkg:pypi/python-dotenv@1.2.2",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:flask@3.2.0.dev0#uv.lock",
+    "pypi:python-dotenv@1.2.2#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:pytz@2023.3#examples/celery/requirements.txt",
+   "name": "pytz",
+   "version": "2023.3",
+   "declared": "2023.3",
+   "purl": "pkg:pypi/pytz@2023.3",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:pytz@2023.3#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:pyyaml@6.0.3#uv.lock",
+   "name": "pyyaml",
+   "version": "6.0.3",
+   "declared": "6.0.3",
+   "purl": "pkg:pypi/pyyaml@6.0.3",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:pyyaml@6.0.3#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:redis@4.5.4#examples/celery/requirements.txt",
+   "name": "redis",
+   "version": "4.5.4",
+   "declared": "4.5.4",
+   "purl": "pkg:pypi/redis@4.5.4",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:redis@4.5.4#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:requests@2.34.2#uv.lock",
+   "name": "requests",
+   "version": "2.34.2",
+   "declared": "2.34.2",
+   "purl": "pkg:pypi/requests@2.34.2",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:requests@2.34.2#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:roman-numerals@4.1.0#uv.lock",
+   "name": "roman-numerals",
+   "version": "4.1.0",
+   "declared": "4.1.0",
+   "purl": "pkg:pypi/roman-numerals@4.1.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:roman-numerals-py@4.1.0#uv.lock",
+    "pypi:roman-numerals@4.1.0#uv.lock"
+   ],
+   "depth": 4
+  },
+  {
+   "key": "pypi:roman-numerals-py@4.1.0#uv.lock",
+   "name": "roman-numerals-py",
+   "version": "4.1.0",
+   "declared": "4.1.0",
+   "purl": "pkg:pypi/roman-numerals-py@4.1.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:roman-numerals-py@4.1.0#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:ruff@0.16.0#uv.lock",
+   "name": "ruff",
+   "version": "0.16.0",
+   "declared": "0.16.0",
+   "purl": "pkg:pypi/ruff@0.16.0",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:ruff@0.16.0#uv.lock"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:six@1.16.0#examples/celery/requirements.txt",
+   "name": "six",
+   "version": "1.16.0",
+   "declared": "1.16.0",
+   "purl": "pkg:pypi/six@1.16.0",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:six@1.16.0#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:snowballstemmer@3.1.1#uv.lock",
+   "name": "snowballstemmer",
+   "version": "3.1.1",
+   "declared": "3.1.1",
+   "purl": "pkg:pypi/snowballstemmer@3.1.1",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:snowballstemmer@3.1.1#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:sphinx@8.2.3#uv.lock",
+   "name": "sphinx",
+   "version": "8.2.3",
+   "declared": "8.2.3",
+   "purl": "pkg:pypi/sphinx@8.2.3",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:sphinx-autobuild@2025.8.25#uv.lock",
+   "name": "sphinx-autobuild",
+   "version": "2025.8.25",
+   "declared": "2025.8.25",
+   "purl": "pkg:pypi/sphinx-autobuild@2025.8.25",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:sphinx-autobuild@2025.8.25#uv.lock"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:sphinx-notfound-page@1.1.0#uv.lock",
+   "name": "sphinx-notfound-page",
+   "version": "1.1.0",
+   "declared": "1.1.0",
+   "purl": "pkg:pypi/sphinx-notfound-page@1.1.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx-notfound-page@1.1.0#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:sphinx-tabs@3.5.0#uv.lock",
+   "name": "sphinx-tabs",
+   "version": "3.5.0",
+   "declared": "3.5.0",
+   "purl": "pkg:pypi/sphinx-tabs@3.5.0",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:sphinx-tabs@3.5.0#uv.lock"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:sphinxcontrib-applehelp@2.0.0#uv.lock",
+   "name": "sphinxcontrib-applehelp",
+   "version": "2.0.0",
+   "declared": "2.0.0",
+   "purl": "pkg:pypi/sphinxcontrib-applehelp@2.0.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:sphinxcontrib-applehelp@2.0.0#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:sphinxcontrib-devhelp@2.0.0#uv.lock",
+   "name": "sphinxcontrib-devhelp",
+   "version": "2.0.0",
+   "declared": "2.0.0",
+   "purl": "pkg:pypi/sphinxcontrib-devhelp@2.0.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:sphinxcontrib-devhelp@2.0.0#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:sphinxcontrib-htmlhelp@2.1.0#uv.lock",
+   "name": "sphinxcontrib-htmlhelp",
+   "version": "2.1.0",
+   "declared": "2.1.0",
+   "purl": "pkg:pypi/sphinxcontrib-htmlhelp@2.1.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:sphinxcontrib-htmlhelp@2.1.0#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:sphinxcontrib-jsmath@1.0.1#uv.lock",
+   "name": "sphinxcontrib-jsmath",
+   "version": "1.0.1",
+   "declared": "1.0.1",
+   "purl": "pkg:pypi/sphinxcontrib-jsmath@1.0.1",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:sphinxcontrib-jsmath@1.0.1#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:sphinxcontrib-log-cabinet@1.0.1#uv.lock",
+   "name": "sphinxcontrib-log-cabinet",
+   "version": "1.0.1",
+   "declared": "1.0.1",
+   "purl": "pkg:pypi/sphinxcontrib-log-cabinet@1.0.1",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:sphinxcontrib-log-cabinet@1.0.1#uv.lock"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:sphinxcontrib-qthelp@2.0.0#uv.lock",
+   "name": "sphinxcontrib-qthelp",
+   "version": "2.0.0",
+   "declared": "2.0.0",
+   "purl": "pkg:pypi/sphinxcontrib-qthelp@2.0.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:sphinxcontrib-qthelp@2.0.0#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:sphinxcontrib-serializinghtml@2.0.0#uv.lock",
+   "name": "sphinxcontrib-serializinghtml",
+   "version": "2.0.0",
+   "declared": "2.0.0",
+   "purl": "pkg:pypi/sphinxcontrib-serializinghtml@2.0.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:sphinxcontrib-serializinghtml@2.0.0#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:starlette@1.3.1#uv.lock",
+   "name": "starlette",
+   "version": "1.3.1",
+   "declared": "1.3.1",
+   "purl": "pkg:pypi/starlette@1.3.1",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:sphinx-autobuild@2025.8.25#uv.lock",
+    "pypi:starlette@1.3.1#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:tomli-w@1.2.0#uv.lock",
+   "name": "tomli-w",
+   "version": "1.2.0",
+   "declared": "1.2.0",
+   "purl": "pkg:pypi/tomli-w@1.2.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:tox-uv@1.36.0#uv.lock",
+    "pypi:tox-uv-bare@1.36.0#uv.lock",
+    "pypi:tox@4.58.0#uv.lock",
+    "pypi:tomli-w@1.2.0#uv.lock"
+   ],
+   "depth": 4
+  },
+  {
+   "key": "pypi:tox@4.58.0#uv.lock",
+   "name": "tox",
+   "version": "4.58.0",
+   "declared": "4.58.0",
+   "purl": "pkg:pypi/tox@4.58.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:tox-uv@1.36.0#uv.lock",
+    "pypi:tox-uv-bare@1.36.0#uv.lock",
+    "pypi:tox@4.58.0#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:tox-uv@1.36.0#uv.lock",
+   "name": "tox-uv",
+   "version": "1.36.0",
+   "declared": "1.36.0",
+   "purl": "pkg:pypi/tox-uv@1.36.0",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:tox-uv@1.36.0#uv.lock"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:tox-uv-bare@1.36.0#uv.lock",
+   "name": "tox-uv-bare",
+   "version": "1.36.0",
+   "declared": "1.36.0",
+   "purl": "pkg:pypi/tox-uv-bare@1.36.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:tox-uv@1.36.0#uv.lock",
+    "pypi:tox-uv-bare@1.36.0#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:types-contextvars@2.4.7.3#uv.lock",
+   "name": "types-contextvars",
+   "version": "2.4.7.3",
+   "declared": "2.4.7.3",
+   "purl": "pkg:pypi/types-contextvars@2.4.7.3",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:types-contextvars@2.4.7.3#uv.lock"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:types-dataclasses@0.6.6#uv.lock",
+   "name": "types-dataclasses",
+   "version": "0.6.6",
+   "declared": "0.6.6",
+   "purl": "pkg:pypi/types-dataclasses@0.6.6",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:types-dataclasses@0.6.6#uv.lock"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:typing-extensions@4.16.0#uv.lock",
+   "name": "typing-extensions",
+   "version": "4.16.0",
+   "declared": "4.16.0",
+   "purl": "pkg:pypi/typing-extensions@4.16.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:mypy@2.3.0#uv.lock",
+    "pypi:typing-extensions@4.16.0#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:urllib3@2.7.0#uv.lock",
+   "name": "urllib3",
+   "version": "2.7.0",
+   "declared": "2.7.0",
+   "purl": "pkg:pypi/urllib3@2.7.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:requests@2.34.2#uv.lock",
+    "pypi:urllib3@2.7.0#uv.lock"
+   ],
+   "depth": 4
+  },
+  {
+   "key": "pypi:uv@0.12.0#uv.lock",
+   "name": "uv",
+   "version": "0.12.0",
+   "declared": "0.12.0",
+   "purl": "pkg:pypi/uv@0.12.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:uv@0.12.0#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:uvicorn@0.52.0#uv.lock",
+   "name": "uvicorn",
+   "version": "0.52.0",
+   "declared": "0.52.0",
+   "purl": "pkg:pypi/uvicorn@0.52.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:sphinx-autobuild@2025.8.25#uv.lock",
+    "pypi:uvicorn@0.52.0#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:vine@5.0.0#examples/celery/requirements.txt",
+   "name": "vine",
+   "version": "5.0.0",
+   "declared": "5.0.0",
+   "purl": "pkg:pypi/vine@5.0.0",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:vine@5.0.0#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:virtualenv@21.7.1#uv.lock",
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "declared": "21.7.1",
+   "purl": "pkg:pypi/virtualenv@21.7.1",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ],
+   "depth": 3
+  },
+  {
+   "key": "pypi:watchfiles@1.2.0#uv.lock",
+   "name": "watchfiles",
+   "version": "1.2.0",
+   "declared": "1.2.0",
+   "purl": "pkg:pypi/watchfiles@1.2.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:sphinx-autobuild@2025.8.25#uv.lock",
+    "pypi:watchfiles@1.2.0#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:wcwidth@0.2.6#examples/celery/requirements.txt",
+   "name": "wcwidth",
+   "version": "0.2.6",
+   "declared": "0.2.6",
+   "purl": "pkg:pypi/wcwidth@0.2.6",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:wcwidth@0.2.6#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:websockets@17.0#uv.lock",
+   "name": "websockets",
+   "version": "17.0",
+   "declared": "17.0",
+   "purl": "pkg:pypi/websockets@17.0",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:sphinx-autobuild@2025.8.25#uv.lock",
+    "pypi:websockets@17.0#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "pypi:werkzeug@2.3.3#examples/celery/requirements.txt",
+   "name": "werkzeug",
+   "version": "2.3.3",
+   "declared": "2.3.3",
+   "purl": "pkg:pypi/werkzeug@2.3.3",
+   "ecosystem": "pypi",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "examples/celery/requirements.txt",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "pypi:werkzeug@2.3.3#examples/celery/requirements.txt"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "pypi:werkzeug@3.1.8#uv.lock",
+   "name": "werkzeug",
+   "version": "3.1.8",
+   "declared": "3.1.8",
+   "purl": "pkg:pypi/werkzeug@3.1.8",
+   "ecosystem": "pypi",
+   "direct": false,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": "uv.lock",
+   "origin": "registry",
+   "found_by": "python-package-cataloger",
+   "pinned": true,
+   "graph": true,
+   "path": [
+    "flask",
+    "pypi:flask@3.2.0.dev0#uv.lock",
+    "pypi:werkzeug@3.1.8#uv.lock"
+   ],
+   "depth": 2
+  },
+  {
+   "key": "github:zizmorcore/zizmor-action@v0.6.1#.github/workflows/zizmor.yaml",
+   "name": "zizmorcore/zizmor-action",
+   "version": "v0.6.1",
+   "declared": "v0.6.1",
+   "purl": "pkg:github/zizmorcore/zizmor-action@v0.6.1",
+   "ecosystem": "github",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": null,
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": null,
+   "source_file": ".github/workflows/zizmor.yaml",
+   "origin": "registry",
+   "found_by": "github-actions-usage-cataloger",
+   "pinned": true,
+   "graph": false,
+   "path": [
+    "flask",
+    "github:zizmorcore/zizmor-action@v0.6.1#.github/workflows/zizmor.yaml"
+   ],
+   "depth": 1
+  },
+  {
+   "key": "cdn:jquery@3.3.1#examples/javascript/js_example/templates/jquery.html",
+   "name": "jquery",
+   "version": "3.3.1",
+   "declared": "3.3.1",
+   "purl": "pkg:npm/jquery@3.3.1",
+   "ecosystem": "npm",
+   "direct": true,
+   "dev": false,
+   "runtime": true,
+   "optional": false,
+   "resolved": "https://code.jquery.com/jquery-3.3.1.min.js",
+   "integrity": null,
+   "has_install_script": false,
+   "license": null,
+   "alias": null,
+   "lockfile_line": 10,
+   "source_file": "examples/javascript/js_example/templates/jquery.html",
+   "origin": "code.jquery.com",
+   "pinned": true,
+   "found_by": "guardian HTML <script src> check",
+   "path": [
+    "flask",
+    "cdn:jquery@3.3.1#examples/javascript/js_example/templates/jquery.html"
+   ],
+   "depth": 1
+  }
+ ],
+ "actions": [
+  {
+   "workflow": ".github/workflows/lock.yaml",
+   "job": "lock",
+   "uses": "dessant/lock-threads@89ae32b08ed1a541efecbab17912962a5e38981c",
+   "owner_repo": "dessant/lock-threads",
+   "ref": "89ae32b08ed1a541efecbab17912962a5e38981c",
+   "pinned_sha": true,
+   "first_party": false,
+   "version_comment": "v6.0.2",
+   "line": 22
+  },
+  {
+   "workflow": ".github/workflows/pre-commit.yaml",
+   "job": "main",
+   "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+   "owner_repo": "actions/checkout",
+   "ref": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+   "pinned_sha": true,
+   "first_party": true,
+   "version_comment": "v7.0.1",
+   "line": 14
+  },
+  {
+   "workflow": ".github/workflows/pre-commit.yaml",
+   "job": "main",
+   "uses": "astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9",
+   "owner_repo": "astral-sh/setup-uv",
+   "ref": "c771a70e6277c0a99b617c7a806ffedaca235ff9",
+   "pinned_sha": true,
+   "first_party": false,
+   "version_comment": "v9.0.0",
+   "line": 17
+  },
+  {
+   "workflow": ".github/workflows/pre-commit.yaml",
+   "job": "main",
+   "uses": "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+   "owner_repo": "actions/setup-python",
+   "ref": "5fda3b95a4ea91299a34e894583c3862153e4b97",
+   "pinned_sha": true,
+   "first_party": true,
+   "version_comment": "v7.0.0",
+   "line": 21
+  },
+  {
+   "workflow": ".github/workflows/pre-commit.yaml",
+   "job": "main",
+   "uses": "actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
+   "owner_repo": "actions/cache",
+   "ref": "55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
+   "pinned_sha": true,
+   "first_party": true,
+   "version_comment": "v6.1.0",
+   "line": 25
+  },
+  {
+   "workflow": ".github/workflows/publish.yaml",
+   "job": "build",
+   "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+   "owner_repo": "actions/checkout",
+   "ref": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+   "pinned_sha": true,
+   "first_party": true,
+   "version_comment": "v7.0.1",
+   "line": 15
+  },
+  {
+   "workflow": ".github/workflows/publish.yaml",
+   "job": "build",
+   "uses": "astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9",
+   "owner_repo": "astral-sh/setup-uv",
+   "ref": "c771a70e6277c0a99b617c7a806ffedaca235ff9",
+   "pinned_sha": true,
+   "first_party": false,
+   "version_comment": "v9.0.0",
+   "line": 18
+  },
+  {
+   "workflow": ".github/workflows/publish.yaml",
+   "job": "build",
+   "uses": "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+   "owner_repo": "actions/setup-python",
+   "ref": "5fda3b95a4ea91299a34e894583c3862153e4b97",
+   "pinned_sha": true,
+   "first_party": true,
+   "version_comment": "v7.0.0",
+   "line": 22
+  },
+  {
+   "workflow": ".github/workflows/publish.yaml",
+   "job": "build",
+   "uses": "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+   "owner_repo": "actions/upload-artifact",
+   "ref": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+   "pinned_sha": true,
+   "first_party": true,
+   "version_comment": "v7.0.1",
+   "line": 27
+  },
+  {
+   "workflow": ".github/workflows/publish.yaml",
+   "job": "create-release",
+   "uses": "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
+   "owner_repo": "actions/download-artifact",
+   "ref": "3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
+   "pinned_sha": true,
+   "first_party": true,
+   "version_comment": "v8.0.1",
+   "line": 39
+  },
+  {
+   "workflow": ".github/workflows/publish.yaml",
+   "job": "publish-pypi",
+   "uses": "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
+   "owner_repo": "actions/download-artifact",
+   "ref": "3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
+   "pinned_sha": true,
+   "first_party": true,
+   "version_comment": "v8.0.1",
+   "line": 39
+  },
+  {
+   "workflow": ".github/workflows/publish.yaml",
+   "job": "publish-pypi",
+   "uses": "pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33",
+   "owner_repo": "pypa/gh-action-pypi-publish",
+   "ref": "dc37677b2e1c63e2034f94d8a5b11f265b73ba33",
+   "pinned_sha": true,
+   "first_party": false,
+   "version_comment": "v1.14.2",
+   "line": 60
+  },
+  {
+   "workflow": ".github/workflows/tests.yaml",
+   "job": "tests",
+   "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+   "owner_repo": "actions/checkout",
+   "ref": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+   "pinned_sha": true,
+   "first_party": true,
+   "version_comment": "v7.0.1",
+   "line": 32
+  },
+  {
+   "workflow": ".github/workflows/tests.yaml",
+   "job": "tests",
+   "uses": "astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9",
+   "owner_repo": "astral-sh/setup-uv",
+   "ref": "c771a70e6277c0a99b617c7a806ffedaca235ff9",
+   "pinned_sha": true,
+   "first_party": false,
+   "version_comment": "v9.0.0",
+   "line": 35
+  },
+  {
+   "workflow": ".github/workflows/tests.yaml",
+   "job": "tests",
+   "uses": "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+   "owner_repo": "actions/setup-python",
+   "ref": "5fda3b95a4ea91299a34e894583c3862153e4b97",
+   "pinned_sha": true,
+   "first_party": true,
+   "version_comment": "v7.0.0",
+   "line": 39
+  },
+  {
+   "workflow": ".github/workflows/tests.yaml",
+   "job": "typing",
+   "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+   "owner_repo": "actions/checkout",
+   "ref": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+   "pinned_sha": true,
+   "first_party": true,
+   "version_comment": "v7.0.1",
+   "line": 32
+  },
+  {
+   "workflow": ".github/workflows/tests.yaml",
+   "job": "typing",
+   "uses": "astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9",
+   "owner_repo": "astral-sh/setup-uv",
+   "ref": "c771a70e6277c0a99b617c7a806ffedaca235ff9",
+   "pinned_sha": true,
+   "first_party": false,
+   "version_comment": "v9.0.0",
+   "line": 35
+  },
+  {
+   "workflow": ".github/workflows/tests.yaml",
+   "job": "typing",
+   "uses": "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+   "owner_repo": "actions/setup-python",
+   "ref": "5fda3b95a4ea91299a34e894583c3862153e4b97",
+   "pinned_sha": true,
+   "first_party": true,
+   "version_comment": "v7.0.0",
+   "line": 39
+  },
+  {
+   "workflow": ".github/workflows/tests.yaml",
+   "job": "typing",
+   "uses": "actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
+   "owner_repo": "actions/cache",
+   "ref": "55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
+   "pinned_sha": true,
+   "first_party": true,
+   "version_comment": "v6.1.0",
+   "line": 60
+  },
+  {
+   "workflow": ".github/workflows/zizmor.yaml",
+   "job": "zizmor",
+   "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+   "owner_repo": "actions/checkout",
+   "ref": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+   "pinned_sha": true,
+   "first_party": true,
+   "version_comment": "v7.0.1",
+   "line": 16
+  },
+  {
+   "workflow": ".github/workflows/zizmor.yaml",
+   "job": "zizmor",
+   "uses": "zizmorcore/zizmor-action@6fc4b006235f201fdab3722e17240ab420d580e5",
+   "owner_repo": "zizmorcore/zizmor-action",
+   "ref": "6fc4b006235f201fdab3722e17240ab420d580e5",
+   "pinned_sha": true,
+   "first_party": false,
+   "version_comment": "v0.6.1",
+   "line": 19
+  }
+ ],
+ "images": [],
+ "manifests": [
+  {
+   "path": ".github/workflows/lock.yaml",
+   "ecosystem": "ci",
+   "role": "ci"
+  },
+  {
+   "path": ".github/workflows/pre-commit.yaml",
+   "ecosystem": "ci",
+   "role": "ci"
+  },
+  {
+   "path": ".github/workflows/publish.yaml",
+   "ecosystem": "ci",
+   "role": "ci"
+  },
+  {
+   "path": ".github/workflows/tests.yaml",
+   "ecosystem": "ci",
+   "role": "ci"
+  },
+  {
+   "path": ".github/workflows/zizmor.yaml",
+   "ecosystem": "ci",
+   "role": "ci"
+  },
+  {
+   "path": "examples/celery/requirements.txt",
+   "ecosystem": "pypi",
+   "role": "lockfile"
+  },
+  {
+   "path": "uv.lock",
+   "ecosystem": "pypi",
+   "role": "lockfile"
+  },
+  {
+   "path": "examples/celery/pyproject.toml",
+   "ecosystem": "pypi",
+   "role": "manifest"
+  },
+  {
+   "path": "examples/javascript/pyproject.toml",
+   "ecosystem": "pypi",
+   "role": "manifest"
+  },
+  {
+   "path": "examples/tutorial/pyproject.toml",
+   "ecosystem": "pypi",
+   "role": "manifest"
+  },
+  {
+   "path": "pyproject.toml",
+   "ecosystem": "pypi",
+   "role": "manifest"
+  }
+ ],
+ "sbom": {
+  "guardian": "/Users/kirankishorev/Documents/BOSCH/guardian/guardian-out/projects/182610-9b8a70/check/snap-49943b5a9441/sbom.guardian.cdx.json",
+  "cyclonedx": "/Users/kirankishorev/Documents/BOSCH/guardian/guardian-out/projects/182610-9b8a70/check/snap-49943b5a9441/sbom.syft.cdx.json",
+  "spdx": "/Users/kirankishorev/Documents/BOSCH/guardian/guardian-out/projects/182610-9b8a70/check/snap-49943b5a9441/sbom.syft.spdx.json"
+ },
+ "runs": {
+  "base": "/Users/kirankishorev/Documents/BOSCH/guardian/guardian-out/projects/182610-9b8a70/check/snap-d04a0c15a83c",
+  "head": "/Users/kirankishorev/Documents/BOSCH/guardian/guardian-out/projects/182610-9b8a70/check/snap-49943b5a9441"
+ }
+}

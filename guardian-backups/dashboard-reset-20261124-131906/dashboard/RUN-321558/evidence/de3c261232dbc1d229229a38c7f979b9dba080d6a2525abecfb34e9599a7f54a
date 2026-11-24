@@ -1,0 +1,6 @@
+{
+  "allowed_registry_hosts": [
+    "registry.npmjs.org"
+  ],
+  "internal_scopes": []
+}

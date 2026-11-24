@@ -41,6 +41,7 @@ def test_chat_json_uses_freemodel_with_medium_reasoning(monkeypatch):
 def test_chat_json_without_key_raises(monkeypatch):
     from guardian import llm_client
     monkeypatch.delenv("FM_API_KEY", raising=False)
+    monkeypatch.delenv("GOOGLE_API_KEY", raising=False)  # no main key and no fallback key
     monkeypatch.setattr(llm_client.config, "load_env", lambda: None)
     with pytest.raises(RuntimeError, match="FM_API_KEY"):
         llm_client.chat_json("p", session=FakeSession(REPLY))

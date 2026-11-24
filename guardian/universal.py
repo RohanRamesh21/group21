@@ -982,8 +982,14 @@ def check_any(repo: Path, base: str | None, head: str, out: Path, app: str, log=
     ci = label_ci(B["ci"]["findings"], H["ci"]["findings"])
     sus = _label(B["suspicious"], H["suspicious"], _key)
     sus = [s for s in sus if s["label"] != "fixed"]
+    drift_error = None
     if B is not H:
         sus += [{**s, "label": "introduced"} for s in change_signals(B, H, files, policy)]
+        try:  # CI drift hard signals (D11 SHA -> tag, D12 history rewrite): git/JSON only, nothing is executed
+            from guardian.detectors.ci_drift import action_sha_to_tag, history_rewrite
+            sus += action_sha_to_tag(B["actions"], H["actions"]) + history_rewrite(repo, bc, hc)
+        except Exception as e:
+            drift_error = f"ci_drift {type(e).__name__}: {e}"[:200]
     # a package that newly runs install code: keep the strong "new_install_script" signal, drop the weak duplicate
     strong = {re.sub(r"@.*$", "", s["component"]) for s in sus if s["type"] == "new_install_script"}
     sus = [s for s in sus if not (s["type"] == "install_script" and re.sub(r"@.*$", "", s["component"]) in strong)]
@@ -1006,19 +1012,18 @@ def check_any(repo: Path, base: str | None, head: str, out: Path, app: str, log=
                      "fixed": sum(1 for c in ci if c["label"] == "fixed"), "actions": H["ci"]["actions"], "images": H["ci"]["images"],
                      "errors": H["ci"]["errors"]},
         "suspicious_changes": [f"[{x['severity']}] {x['type']}: {x['component']} - {x['summary']}" for x in sus],
-        "suspicious_error": None, "syft_error": H["syft_error"],
+        "suspicious_error": drift_error, "syft_error": H["syft_error"],
     }
     report = {"headline": headline, "package_changes": pkgs, "suspicious_changes": sus, "vulnerabilities": vulns, "ci_image": ci,
               "inventory": H["inventory"], "actions": H["actions"], "images": H["images"], "manifests": H["manifests"],
               "sbom": H["sbom"], "runs": {"base": B["dir"], "head": H["dir"]}}
-    shutil.rmtree(out / "trees", ignore_errors=True)
     path = out / f"report-{bc[:8]}-{hc[:8]}.json"
     path.write_text(json.dumps(report, indent=1))
     pointer = {"path": str(path)}
     try:
-        from guardian.scoring.score import score_report
+        from guardian.scoring.contextual_score import score_with_context
         from guardian.scoring.states import stages
-        scores = score_report(report)
+        scores = score_with_context(report, out, src=out / "trees" / "head")  # reachability reads the full head tree
         spath = out / f"scores-{bc[:8]}-{hc[:8]}.json"
         spath.write_text(json.dumps(scores, indent=1))
         pointer["scores"] = str(spath)
@@ -1035,5 +1040,6 @@ def check_any(repo: Path, base: str | None, head: str, out: Path, app: str, log=
                                   incomplete_reasons=[f"scoring: {pointer['scores_error']}"])
         report["headline"]["stages"] = stages(report["headline"], compared=B is not H, scored=False)
         path.write_text(json.dumps(report, indent=1))
+    shutil.rmtree(out / "trees", ignore_errors=True)  # after scoring: reachability needed the full exported head tree
     (out / "latest.json").write_text(json.dumps(pointer))
     return {**report, "path": str(path)}

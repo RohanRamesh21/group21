@@ -1,0 +1,233 @@
+[
+ {
+  "workflow": ".github/workflows/lock.yaml",
+  "job": "lock",
+  "uses": "dessant/lock-threads@89ae32b08ed1a541efecbab17912962a5e38981c",
+  "owner_repo": "dessant/lock-threads",
+  "ref": "89ae32b08ed1a541efecbab17912962a5e38981c",
+  "pinned_sha": true,
+  "first_party": false,
+  "version_comment": "v6.0.2",
+  "line": 22
+ },
+ {
+  "workflow": ".github/workflows/pre-commit.yaml",
+  "job": "main",
+  "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+  "owner_repo": "actions/checkout",
+  "ref": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+  "pinned_sha": true,
+  "first_party": true,
+  "version_comment": "v7.0.1",
+  "line": 14
+ },
+ {
+  "workflow": ".github/workflows/pre-commit.yaml",
+  "job": "main",
+  "uses": "astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9",
+  "owner_repo": "astral-sh/setup-uv",
+  "ref": "c771a70e6277c0a99b617c7a806ffedaca235ff9",
+  "pinned_sha": true,
+  "first_party": false,
+  "version_comment": "v9.0.0",
+  "line": 17
+ },
+ {
+  "workflow": ".github/workflows/pre-commit.yaml",
+  "job": "main",
+  "uses": "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+  "owner_repo": "actions/setup-python",
+  "ref": "5fda3b95a4ea91299a34e894583c3862153e4b97",
+  "pinned_sha": true,
+  "first_party": true,
+  "version_comment": "v7.0.0",
+  "line": 21
+ },
+ {
+  "workflow": ".github/workflows/pre-commit.yaml",
+  "job": "main",
+  "uses": "actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
+  "owner_repo": "actions/cache",
+  "ref": "55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
+  "pinned_sha": true,
+  "first_party": true,
+  "version_comment": "v6.1.0",
+  "line": 25
+ },
+ {
+  "workflow": ".github/workflows/publish.yaml",
+  "job": "build",
+  "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+  "owner_repo": "actions/checkout",
+  "ref": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+  "pinned_sha": true,
+  "first_party": true,
+  "version_comment": "v7.0.1",
+  "line": 15
+ },
+ {
+  "workflow": ".github/workflows/publish.yaml",
+  "job": "build",
+  "uses": "astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9",
+  "owner_repo": "astral-sh/setup-uv",
+  "ref": "c771a70e6277c0a99b617c7a806ffedaca235ff9",
+  "pinned_sha": true,
+  "first_party": false,
+  "version_comment": "v9.0.0",
+  "line": 18
+ },
+ {
+  "workflow": ".github/workflows/publish.yaml",
+  "job": "build",
+  "uses": "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+  "owner_repo": "actions/setup-python",
+  "ref": "5fda3b95a4ea91299a34e894583c3862153e4b97",
+  "pinned_sha": true,
+  "first_party": true,
+  "version_comment": "v7.0.0",
+  "line": 22
+ },
+ {
+  "workflow": ".github/workflows/publish.yaml",
+  "job": "build",
+  "uses": "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+  "owner_repo": "actions/upload-artifact",
+  "ref": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+  "pinned_sha": true,
+  "first_party": true,
+  "version_comment": "v7.0.1",
+  "line": 27
+ },
+ {
+  "workflow": ".github/workflows/publish.yaml",
+  "job": "create-release",
+  "uses": "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
+  "owner_repo": "actions/download-artifact",
+  "ref": "3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
+  "pinned_sha": true,
+  "first_party": true,
+  "version_comment": "v8.0.1",
+  "line": 39
+ },
+ {
+  "workflow": ".github/workflows/publish.yaml",
+  "job": "publish-pypi",
+  "uses": "actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
+  "owner_repo": "actions/download-artifact",
+  "ref": "3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
+  "pinned_sha": true,
+  "first_party": true,
+  "version_comment": "v8.0.1",
+  "line": 39
+ },
+ {
+  "workflow": ".github/workflows/publish.yaml",
+  "job": "publish-pypi",
+  "uses": "pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33",
+  "owner_repo": "pypa/gh-action-pypi-publish",
+  "ref": "dc37677b2e1c63e2034f94d8a5b11f265b73ba33",
+  "pinned_sha": true,
+  "first_party": false,
+  "version_comment": "v1.14.2",
+  "line": 60
+ },
+ {
+  "workflow": ".github/workflows/tests.yaml",
+  "job": "tests",
+  "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+  "owner_repo": "actions/checkout",
+  "ref": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+  "pinned_sha": true,
+  "first_party": true,
+  "version_comment": "v7.0.1",
+  "line": 32
+ },
+ {
+  "workflow": ".github/workflows/tests.yaml",
+  "job": "tests",
+  "uses": "astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9",
+  "owner_repo": "astral-sh/setup-uv",
+  "ref": "c771a70e6277c0a99b617c7a806ffedaca235ff9",
+  "pinned_sha": true,
+  "first_party": false,
+  "version_comment": "v9.0.0",
+  "line": 35
+ },
+ {
+  "workflow": ".github/workflows/tests.yaml",
+  "job": "tests",
+  "uses": "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+  "owner_repo": "actions/setup-python",
+  "ref": "5fda3b95a4ea91299a34e894583c3862153e4b97",
+  "pinned_sha": true,
+  "first_party": true,
+  "version_comment": "v7.0.0",
+  "line": 39
+ },
+ {
+  "workflow": ".github/workflows/tests.yaml",
+  "job": "typing",
+  "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+  "owner_repo": "actions/checkout",
+  "ref": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+  "pinned_sha": true,
+  "first_party": true,
+  "version_comment": "v7.0.1",
+  "line": 32
+ },
+ {
+  "workflow": ".github/workflows/tests.yaml",
+  "job": "typing",
+  "uses": "astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9",
+  "owner_repo": "astral-sh/setup-uv",
+  "ref": "c771a70e6277c0a99b617c7a806ffedaca235ff9",
+  "pinned_sha": true,
+  "first_party": false,
+  "version_comment": "v9.0.0",
+  "line": 35
+ },
+ {
+  "workflow": ".github/workflows/tests.yaml",
+  "job": "typing",
+  "uses": "actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97",
+  "owner_repo": "actions/setup-python",
+  "ref": "5fda3b95a4ea91299a34e894583c3862153e4b97",
+  "pinned_sha": true,
+  "first_party": true,
+  "version_comment": "v7.0.0",
+  "line": 39
+ },
+ {
+  "workflow": ".github/workflows/tests.yaml",
+  "job": "typing",
+  "uses": "actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
+  "owner_repo": "actions/cache",
+  "ref": "55cc8345863c7cc4c66a329aec7e433d2d1c52a9",
+  "pinned_sha": true,
+  "first_party": true,
+  "version_comment": "v6.1.0",
+  "line": 60
+ },
+ {
+  "workflow": ".github/workflows/zizmor.yaml",
+  "job": "zizmor",
+  "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+  "owner_repo": "actions/checkout",
+  "ref": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+  "pinned_sha": true,
+  "first_party": true,
+  "version_comment": "v7.0.1",
+  "line": 16
+ },
+ {
+  "workflow": ".github/workflows/zizmor.yaml",
+  "job": "zizmor",
+  "uses": "zizmorcore/zizmor-action@6fc4b006235f201fdab3722e17240ab420d580e5",
+  "owner_repo": "zizmorcore/zizmor-action",
+  "ref": "6fc4b006235f201fdab3722e17240ab420d580e5",
+  "pinned_sha": true,
+  "first_party": false,
+  "version_comment": "v0.6.1",
+  "line": 19
+ }
+]

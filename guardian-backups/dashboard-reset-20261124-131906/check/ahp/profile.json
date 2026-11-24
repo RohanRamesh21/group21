@@ -1,0 +1,6 @@
+{
+ "internet_facing": "yes",
+ "data_sensitivity": "secrets",
+ "deployment": "on_prem",
+ "notes": ""
+}

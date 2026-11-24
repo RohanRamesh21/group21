@@ -1,0 +1,224 @@
+{
+ "status": "partial",
+ "mode": "workflow",
+ "prompt_version": "inv-1",
+ "model": "deepseek-v4-flash-0731",
+ "effort": "medium",
+ "created": "2026-11-24T07:41:24Z",
+ "seconds": 1.4,
+ "run_id": "inv-4fbc6e0e-131123256",
+ "packet_sha256": "4fbc6e0e85d5d0764c31748e616191f8b6f72daf8eab44a940ea685db685478a",
+ "base_sha": "da938350cc858e845e4a41aaf5fa9c1091f343ce",
+ "head_sha": "576752d0a257fcb1438a5eea68660cf25f4dff2f",
+ "rules_verdict": {
+  "verdict": "block",
+  "reasons": [
+   "axois@1.0.0: MAL-2025-15245 (Known malicious package (OSV MAL- advisory))",
+   "axois@1.0.0: untrusted source (Package downloaded from a server that is not on the registry allow-list)",
+   "axois@1.0.0: typosquat (Look-alike name AND install-time code)",
+   "axois@1.0.0: new install script (Look-alike name AND install-time code)",
+   ".npmrc: source change (Package-manager config redirected (e.g. .npmrc registry))"
+  ]
+ },
+ "note": "AI text is inference, checked against stored evidence. The AI does not change the rules verdict.",
+ "cases": [
+  {
+   "case_id": "C-e813096d",
+   "component": ".npmrc",
+   "finding_ids": [
+    "sensitive_file_change:.npmrc",
+    "source_change:.npmrc"
+   ],
+   "claims": [
+    {
+     "text": "The .npmrc diff adds a registry line pointing npm package downloads to http://127.0.0.1:4873/.",
+     "evidence_ids": [
+      "E-834a970a775a",
+      "E-58afb1000ab5"
+     ],
+     "status": "inferred",
+     "cites_checked": true
+    },
+    {
+     "text": "Rule-based detection classified the registry redirection as a hard signal and critical source change because it is not an approved registry.",
+     "evidence_ids": [
+      "E-58afb1000ab5"
+     ],
+     "status": "inferred",
+     "cites_checked": true
+    },
+    {
+     "text": "The same .npmrc change was also flagged as a low-level sensitive-file change because it controls install/build behavior.",
+     "evidence_ids": [
+      "E-0bedc8739804"
+     ],
+     "status": "inferred",
+     "cites_checked": true
+    },
+    {
+     "text": "The redirect targets the loopback address 127.0.0.1 on port 4873, which is commonly used by a local package registry such as Verdaccio.",
+     "evidence_ids": [
+      "E-834a970a775a",
+      "E-58afb1000ab5"
+     ],
+     "status": "inferred",
+     "cites_checked": true
+    }
+   ],
+   "rejected": [],
+   "open_questions": [
+    "Is http://127.0.0.1:4873/ expected to be available in CI, and would it serve vetted packages?",
+    "Was the local registry line intended to be committed, or should it be reverted/guarded in developer-local config?",
+    "Does the repository's policy allow any non-approved registry redirects, even loopback-only ones?"
+   ],
+   "status": "done",
+   "assessment": "risky_config",
+   "summary": "The PR adds registry=http://127.0.0.1:4873/ to .npmrc, redirecting package downloads to an unapproved local HTTP registry. This is a high-severity supply-chain configuration change, but the evidence does not show an external host, credential theft, or malicious package content.",
+   "confidence": "medium",
+   "innocent_explanation": "A developer may have pointed npm at a local Verdaccio-style registry on its default port for offline or pre-publication testing and committed the .npmrc line by accident.",
+   "cached": true
+  },
+  {
+   "case_id": "C-68acd29b",
+   "component": "axois@1.0.0",
+   "finding_ids": [
+    "axois@1.0.0#GHSA-ch9v-rq66-537x",
+    "axois@1.0.0#GHSA-wpfc-3w63-g4hm",
+    "axois@1.0.0#MAL-2025-15245",
+    "new_dependency:axois@1.0.0",
+    "new_install_script:axois@1.0.0",
+    "typosquat:axois@1.0.0",
+    "untrusted_source:axois@1.0.0"
+   ],
+   "claims": [],
+   "rejected": [],
+   "open_questions": [],
+   "status": "failed",
+   "error": "RuntimeError: AI quota used up at the model provider (tokens_exhausted): Your plan tokens are used up. Renew or upgrade your plan at freemodel.in/dashboard/plan to continue. Your wallet balance is never charged automatically."
+  }
+ ],
+ "verifier": {
+  "status": "failed",
+  "error": "RuntimeError: AI quota used up at the model provider (tokens_exhausted): Your plan tokens are used up. Renew or upgrade your plan at freemodel.in/dashboard/plan to continue. Your wallet balance is never charged automatically.",
+  "challenges": [],
+  "missed_risks": [],
+  "rejected": []
+ },
+ "usage": {
+  "run": {
+   "calls": 0,
+   "cached_calls": 1,
+   "tokens": 0,
+   "seconds": 0.0
+  },
+  "month": {
+   "calls": 9,
+   "cached_calls": 33,
+   "tokens": 64193,
+   "seconds": 221.5
+  },
+  "by_purpose": {
+   "explain": {
+    "calls": 2,
+    "cached_calls": 0,
+    "tokens": 17478,
+    "seconds": 93.1
+   },
+   "fix_review": {
+    "calls": 1,
+    "cached_calls": 7,
+    "tokens": 5542,
+    "seconds": 15.3
+   },
+   "investigate": {
+    "calls": 3,
+    "cached_calls": 20,
+    "tokens": 13140,
+    "seconds": 35.0
+   },
+   "verify": {
+    "calls": 3,
+    "cached_calls": 6,
+    "tokens": 28033,
+    "seconds": 78.2
+   }
+  },
+  "budget": {
+   "run": 25000,
+   "month": 300000
+  },
+  "month_left": 235807
+ },
+ "evidence_index": {
+  "E-0bedc8739804": {
+   "sha256": "81024adea048dc75ca6ed113147f5706574c8f7b6cd9dc184e43645b3ff06162",
+   "source": "engine_finding",
+   "path": null
+  },
+  "E-58afb1000ab5": {
+   "sha256": "b1cc52a90a2d42155a4dd4a375c812b416000cafec3cfbfc55c14ec1cef4a235",
+   "source": "engine_finding",
+   "path": null
+  },
+  "E-834a970a775a": {
+   "sha256": "5c40f828bcf3e6bcb0bb059d496b1d81b38aedbe16e3251d7546f82c9e816deb",
+   "source": "file_diff",
+   "path": ".npmrc"
+  },
+  "E-0a90726c45f7": {
+   "sha256": "ad3e6e5e577e85a895174b8aa4e916da61d63bf5caaf2100fb6c8ecea3ec3a67",
+   "source": "engine_finding",
+   "path": null
+  },
+  "E-0867f8ef4aa8": {
+   "sha256": "ac9248ad364f352b081d0aa8ff438b2117d7f1f3c04a5a0e52570ceb3bf11a25",
+   "source": "engine_finding",
+   "path": null
+  },
+  "E-eea2b3eafe4f": {
+   "sha256": "9bf281169b5e0192c21f833aad0a8ccf1910907d3aabb5ef1b430689e64d3a76",
+   "source": "engine_finding",
+   "path": null
+  },
+  "E-1a0956359aac": {
+   "sha256": "a802efe988e38adf1d5b75b227fb5fe0fc648de72fc45aba5baee48121624152",
+   "source": "engine_finding",
+   "path": null
+  },
+  "E-289e361b5641": {
+   "sha256": "241474ef0584ba11b4030c6ea96de8a2d395236f5bbe5feb673fa8c342206e96",
+   "source": "engine_finding",
+   "path": null
+  },
+  "E-61b85cc4ebf6": {
+   "sha256": "2ef7f3a216d634dffa08fc740067ebc5633e643ebc5b30787013f9b31a4731b3",
+   "source": "engine_finding",
+   "path": null
+  },
+  "E-e6a3f8630a70": {
+   "sha256": "4896dcb8c5d0d22b5abe9191b93559cffe819a750eea9b8482043767d6a7cee6",
+   "source": "engine_finding",
+   "path": null
+  },
+  "E-4de7a33807b1": {
+   "sha256": "b0097df1a5bcfaa24bb13bbb83653d9cd4993f51499278f9f51e8110246bd08f",
+   "source": "lockfile_entry",
+   "path": "package-lock.json"
+  },
+  "E-13c03ec974ae": {
+   "sha256": "924d354e97876ddf990125086af9505d961bda166dfc95d9a288f30f1ad1466a",
+   "source": "manifest_diff",
+   "path": "package.json"
+  },
+  "E-e60df1962f0c": {
+   "sha256": "600bd5f7ef2c26930c31b66b0c074445e587106db6d07a5dd137b7fb46e48ec3",
+   "source": "package_scripts",
+   "path": "axois@1.0.0/package.json"
+  },
+  "E-702287d79c2d": {
+   "sha256": "8b460e514d946e203b2ad6e8eb41efb4f5e74492cc315e52a6b55ae2a53196fb",
+   "source": "hook_file",
+   "path": "axois@1.0.0/setup.js"
+  }
+ }
+}

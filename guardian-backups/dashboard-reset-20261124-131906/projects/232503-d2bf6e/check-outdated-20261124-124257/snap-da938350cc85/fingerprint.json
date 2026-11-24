@@ -1,0 +1,69 @@
+{
+  "ecosystems": [
+    "npm"
+  ],
+  "manifests": [
+    "extra/kuma-pr/package.json",
+    "extra/push-examples/javascript-fetch/package.json",
+    "extra/push-examples/typescript-fetch/package.json",
+    "extra/uptime-kuma-push/package.json",
+    "package.json"
+  ],
+  "lockfiles": [
+    "package-lock.json"
+  ],
+  "dockerfiles": [
+    "docker/builder-go.dockerfile",
+    "docker/debian-base.dockerfile",
+    "docker/dockerfile",
+    "extra/uptime-kuma-push/Dockerfile",
+    "test/test-radius.dockerfile"
+  ],
+  "workflows": [
+    ".github/workflows/ai-slop.yml",
+    ".github/workflows/auto-test.yml",
+    ".github/workflows/autofix.yml",
+    ".github/workflows/build-docker-base.yml",
+    ".github/workflows/build-docker-pr-test.yml",
+    ".github/workflows/build-docker-push.yml",
+    ".github/workflows/close-incorrect-issue.yml",
+    ".github/workflows/codeql-analysis.yml",
+    ".github/workflows/conflict-labeler.yml",
+    ".github/workflows/deleted-pr.yml",
+    ".github/workflows/duplicate-issues.yml",
+    ".github/workflows/mark-as-draft-on-requesting-changes.yml",
+    ".github/workflows/new-contributor-pr.yml",
+    ".github/workflows/npm-update.yml",
+    ".github/workflows/pr-description-check.yml",
+    ".github/workflows/pr-title.yml",
+    ".github/workflows/prevent-file-change.yml",
+    ".github/workflows/release-nightly.yml",
+    ".github/workflows/release.yml",
+    ".github/workflows/stale-bot.yml",
+    ".github/workflows/validate.yml"
+  ],
+  "sensitive": [
+    ".github/workflows/ai-slop.yml",
+    ".github/workflows/auto-test.yml",
+    ".github/workflows/autofix.yml",
+    ".github/workflows/build-docker-base.yml",
+    ".github/workflows/build-docker-pr-test.yml",
+    ".github/workflows/build-docker-push.yml",
+    ".github/workflows/close-incorrect-issue.yml",
+    ".github/workflows/codeql-analysis.yml",
+    ".github/workflows/conflict-labeler.yml",
+    ".github/workflows/deleted-pr.yml",
+    ".github/workflows/duplicate-issues.yml",
+    ".github/workflows/mark-as-draft-on-requesting-changes.yml",
+    ".github/workflows/new-contributor-pr.yml",
+    ".github/workflows/npm-update.yml",
+    ".github/workflows/pr-description-check.yml",
+    ".github/workflows/pr-title.yml",
+    ".github/workflows/prevent-file-change.yml",
+    ".github/workflows/release-nightly.yml",
+    ".github/workflows/release.yml",
+    ".github/workflows/stale-bot.yml",
+    ".github/workflows/validate.yml",
+    ".npmrc"
+  ]
+}

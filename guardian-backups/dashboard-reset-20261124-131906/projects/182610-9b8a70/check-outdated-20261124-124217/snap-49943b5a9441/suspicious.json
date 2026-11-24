@@ -1,0 +1,72 @@
+[
+ {
+  "detector": "D11",
+  "type": "remote_script_no_sri",
+  "severity": "medium",
+  "hard_signal": false,
+  "component": "jquery@3.3.1",
+  "file": "examples/javascript/js_example/templates/jquery.html",
+  "line": 10,
+  "summary": "examples/javascript/js_example/templates/jquery.html:10 loads https://code.jquery.com/jquery-3.3.1.min.js from code.jquery.com without an integrity hash: whoever controls that server can change the code your users run"
+ },
+ {
+  "detector": "D13",
+  "type": "undeclared_dependency",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "pypi:config-module-app",
+  "file": "tests/test_instance_config.py",
+  "line": 25,
+  "summary": "'config-module-app' is imported (1x, e.g. tests/test_instance_config.py:25) but no manifest declares it: the version is whatever is installed on the machine, so it is unpinned and unchecked"
+ },
+ {
+  "detector": "D13",
+  "type": "undeclared_dependency",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "pypi:config-package-app",
+  "file": "tests/test_instance_config.py",
+  "line": 41,
+  "summary": "'config-package-app' is imported (1x, e.g. tests/test_instance_config.py:41) but no manifest declares it: the version is whatever is installed on the machine, so it is unpinned and unchecked"
+ },
+ {
+  "detector": "D13",
+  "type": "undeclared_dependency",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "pypi:installed-package",
+  "file": "tests/test_instance_config.py",
+  "line": 92,
+  "summary": "'installed-package' is imported (1x, e.g. tests/test_instance_config.py:92) but no manifest declares it: the version is whatever is installed on the machine, so it is unpinned and unchecked"
+ },
+ {
+  "detector": "D13",
+  "type": "undeclared_dependency",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "pypi:namespace",
+  "file": "tests/test_instance_config.py",
+  "line": 60,
+  "summary": "'namespace' is imported (1x, e.g. tests/test_instance_config.py:60) but no manifest declares it: the version is whatever is installed on the machine, so it is unpinned and unchecked"
+ },
+ {
+  "detector": "D13",
+  "type": "undeclared_dependency",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "pypi:site-app",
+  "file": "tests/test_instance_config.py",
+  "line": 73,
+  "summary": "'site-app' is imported (1x, e.g. tests/test_instance_config.py:73) but no manifest declares it: the version is whatever is installed on the machine, so it is unpinned and unchecked"
+ },
+ {
+  "detector": "D13",
+  "type": "undeclared_dependency",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "pypi:site-package",
+  "file": "tests/test_instance_config.py",
+  "line": 107,
+  "summary": "'site-package' is imported (1x, e.g. tests/test_instance_config.py:107) but no manifest declares it: the version is whatever is installed on the machine, so it is unpinned and unchecked"
+ }
+]

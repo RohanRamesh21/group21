@@ -58,10 +58,37 @@ function Validation({ project, s, refresh }: { project: string | null; s: Sectio
 }
 
 
+/* Before/after delta from contextual scoring (informational; the gate above decides "verified"). */
+function Delta({ d }: { d: any }) {
+  if (!d) return null;
+  if (d.error) return <p className="panel p-4 text-[12px] text-high">{d.error}</p>;
+  const LV = ["critical", "high", "medium", "low", "info"];
+  return (
+    <section className="panel p-4 text-[12.5px]">
+      <h2 className="text-[13px] font-semibold">Before / after <span className="font-normal text-faint">· contextual risk index</span></h2>
+      <div className="mt-3 grid gap-4 md:grid-cols-[220px_minmax(0,1fr)]">
+        <div>
+          <div className="flex items-baseline gap-2 font-mono tabular-nums"><span className="text-[22px] text-muted">{d.risk_index.before}</span><span className="text-faint">→</span>
+            <span className={`text-[26px] ${d.risk_index.after < d.risk_index.before ? "text-ok" : d.risk_index.after > d.risk_index.before ? "text-crit" : ""}`}>{d.risk_index.after}</span></div>
+          <p className="mt-1 text-[11px] text-faint">{d.risk_index.definition}. {d.risk_index.note}</p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <table className="text-[12px] tabular-nums"><thead className="text-[11px] text-faint"><tr><th className="text-left">level</th><th className="text-right">before</th><th className="text-right">after</th></tr></thead>
+            <tbody>{LV.map((lv) => <tr key={lv}><td className="text-muted">{lv}</td><td className="text-right">{d.levels_before[lv] ?? 0}</td><td className="text-right">{d.levels_after[lv] ?? 0}</td></tr>)}</tbody></table>
+          <ul className="space-y-1 text-[12px]">{d.targets.map((t: any) => (
+            <li key={t.id} className="flex gap-2"><span className={t.status === "remediated" ? "text-ok" : t.status === "regressed" ? "text-crit" : "text-high"}>{t.status}</span><span className="truncate font-mono text-[11px] text-muted">{t.id}</span></li>))}</ul>
+        </div>
+      </div>
+      <p className="mt-2 text-[11.5px] text-muted">Conditions: {Object.entries(d.conditions).map(([k, v]) => `${k.replace(/_/g, " ")} ${v ? "✓" : "✗"}`).join(" · ")}
+        {d.new_findings?.length ? ` · ${d.new_findings.length} new finding(s)` : ""}</p>
+    </section>);
+}
+
 export function Validate({ s, project, refresh }: { s: Sections; project: string | null; refresh: () => void }) {
   return (
     <div className="flex flex-col gap-4">
       <SectionHead n={5} title="Validate the approved fix" sub="Baseline and candidate are installed, built and tested in disposable containers (all capabilities dropped, non-root, no secrets, no internet except the local registry), then rescanned. “Verified” only when every required stage passed." />
       <Validation project={project} s={s} refresh={refresh} />
+      <Delta d={s.before_after?.delta} />
     </div>);
 }

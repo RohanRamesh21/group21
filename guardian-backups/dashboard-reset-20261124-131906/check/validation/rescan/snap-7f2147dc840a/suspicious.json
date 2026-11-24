@@ -1,0 +1,102 @@
+[
+ {
+  "detector": "D4",
+  "type": "source_change",
+  "severity": "high",
+  "hard_signal": true,
+  "component": ".npmrc",
+  "file": ".npmrc",
+  "line": 3,
+  "summary": ".npmrc:3 sends package downloads to http://127.0.0.1:4873/ (not an approved registry)"
+ },
+ {
+  "detector": "D2",
+  "type": "install_script",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "@louislam/sqlite3@15.1.6",
+  "file": "package-lock.json",
+  "line": 1893,
+  "summary": "runs its own code during install (preinstall/install/postinstall)"
+ },
+ {
+  "detector": "D1",
+  "type": "typosquat",
+  "severity": "high",
+  "hard_signal": false,
+  "component": "axois@1.0.0",
+  "file": "package-lock.json",
+  "line": 4928,
+  "summary": "name is 1 edit(s) away from the popular package 'axios'"
+ },
+ {
+  "detector": "D2",
+  "type": "install_script",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "axois@1.0.0",
+  "file": "package-lock.json",
+  "line": 4928,
+  "summary": "runs its own code during install (preinstall/install/postinstall)"
+ },
+ {
+  "detector": "D3",
+  "type": "untrusted_source",
+  "severity": "critical",
+  "hard_signal": true,
+  "component": "axois@1.0.0",
+  "file": "package-lock.json",
+  "line": 4928,
+  "summary": "downloaded from 127.0.0.1:4873, which is not on the registry allow-list"
+ },
+ {
+  "detector": "D2",
+  "type": "install_script",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "fsevents@2.3.2",
+  "file": "package-lock.json",
+  "line": 8602,
+  "summary": "runs its own code during install (preinstall/install/postinstall)"
+ },
+ {
+  "detector": "D2",
+  "type": "install_script",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "oracledb@6.10.0",
+  "file": "package-lock.json",
+  "line": 12051,
+  "summary": "runs its own code during install (preinstall/install/postinstall)"
+ },
+ {
+  "detector": "D2",
+  "type": "install_script",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "ssh2@1.17.0",
+  "file": "package-lock.json",
+  "line": 14680,
+  "summary": "runs its own code during install (preinstall/install/postinstall)"
+ },
+ {
+  "detector": "D2",
+  "type": "install_script",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "fsevents@2.3.3",
+  "file": "package-lock.json",
+  "line": 16131,
+  "summary": "runs its own code during install (preinstall/install/postinstall)"
+ },
+ {
+  "detector": "D2",
+  "type": "install_script",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "vue-demi@0.12.5",
+  "file": "package-lock.json",
+  "line": 16199,
+  "summary": "runs its own code during install (preinstall/install/postinstall)"
+ }
+]

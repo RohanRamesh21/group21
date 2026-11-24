@@ -33,8 +33,25 @@ function createPet() {
   });
   pet.setAlwaysOnTop(true, "floating");
   pet.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  // Diagnostics (written to the launchd log): load result, renderer crashes, console errors, and a self-snapshot.
+  const wc = pet.webContents;
+  wc.on("did-finish-load", () => console.log(`[buddy] pet page loaded; window ${JSON.stringify(pet.getBounds())}`));
+  wc.on("did-fail-load", (_e, code, desc) => console.log(`[buddy] pet page FAILED to load: ${code} ${desc}`));
+  wc.on("render-process-gone", (_e, d) => console.log(`[buddy] renderer gone: ${d.reason}`));
+  wc.on("console-message", (e) => { const m = e.message ?? e; if ((e.level ?? 0) >= 2 || /error/i.test(String(m))) console.log(`[buddy] page console: ${m}`); });
   pet.loadFile(path.join(__dirname, "pet.html"));
-  pet.once("ready-to-show", () => { pet.showInactive(); push(); });
+  pet.once("ready-to-show", () => {
+    pet.showInactive(); push();
+    setTimeout(() => wc.executeJavaScript(`(() => { const r = document.getElementById("robot"), w = document.querySelector(".wrap"); const cs = getComputedStyle(r);
+      return JSON.stringify({ kind: document.body.dataset.kind, win: [innerWidth, innerHeight], robot: r.getBoundingClientRect(), wrap: w.getBoundingClientRect(),
+        display: cs.display, opacity: cs.opacity, visibility: cs.visibility, cols: getComputedStyle(w).gridTemplateColumns, sheets: document.styleSheets.length }); })()`)
+      .then((d) => console.log(`[buddy] layout ${d}`)).catch((e) => console.log(`[buddy] layout check failed: ${e.message}`)), 2500);
+    setTimeout(() => wc.capturePage().then((img) => {
+      const out = path.join(app.getPath("home"), "Library", "Logs", "guardian", "buddy-snapshot.png");
+      require("node:fs").writeFileSync(out, img.toPNG());
+      console.log(`[buddy] self-snapshot ${img.getSize().width}x${img.getSize().height} -> ${out}; state ${state.kind}`);
+    }).catch((err) => console.log(`[buddy] snapshot failed: ${err.message}`)), 3000);
+  });
 }
 
 function setSize(name) {
@@ -78,6 +95,7 @@ function push() {
 const LOUD = new Set(["scanning", "block", "review", "approval", "verified", "not_verified", "nightly"]);
 
 function setState(next) {
+  if (next.kind !== state.kind) console.log(`[buddy] state ${state.kind} -> ${next.kind}${next.pr ? ` (PR #${next.pr})` : ""}`);
   state = { ...next, at: Date.now() };
   const quiet = Date.now() < snoozeUntil && next.kind !== "block";  // snoozed: only red interrupts
   if (!quiet && LOUD.has(next.kind) || next.kind === "block") {

@@ -1,0 +1,4 @@
+commit a1b2c3d
+Author: dev-bot <dev-bot@example.invalid>
+Message: fix typo
+Files: package.json, package-lock.json, .npmrc

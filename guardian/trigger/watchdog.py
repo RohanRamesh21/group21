@@ -28,13 +28,13 @@ def missed(github, repo: str, runs: list[dict]) -> list[dict]:
 
 def main() -> int:
     from guardian import config
-    from guardian.trigger.github import GitHub
+    from guardian.trigger.github import GitHubRouter
     ap = argparse.ArgumentParser()
     ap.add_argument("--repo", action="append", required=True, help="repeat for several repositories")
     ap.add_argument("--server", default=os.environ.get("GUARDIAN_URL", "http://127.0.0.1:8765"))
     a = ap.parse_args()
     config.load_env()
-    gh = GitHub(os.environ["GUARDIAN_GITHUB_TOKEN"])
+    gh = GitHubRouter(dict(os.environ))
     with urllib.request.urlopen(f"{a.server}/api/trigger/current", timeout=20) as r:
         runs = json.loads(r.read()).get("runs", [])
     events = [e for repo in a.repo for e in missed(gh, repo, runs)]

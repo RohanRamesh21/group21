@@ -1,0 +1,73 @@
+{
+ "id": "182610-9b8a70",
+ "kind": "git",
+ "label": "github.com/pallets/flask",
+ "status": "done",
+ "message": "done",
+ "created": 1795438570.8511,
+ "steps": [
+  {
+   "t": 65766.2,
+   "msg": "Rescan with the current engine: same commits (d04a0c15a83c -> 49943b5a9441)"
+  },
+  {
+   "t": 65766.2,
+   "msg": "Day 1 pipeline: components -> SBOM -> dependency graph -> vulnerabilities -> suspicious changes -> evidence (comparing d04a0c15a83c78186cf31dc5d226b3110321b9e5 -> 49943b5a94413a530761350f04e896f76e8d620e)"
+  },
+  {
+   "t": 65766.2,
+   "msg": "Exporting commit 49943b5a (git archive: no hooks, no symlinks)"
+  },
+  {
+   "t": 65766.3,
+   "msg": "Building the SBOM with Syft (CycloneDX + SPDX), all ecosystems"
+  },
+  {
+   "t": 65767.1,
+   "msg": "Checking CI workflows and container images"
+  },
+  {
+   "t": 65767.3,
+   "msg": "Looking up vulnerabilities: OSV.dev (all ecosystems) + Grype (local DB)"
+  },
+  {
+   "t": 65774.4,
+   "msg": "Scanning the previous state d04a0c15 to find what changed"
+  },
+  {
+   "t": 65774.5,
+   "msg": "Building the SBOM with Syft (CycloneDX + SPDX), all ecosystems"
+  },
+  {
+   "t": 65776.1,
+   "msg": "Checking CI workflows and container images"
+  },
+  {
+   "t": 65776.3,
+   "msg": "Looking up vulnerabilities: OSV.dev (all ecosystems) + Grype (local DB)"
+  }
+ ],
+ "url": "https://github.com/pallets/flask",
+ "base": null,
+ "head": null,
+ "updated": 1795504351.703073,
+ "base_default": true,
+ "mode": "compare",
+ "out": "/Users/kirankishorev/Documents/BOSCH/guardian/guardian-out/projects/182610-9b8a70/check",
+ "summary": {
+  "packages": 118,
+  "ecosystems": {
+   "github": 17,
+   "pypi": 100,
+   "npm": 1
+  },
+  "verdict": "allow",
+  "reasons": [
+   "no high or critical risk introduced by this change"
+  ],
+  "head_commit": "49943b5a9441",
+  "base_commit": "d04a0c15a83c",
+  "scores": true
+ },
+ "rescanned": 1795504337.052212
+}

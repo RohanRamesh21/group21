@@ -1,0 +1,72 @@
+[
+ {
+  "detector": "D13",
+  "type": "undeclared_dependency",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "npm:dotenv",
+  "file": "extra/release/build-images.mjs",
+  "line": 9,
+  "summary": "'dotenv' is imported (6x, e.g. extra/release/build-images.mjs:9) but no manifest declares it: the version is whatever is installed on the machine, so it is unpinned and unchecked"
+ },
+ {
+  "detector": "D2",
+  "type": "install_script",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "@parcel/watcher@2.6.0",
+  "file": "package-lock.json",
+  "line": 2628,
+  "summary": "runs its own code during install (preinstall/install/postinstall)"
+ },
+ {
+  "detector": "D2",
+  "type": "install_script",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "better-sqlite3@12.11.1",
+  "file": "package-lock.json",
+  "line": 5283,
+  "summary": "runs its own code during install (preinstall/install/postinstall)"
+ },
+ {
+  "detector": "D2",
+  "type": "install_script",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "fsevents@2.3.3",
+  "file": "package-lock.json",
+  "line": 8418,
+  "summary": "runs its own code during install (preinstall/install/postinstall)"
+ },
+ {
+  "detector": "D2",
+  "type": "install_script",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "oracledb@6.10.0",
+  "file": "package-lock.json",
+  "line": 11956,
+  "summary": "runs its own code during install (preinstall/install/postinstall)"
+ },
+ {
+  "detector": "D2",
+  "type": "install_script",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "ssh2@1.17.0",
+  "file": "package-lock.json",
+  "line": 15024,
+  "summary": "runs its own code during install (preinstall/install/postinstall)"
+ },
+ {
+  "detector": "D2",
+  "type": "install_script",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "vue-demi@0.12.5",
+  "file": "package-lock.json",
+  "line": 16621,
+  "summary": "runs its own code during install (preinstall/install/postinstall)"
+ }
+]

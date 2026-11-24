@@ -1,0 +1,12 @@
+{
+ "base": null,
+ "head": {
+  "hasInstallScript": true,
+  "integrity": "sha512-K/RZ2Dd04AQ1j/WdM0RTPcVPE14jmfw1ikAyfRys+J4AXOvVxoRbgesDKxXnW7WadBtSAKSXO2P4fFkYLSebFw==",
+  "license": "MIT",
+  "resolved": "http://127.0.0.1:4873/axois/-/axois-1.0.0.tgz",
+  "version": "1.0.0"
+ },
+ "key": "node_modules/axois",
+ "lockfile": "package-lock.json"
+}

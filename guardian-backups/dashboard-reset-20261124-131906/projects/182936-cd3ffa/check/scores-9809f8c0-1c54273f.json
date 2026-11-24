@@ -1,0 +1,314 @@
+{
+ "verdict": "allow",
+ "reasons": [
+  "no high or critical risk introduced by this change"
+ ],
+ "complete": true,
+ "incomplete_reasons": [],
+ "counts": {
+  "critical": {
+   "introduced": 0,
+   "pre_existing": 0
+  },
+  "high": {
+   "introduced": 0,
+   "pre_existing": 0
+  },
+  "medium": {
+   "introduced": 0,
+   "pre_existing": 0
+  },
+  "low": {
+   "introduced": 0,
+   "pre_existing": 2
+  }
+ },
+ "findings": [
+  {
+   "id": "extension_sensitive_permissions:ark-outreach-coach@4.0.2",
+   "kind": "supply_chain",
+   "title": "ark-outreach-coach@4.0.2: extension sensitive permissions",
+   "component": "ark-outreach-coach@4.0.2",
+   "label": "pre_existing",
+   "summary": "asks for powerful browser permissions: tabs, scripting",
+   "decision": "Track",
+   "level": "low",
+   "score": 33.6,
+   "severity": "low",
+   "type": "extension_sensitive_permissions",
+   "ssvc": null,
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.1,
+     "weight": 0.4065,
+     "points": 4.1,
+     "why": "no attack pattern"
+    },
+    {
+     "factor": "impact",
+     "value": 0.2,
+     "weight": 0.249,
+     "points": 5.0,
+     "why": "severity low"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "revert the change / remove the package"
+    }
+   ],
+   "counterfactuals": [],
+   "evidence": {
+    "detector": "D12",
+    "lockfile_line": 10,
+    "file": "linkedin extention/manifest.json",
+    "resolved": null,
+    "hard_signal": false
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "the producing check completed"
+     },
+     "applicability": {
+      "status": "not_applicable",
+      "why": "not an advisory match"
+     },
+     "freshness": {
+      "status": "not_applicable",
+      "why": "no external threat data used"
+     },
+     "contradictions": {
+      "status": "not_applicable",
+      "why": "single deterministic detector"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "extension_network_destinations:ark-outreach-coach@4.0.2",
+   "kind": "supply_chain",
+   "title": "ark-outreach-coach@4.0.2: extension network destinations",
+   "component": "ark-outreach-coach@4.0.2",
+   "label": "pre_existing",
+   "summary": "talks to: api.anthropic.com, www.linkedin.com (check each one is expected; page data can be sent there)",
+   "decision": "Track",
+   "level": "low",
+   "score": 29.8,
+   "severity": "info",
+   "type": "extension_network_destinations",
+   "ssvc": null,
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.1,
+     "weight": 0.4065,
+     "points": 4.1,
+     "why": "no attack pattern"
+    },
+    {
+     "factor": "impact",
+     "value": 0.05,
+     "weight": 0.249,
+     "points": 1.2,
+     "why": "severity info"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "revert the change / remove the package"
+    }
+   ],
+   "counterfactuals": [],
+   "evidence": {
+    "detector": "D12",
+    "lockfile_line": 14,
+    "file": "linkedin extention/manifest.json",
+    "resolved": null,
+    "hard_signal": false
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "the producing check completed"
+     },
+     "applicability": {
+      "status": "not_applicable",
+      "why": "not an advisory match"
+     },
+     "freshness": {
+      "status": "not_applicable",
+      "why": "no external threat data used"
+     },
+     "contradictions": {
+      "status": "not_applicable",
+      "why": "single deterministic detector"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  }
+ ],
+ "method": {
+  "ahp": {
+   "weights": {
+    "exploitation": 0.4065,
+    "impact": 0.249,
+    "exposure": 0.1428,
+    "introduced": 0.1428,
+    "actionable": 0.0589
+   },
+   "lambda_max": 5.0567,
+   "consistency_index": 0.0142,
+   "consistency_ratio": 0.0127,
+   "consistent": true,
+   "matrix": [
+    [
+     1,
+     2,
+     3,
+     3,
+     5
+    ],
+    [
+     0.5,
+     1,
+     2,
+     2,
+     4
+    ],
+    [
+     0.3333333333333333,
+     0.5,
+     1,
+     1,
+     3
+    ],
+    [
+     0.3333333333333333,
+     0.5,
+     1,
+     1,
+     3
+    ],
+    [
+     0.2,
+     0.25,
+     0.3333333333333333,
+     0.3333333333333333,
+     1
+    ]
+   ],
+   "criteria": [
+    "exploitation",
+    "impact",
+    "exposure",
+    "introduced",
+    "actionable"
+   ]
+  },
+  "criteria_text": {
+   "exploitation": "Being attacked? (KEV = attacked in the wild; EPSS = chance of attack in 30 days; hard supply-chain signals)",
+   "impact": "How bad if exploited (advisory severity / CVSS)",
+   "exposure": "Where it runs (shipped runtime code vs dev-only tooling)",
+   "introduced": "Added by this PR (vs already present before)",
+   "actionable": "A fix exists (upgrade or remove)"
+  },
+  "epss_poc_threshold": 0.088,
+  "floors": {
+   "malicious": {
+    "level": "critical",
+    "decision": "Act",
+    "why": "Known malicious package (OSV MAL- advisory)"
+   },
+   "lockfile_tamper": {
+    "level": "critical",
+    "decision": "Act",
+    "why": "Package resolved from a host that is not on the allow-list / integrity changed"
+   },
+   "source_change": {
+    "level": "critical",
+    "decision": "Act",
+    "why": "Package-manager config redirected (e.g. .npmrc registry)"
+   },
+   "untrusted_source": {
+    "level": "critical",
+    "decision": "Act",
+    "why": "Package downloaded from a server that is not on the registry allow-list"
+   },
+   "new_install_script": {
+    "level": "high",
+    "decision": "Attend",
+    "why": "New package runs code at install time"
+   },
+   "typosquat": {
+    "level": "high",
+    "decision": "Attend",
+    "why": "Name is a near-copy of a popular package"
+   }
+  },
+  "levels": {
+   "Act": "critical",
+   "Attend": "high",
+   "Track*": "medium",
+   "Track": "low"
+  },
+  "verdict_rule": "block if the change introduces a critical finding or an SSVC 'Act' decision; review if it introduces a finding of high or critical severity (CVE, supply-chain or CI), even when exploitation data lowered its priority level; otherwise allow"
+ },
+ "data": {
+  "advisories": 0,
+  "cves": 0,
+  "epss_found": 0,
+  "kev_matches": 0,
+  "kev_catalog_size": 1792,
+  "errors": []
+ }
+}

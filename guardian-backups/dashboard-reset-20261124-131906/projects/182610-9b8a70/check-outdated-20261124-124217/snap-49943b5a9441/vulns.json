@@ -1,0 +1,1941 @@
+{
+ "vulnerabilities": [
+  {
+   "name": "certifi",
+   "version": "2026.7.22",
+   "ids": [
+    "GHSA-6q48-6c7w-9gw2",
+    "PYSEC-2026-4320"
+   ],
+   "summary": "certifi bundles emSign root CAs with compromised intermediate CA keys",
+   "severity": "critical",
+   "severity_known": true,
+   "fixed": [
+    "2026.10.18"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-6q48-6c7w-9gw2",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-6q48-6c7w-9gw2",
+   "key": "certifi@2026.7.22#GHSA-6q48-6c7w-9gw2",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:certifi@2026.7.22#uv.lock",
+   "path": [
+    "flask",
+    "pypi:gha-update@0.2.0#uv.lock",
+    "pypi:httpx@0.28.1#uv.lock",
+    "pypi:certifi@2026.7.22#uv.lock"
+   ]
+  },
+  {
+   "name": "pypa/gh-action-pypi-publish",
+   "version": "v1.14.2",
+   "ids": [
+    "GHSA-5xjx-3w67-w9x9"
+   ],
+   "summary": "pypi-publish action revocation of CA in the chain that Sigstore uses in Trusted Publishing and Digital Attestations for PyPI",
+   "severity": "critical",
+   "severity_known": true,
+   "fixed": [
+    "1.14.3",
+    "7245906fb61fa33a13554f9d5fb856fe61758086"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-5xjx-3w67-w9x9",
+   "ecosystem": "github",
+   "sources": [
+    "osv"
+   ],
+   "id": "GHSA-5xjx-3w67-w9x9",
+   "key": "pypa/gh-action-pypi-publish@v1.14.2#GHSA-5xjx-3w67-w9x9",
+   "direct": true,
+   "runtime": true,
+   "source_file": ".github/workflows/publish.yaml",
+   "component_key": "github:pypa/gh-action-pypi-publish@v1.14.2#.github/workflows/publish.yaml",
+   "path": [
+    "flask",
+    "github:pypa/gh-action-pypi-publish@v1.14.2#.github/workflows/publish.yaml"
+   ]
+  },
+  {
+   "name": "uv",
+   "version": "0.12.0",
+   "ids": [
+    "GHSA-hq85-5cpj-mr62",
+    "PYSEC-2026-4321"
+   ],
+   "summary": "uv's bundled CA store trusts an emSign root whose intermediate CA keys are compromised",
+   "severity": "critical",
+   "severity_known": true,
+   "fixed": [
+    "0.13.4"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-hq85-5cpj-mr62",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-hq85-5cpj-mr62",
+   "key": "uv@0.12.0#GHSA-hq85-5cpj-mr62",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:uv@0.12.0#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:uv@0.12.0#uv.lock"
+   ]
+  },
+  {
+   "name": "cryptography",
+   "version": "49.0.0",
+   "ids": [
+    "GHSA-g6cj-pr64-35w5",
+    "CVE-2026-69247",
+    "PYSEC-2026-3552"
+   ],
+   "summary": "cryptography: PKCS#7 EnvelopedData decryption exposes a Bleichenbacher oracle through distinguishable errors and timing",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "50.0.0"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-g6cj-pr64-35w5",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-g6cj-pr64-35w5",
+   "key": "cryptography@49.0.0#GHSA-g6cj-pr64-35w5",
+   "direct": true,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:cryptography@49.0.0#uv.lock",
+   "path": [
+    "flask",
+    "pypi:cryptography@49.0.0#uv.lock"
+   ]
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-v4x8-3wr5-3wq8",
+    "CVE-2026-112940"
+   ],
+   "summary": "filelock ReadWriteLock: SQLite reopens the lock database by name, so a planted symlink or journal file makes the lock user's process overwrite or unlink its own files",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-v4x8-3wr5-3wq8",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-v4x8-3wr5-3wq8",
+   "key": "filelock@3.32.2#GHSA-v4x8-3wr5-3wq8",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ]
+  },
+  {
+   "name": "jinja2",
+   "version": "3.1.2",
+   "ids": [
+    "GHSA-gmj6-6f8f-6699",
+    "CVE-2024-56201",
+    "PYSEC-2026-1472"
+   ],
+   "summary": "Jinja has a sandbox breakout through malicious filenames",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "3.1.5"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-gmj6-6f8f-6699",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-gmj6-6f8f-6699",
+   "key": "jinja2@3.1.2#GHSA-gmj6-6f8f-6699",
+   "direct": true,
+   "runtime": true,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:jinja2@3.1.2#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:jinja2@3.1.2#examples/celery/requirements.txt"
+   ]
+  },
+  {
+   "name": "jinja2",
+   "version": "3.1.2",
+   "ids": [
+    "GHSA-q2x7-8rv6-6q7h",
+    "CVE-2024-56326",
+    "PYSEC-2026-1475"
+   ],
+   "summary": "Jinja has a sandbox breakout through indirect reference to format method",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "3.1.5"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-q2x7-8rv6-6q7h",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-q2x7-8rv6-6q7h",
+   "key": "jinja2@3.1.2#GHSA-q2x7-8rv6-6q7h",
+   "direct": true,
+   "runtime": true,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:jinja2@3.1.2#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:jinja2@3.1.2#examples/celery/requirements.txt"
+   ]
+  },
+  {
+   "name": "urllib3",
+   "version": "2.7.0",
+   "ids": [
+    "GHSA-8988-9cw3-xx77",
+    "CVE-2026-97687",
+    "PYSEC-2026-4175"
+   ],
+   "summary": "urllib3: HTTPS proxy TLS configuration may be ignored or overridden",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "2.8.0"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-8988-9cw3-xx77",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-8988-9cw3-xx77",
+   "key": "urllib3@2.7.0#GHSA-8988-9cw3-xx77",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:urllib3@2.7.0#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:requests@2.34.2#uv.lock",
+    "pypi:urllib3@2.7.0#uv.lock"
+   ]
+  },
+  {
+   "name": "urllib3",
+   "version": "2.7.0",
+   "ids": [
+    "GHSA-vxq7-64xx-v4gw",
+    "CVE-2026-97689",
+    "PYSEC-2026-4177"
+   ],
+   "summary": "urllib3: HTTPResponse.stream()/read_chunked() buffers an unbounded chunk-size line into memory",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "2.8.0"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-vxq7-64xx-v4gw",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-vxq7-64xx-v4gw",
+   "key": "urllib3@2.7.0#GHSA-vxq7-64xx-v4gw",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:urllib3@2.7.0#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:requests@2.34.2#uv.lock",
+    "pypi:urllib3@2.7.0#uv.lock"
+   ]
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-394h-qwmc-48pf",
+    "BIT-virtualenv-2026-113718",
+    "CVE-2026-113718",
+    "PYSEC-2026-4377"
+   ],
+   "summary": "virtualenv: Xonsh activation literals depend on the script decoding codec",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-394h-qwmc-48pf",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-394h-qwmc-48pf",
+   "key": "virtualenv@21.7.1#GHSA-394h-qwmc-48pf",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-5vjq-rrrf-7h2q",
+    "BIT-virtualenv-2026-113726",
+    "CVE-2026-113726",
+    "PYSEC-2026-4385"
+   ],
+   "summary": "virtualenv activate runs commands from the environment name in zsh with PROMPT_SUBST",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.14.4"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-5vjq-rrrf-7h2q",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-5vjq-rrrf-7h2q",
+   "key": "virtualenv@21.7.1#GHSA-5vjq-rrrf-7h2q",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-6w3r-xr62-4xcp",
+    "BIT-virtualenv-2026-113723",
+    "CVE-2026-113723",
+    "PYSEC-2026-4382"
+   ],
+   "summary": "virtualenv: Bash prompt values can change meaning under older compatibility modes",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-6w3r-xr62-4xcp",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-6w3r-xr62-4xcp",
+   "key": "virtualenv@21.7.1#GHSA-6w3r-xr62-4xcp",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-8rjx-v5ww-45pp",
+    "BIT-virtualenv-2026-113776",
+    "CVE-2026-113776",
+    "PYSEC-2026-4387"
+   ],
+   "summary": "virtualenv activation scripts run code from a path that contains a placeholder name",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.14.2"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-8rjx-v5ww-45pp",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-8rjx-v5ww-45pp",
+   "key": "virtualenv@21.7.1#GHSA-8rjx-v5ww-45pp",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-94p9-xgh2-xp45",
+    "BIT-virtualenv-2026-102930",
+    "CVE-2026-102930",
+    "PYSEC-2026-4011"
+   ],
+   "summary": "virtualenv: Downloaded seed wheels (pip/setuptools) are not integrity-checked before use",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.7.12"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-94p9-xgh2-xp45",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-94p9-xgh2-xp45",
+   "key": "virtualenv@21.7.1#GHSA-94p9-xgh2-xp45",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-c947-3pg5-gm8q",
+    "BIT-virtualenv-2026-113732",
+    "CVE-2026-113732",
+    "PYSEC-2026-4386"
+   ],
+   "summary": "virtualenv activate.fish runs commands from a path or prompt with a backslash before a quote",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.14.2"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-c947-3pg5-gm8q",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-c947-3pg5-gm8q",
+   "key": "virtualenv@21.7.1#GHSA-c947-3pg5-gm8q",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-c978-59m8-c77v",
+    "BIT-virtualenv-2026-113722",
+    "CVE-2026-113722",
+    "PYSEC-2026-4381"
+   ],
+   "summary": "virtualenv: Generated POSIX console launchers interpret destination paths as shell syntax",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-c978-59m8-c77v",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-c978-59m8-c77v",
+   "key": "virtualenv@21.7.1#GHSA-c978-59m8-c77v",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-fc2g-4w5p-6whm",
+    "BIT-virtualenv-2026-113720",
+    "CVE-2026-113720",
+    "PYSEC-2026-4379"
+   ],
+   "summary": "virtualenv: Seeded files retain permissions from an older cache",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-fc2g-4w5p-6whm",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-fc2g-4w5p-6whm",
+   "key": "virtualenv@21.7.1#GHSA-fc2g-4w5p-6whm",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-p58f-9548-mpm2",
+    "BIT-virtualenv-2026-102925",
+    "CVE-2026-102925",
+    "PYSEC-2026-4013"
+   ],
+   "summary": "virtualenv bash and fish activation scripts execute commands embedded in paths",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.7.13"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-p58f-9548-mpm2",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-p58f-9548-mpm2",
+   "key": "virtualenv@21.7.1#GHSA-p58f-9548-mpm2",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-qmx5-4p3x-wvqf",
+    "BIT-virtualenv-2026-113715",
+    "CVE-2026-113715",
+    "PYSEC-2026-4374"
+   ],
+   "summary": "virtualenv: Venv configuration readback can reinterpret path boundaries",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-qmx5-4p3x-wvqf",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-qmx5-4p3x-wvqf",
+   "key": "virtualenv@21.7.1#GHSA-qmx5-4p3x-wvqf",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-vxj4-q4g9-crj7",
+    "BIT-virtualenv-2026-113725",
+    "CVE-2026-113725",
+    "PYSEC-2026-4384"
+   ],
+   "summary": "virtualenv bash activate runs commands from an environment name with a backslash before $",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.14.7"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-vxj4-q4g9-crj7",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-vxj4-q4g9-crj7",
+   "key": "virtualenv@21.7.1#GHSA-vxj4-q4g9-crj7",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-x78j-v8h9-3j2q",
+    "BIT-virtualenv-2026-102937",
+    "CVE-2026-102937",
+    "PYSEC-2026-4014"
+   ],
+   "summary": "virtualenv: Command injection via --prompt in activate.bat (batch activator)",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "21.7.12"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-x78j-v8h9-3j2q",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-x78j-v8h9-3j2q",
+   "key": "virtualenv@21.7.1#GHSA-x78j-v8h9-3j2q",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "name": "werkzeug",
+   "version": "2.3.3",
+   "ids": [
+    "GHSA-2g68-c3qc-8985",
+    "CVE-2024-34069",
+    "PYSEC-2026-2043"
+   ],
+   "summary": "Werkzeug debugger vulnerable to remote execution when interacting with attacker controlled domain",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "3.0.3"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-2g68-c3qc-8985",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-2g68-c3qc-8985",
+   "key": "werkzeug@2.3.3#GHSA-2g68-c3qc-8985",
+   "direct": true,
+   "runtime": true,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:werkzeug@2.3.3#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:werkzeug@2.3.3#examples/celery/requirements.txt"
+   ]
+  },
+  {
+   "name": "werkzeug",
+   "version": "2.3.3",
+   "ids": [
+    "GHSA-hrfv-mqp8-q5rw",
+    "CVE-2023-46136",
+    "PYSEC-2023-221"
+   ],
+   "summary": "Werkzeug DoS: High resource usage when parsing multipart/form-data containing a large part with CR/LF character at the beginning",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "2.3.8",
+    "3.0.1",
+    "f2300208d5e2a5076cbbb4c2aad71096fd040ef9",
+    "f3c803b3ade485a45f12b6d6617595350c0f03e2"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-hrfv-mqp8-q5rw",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-hrfv-mqp8-q5rw",
+   "key": "werkzeug@2.3.3#GHSA-hrfv-mqp8-q5rw",
+   "direct": true,
+   "runtime": true,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:werkzeug@2.3.3#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:werkzeug@2.3.3#examples/celery/requirements.txt"
+   ]
+  },
+  {
+   "name": "werkzeug",
+   "version": "2.3.3",
+   "ids": [
+    "GHSA-q34m-jh98-gwm2",
+    "CVE-2024-49767",
+    "PYSEC-2026-1860",
+    "PYSEC-2026-3417"
+   ],
+   "summary": "Werkzeug possible resource exhaustion when parsing file data in forms",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "3.0.6"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-q34m-jh98-gwm2",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-q34m-jh98-gwm2",
+   "key": "werkzeug@2.3.3#GHSA-q34m-jh98-gwm2",
+   "direct": true,
+   "runtime": true,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:werkzeug@2.3.3#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:werkzeug@2.3.3#examples/celery/requirements.txt"
+   ]
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-6627-m3xw-93mp",
+    "CVE-2026-112908"
+   ],
+   "summary": "filelock: StrictSoftFileLock creates its claim directories without the lock mode, so another local user with a write bit on them can end a live hold",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-6627-m3xw-93mp",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-6627-m3xw-93mp",
+   "key": "filelock@3.32.2#GHSA-6627-m3xw-93mp",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ]
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-69hj-f68j-2879",
+    "CVE-2026-112909"
+   ],
+   "summary": "filelock: UnixFileLock truncates and chmods any regular file another user renames or hard-links onto the lock path",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-69hj-f68j-2879",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-69hj-f68j-2879",
+   "key": "filelock@3.32.2#GHSA-69hj-f68j-2879",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ]
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-8mx5-7m5m-r77g",
+    "CVE-2026-112910"
+   ],
+   "summary": "filelock: WindowsFileLock ignores mode: a 0o600 lock file and the ReadWriteLock database inherit the directory ACL",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-8mx5-7m5m-r77g",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-8mx5-7m5m-r77g",
+   "key": "filelock@3.32.2#GHSA-8mx5-7m5m-r77g",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ]
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-9c4x-gm8v-wgc4",
+    "CVE-2026-112911"
+   ],
+   "summary": "filelock: StrictSoftFileLock and SoftReadWriteLock adopt a protocol directory another user created first, losing mutual exclusion",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-9c4x-gm8v-wgc4",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-9c4x-gm8v-wgc4",
+   "key": "filelock@3.32.2#GHSA-9c4x-gm8v-wgc4",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ]
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-cwqr-hh33-gh44",
+    "CVE-2026-112915"
+   ],
+   "summary": "filelock ReadWriteLock: a crafted lock database makes every acquire stall or hang regardless of timeout",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-cwqr-hh33-gh44",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-cwqr-hh33-gh44",
+   "key": "filelock@3.32.2#GHSA-cwqr-hh33-gh44",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ]
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-fq56-3cx3-fjxp",
+    "CVE-2026-112935"
+   ],
+   "summary": "filelock: SoftFileLock stale-lock break removes a live lock file on a reused inode number and admits two holders",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-fq56-3cx3-fjxp",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-fq56-3cx3-fjxp",
+   "key": "filelock@3.32.2#GHSA-fq56-3cx3-fjxp",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ]
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-j8f7-rjxc-mr56",
+    "CVE-2026-112936"
+   ],
+   "summary": "filelock: ReadWriteLock follows a symlink at the lock path into SQLite",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "4.0.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-j8f7-rjxc-mr56",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-j8f7-rjxc-mr56",
+   "key": "filelock@3.32.2#GHSA-j8f7-rjxc-mr56",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ]
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-m462-7rxw-wvpg",
+    "CVE-2026-112938"
+   ],
+   "summary": "filelock: StrictSoftFileLock follows a symbolic link swapped in at <path>.filelock and creates claim files in a directory another local user chooses",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-m462-7rxw-wvpg",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-m462-7rxw-wvpg",
+   "key": "filelock@3.32.2#GHSA-m462-7rxw-wvpg",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ]
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-rfpc-qcw5-3pc4",
+    "CVE-2026-112939"
+   ],
+   "summary": "filelock: SoftFileLock removes a live holder's marker when another user forges the PID in a writable marker",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-rfpc-qcw5-3pc4",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-rfpc-qcw5-3pc4",
+   "key": "filelock@3.32.2#GHSA-rfpc-qcw5-3pc4",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ]
+  },
+  {
+   "name": "flask",
+   "version": "2.3.2",
+   "ids": [
+    "GHSA-68rp-wp8r-4726",
+    "CVE-2026-27205",
+    "PYSEC-2026-2151"
+   ],
+   "summary": "Flask session does not add `Vary: Cookie` header when accessed in some ways",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.1.3"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-68rp-wp8r-4726",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-68rp-wp8r-4726",
+   "key": "flask@2.3.2#GHSA-68rp-wp8r-4726",
+   "direct": true,
+   "runtime": true,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:flask@2.3.2#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:flask@2.3.2#examples/celery/requirements.txt"
+   ]
+  },
+  {
+   "name": "jinja2",
+   "version": "3.1.2",
+   "ids": [
+    "GHSA-cpwx-vrp4-4pq7",
+    "CVE-2025-27516",
+    "PYSEC-2026-1471"
+   ],
+   "summary": "Jinja2 vulnerable to sandbox breakout through attr filter selecting format method",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.1.6"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-cpwx-vrp4-4pq7",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-cpwx-vrp4-4pq7",
+   "key": "jinja2@3.1.2#GHSA-cpwx-vrp4-4pq7",
+   "direct": true,
+   "runtime": true,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:jinja2@3.1.2#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:jinja2@3.1.2#examples/celery/requirements.txt"
+   ]
+  },
+  {
+   "name": "jinja2",
+   "version": "3.1.2",
+   "ids": [
+    "GHSA-h5c8-rqwp-cp95",
+    "CVE-2024-22195",
+    "PYSEC-2026-1473"
+   ],
+   "summary": "Jinja vulnerable to HTML attribute injection when passing user input as keys to xmlattr filter",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.1.3"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-h5c8-rqwp-cp95",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-h5c8-rqwp-cp95",
+   "key": "jinja2@3.1.2#GHSA-h5c8-rqwp-cp95",
+   "direct": true,
+   "runtime": true,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:jinja2@3.1.2#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:jinja2@3.1.2#examples/celery/requirements.txt"
+   ]
+  },
+  {
+   "name": "jinja2",
+   "version": "3.1.2",
+   "ids": [
+    "GHSA-h75v-3vvj-5mfj",
+    "CVE-2024-34064",
+    "PYSEC-2026-1474"
+   ],
+   "summary": "Jinja vulnerable to HTML attribute injection when passing user input as keys to xmlattr filter",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.1.4"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-h75v-3vvj-5mfj",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-h75v-3vvj-5mfj",
+   "key": "jinja2@3.1.2#GHSA-h75v-3vvj-5mfj",
+   "direct": true,
+   "runtime": true,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:jinja2@3.1.2#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:jinja2@3.1.2#examples/celery/requirements.txt"
+   ]
+  },
+  {
+   "name": "jquery",
+   "version": "3.3.1",
+   "ids": [
+    "GHSA-6c3j-c64m-qhgq",
+    "CVE-2019-11358",
+    "DRUPAL-CORE-2019-006",
+    "PYSEC-2026-628",
+    "SNYK-JS-JQUERY-174006"
+   ],
+   "summary": "XSS in jQuery as used in Drupal, Backdrop CMS, and other products",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.4.0"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-6c3j-c64m-qhgq",
+   "ecosystem": "npm",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-6c3j-c64m-qhgq",
+   "key": "jquery@3.3.1#GHSA-6c3j-c64m-qhgq",
+   "direct": true,
+   "runtime": true,
+   "source_file": "examples/javascript/js_example/templates/jquery.html",
+   "component_key": "cdn:jquery@3.3.1#examples/javascript/js_example/templates/jquery.html",
+   "path": [
+    "flask",
+    "cdn:jquery@3.3.1#examples/javascript/js_example/templates/jquery.html"
+   ]
+  },
+  {
+   "name": "jquery",
+   "version": "3.3.1",
+   "ids": [
+    "GHSA-gxr4-xjj5-5px2",
+    "BIT-drupal-2020-11022",
+    "CVE-2020-11022"
+   ],
+   "summary": "Potential XSS vulnerability in jQuery",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.5.0"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-gxr4-xjj5-5px2",
+   "ecosystem": "npm",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-gxr4-xjj5-5px2",
+   "key": "jquery@3.3.1#GHSA-gxr4-xjj5-5px2",
+   "direct": true,
+   "runtime": true,
+   "source_file": "examples/javascript/js_example/templates/jquery.html",
+   "component_key": "cdn:jquery@3.3.1#examples/javascript/js_example/templates/jquery.html",
+   "path": [
+    "flask",
+    "cdn:jquery@3.3.1#examples/javascript/js_example/templates/jquery.html"
+   ]
+  },
+  {
+   "name": "jquery",
+   "version": "3.3.1",
+   "ids": [
+    "GHSA-jpcq-cgw6-v4j6",
+    "BIT-drupal-2020-11023",
+    "CVE-2020-11023"
+   ],
+   "summary": "Potential XSS vulnerability in jQuery",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.5.0"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-jpcq-cgw6-v4j6",
+   "ecosystem": "npm",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-jpcq-cgw6-v4j6",
+   "key": "jquery@3.3.1#GHSA-jpcq-cgw6-v4j6",
+   "direct": true,
+   "runtime": true,
+   "source_file": "examples/javascript/js_example/templates/jquery.html",
+   "component_key": "cdn:jquery@3.3.1#examples/javascript/js_example/templates/jquery.html",
+   "path": [
+    "flask",
+    "cdn:jquery@3.3.1#examples/javascript/js_example/templates/jquery.html"
+   ]
+  },
+  {
+   "name": "urllib3",
+   "version": "2.7.0",
+   "ids": [
+    "GHSA-gh4c-6fx4-qh6g",
+    "CVE-2026-97688",
+    "PYSEC-2026-4176"
+   ],
+   "summary": "urllib3: Chunked Deflate streaming can enter an infinite loop",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "2.8.0"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-gh4c-6fx4-qh6g",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-gh4c-6fx4-qh6g",
+   "key": "urllib3@2.7.0#GHSA-gh4c-6fx4-qh6g",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:urllib3@2.7.0#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pallets-sphinx-themes@2.5.0#uv.lock",
+    "pypi:sphinx@8.2.3#uv.lock",
+    "pypi:requests@2.34.2#uv.lock",
+    "pypi:urllib3@2.7.0#uv.lock"
+   ]
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-43mp-35q3-x3fq",
+    "BIT-virtualenv-2026-113724",
+    "CVE-2026-113724",
+    "PYSEC-2026-4383"
+   ],
+   "summary": "virtualenv: Deletion recovery can change a symlink target's mode",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-43mp-35q3-x3fq",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-43mp-35q3-x3fq",
+   "key": "virtualenv@21.7.1#GHSA-43mp-35q3-x3fq",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-558c-9hv2-4prj",
+    "BIT-virtualenv-2026-113721",
+    "CVE-2026-113721",
+    "PYSEC-2026-4380"
+   ],
+   "summary": "virtualenv: Generated files can follow existing destination links",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-558c-9hv2-4prj",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-558c-9hv2-4prj",
+   "key": "virtualenv@21.7.1#GHSA-558c-9hv2-4prj",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-9h9j-4vrj-gf7g",
+    "BIT-virtualenv-2026-102938",
+    "CVE-2026-102938",
+    "PYSEC-2026-4012"
+   ],
+   "summary": "virtualenv writes prompt values into pyvenv.cfg without sanitizing line boundaries, allowing configuration injection",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "21.7.11"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-9h9j-4vrj-gf7g",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-9h9j-4vrj-gf7g",
+   "key": "virtualenv@21.7.1#GHSA-9h9j-4vrj-gf7g",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-cw65-gx24-rc82",
+    "BIT-virtualenv-2026-113716",
+    "CVE-2026-113716",
+    "PYSEC-2026-4375"
+   ],
+   "summary": "virtualenv: Builtin creation follows linked environment directories",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-cw65-gx24-rc82",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-cw65-gx24-rc82",
+   "key": "virtualenv@21.7.1#GHSA-cw65-gx24-rc82",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-hhxq-47xx-j5xx",
+    "BIT-virtualenv-2026-113719",
+    "CVE-2026-113719",
+    "PYSEC-2026-4378"
+   ],
+   "summary": "virtualenv: Seed replacement does not contain metadata deletion paths",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-hhxq-47xx-j5xx",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-hhxq-47xx-j5xx",
+   "key": "virtualenv@21.7.1#GHSA-hhxq-47xx-j5xx",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "PYSEC-2026-4372",
+    "BIT-virtualenv-2026-113713",
+    "CVE-2026-113713",
+    "GHSA-4f8h-vr72-p32c"
+   ],
+   "summary": "virtualenv is a tool for creating isolated virtual python environments. From 21.14.8 until 21.14.10, the app-data seeder can leave an environment linked to temporary package files that virtualenv dele",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "21.14.10"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/PYSEC-2026-4372",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv"
+   ],
+   "id": "GHSA-4f8h-vr72-p32c",
+   "key": "virtualenv@21.7.1#GHSA-4f8h-vr72-p32c",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "name": "werkzeug",
+   "version": "2.3.3",
+   "ids": [
+    "GHSA-29vq-49wr-vm6x",
+    "CVE-2026-27199",
+    "PYSEC-2026-2320"
+   ],
+   "summary": " Werkzeug safe_join() allows Windows special device names",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.1.6"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-29vq-49wr-vm6x",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-29vq-49wr-vm6x",
+   "key": "werkzeug@2.3.3#GHSA-29vq-49wr-vm6x",
+   "direct": true,
+   "runtime": true,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:werkzeug@2.3.3#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:werkzeug@2.3.3#examples/celery/requirements.txt"
+   ]
+  },
+  {
+   "name": "werkzeug",
+   "version": "2.3.3",
+   "ids": [
+    "GHSA-87hc-h4r5-73f7",
+    "CVE-2026-21860",
+    "PYSEC-2026-2044"
+   ],
+   "summary": " Werkzeug safe_join() allows Windows special device names with compound extensions",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.1.5"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-87hc-h4r5-73f7",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-87hc-h4r5-73f7",
+   "key": "werkzeug@2.3.3#GHSA-87hc-h4r5-73f7",
+   "direct": true,
+   "runtime": true,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:werkzeug@2.3.3#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:werkzeug@2.3.3#examples/celery/requirements.txt"
+   ]
+  },
+  {
+   "name": "werkzeug",
+   "version": "2.3.3",
+   "ids": [
+    "GHSA-f9vj-2wh5-fj8j",
+    "CVE-2024-49766",
+    "PYSEC-2026-2045"
+   ],
+   "summary": "Werkzeug safe_join not safe on Windows",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.0.6"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-f9vj-2wh5-fj8j",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-f9vj-2wh5-fj8j",
+   "key": "werkzeug@2.3.3#GHSA-f9vj-2wh5-fj8j",
+   "direct": true,
+   "runtime": true,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:werkzeug@2.3.3#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:werkzeug@2.3.3#examples/celery/requirements.txt"
+   ]
+  },
+  {
+   "name": "werkzeug",
+   "version": "2.3.3",
+   "ids": [
+    "GHSA-g6x2-hccm-hh4m",
+    "CVE-2026-102598",
+    "PYSEC-2026-4312"
+   ],
+   "summary": "Werkzeug safe_join() allows Windows special device names",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.1.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-g6x2-hccm-hh4m",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-g6x2-hccm-hh4m",
+   "key": "werkzeug@2.3.3#GHSA-g6x2-hccm-hh4m",
+   "direct": true,
+   "runtime": true,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:werkzeug@2.3.3#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:werkzeug@2.3.3#examples/celery/requirements.txt"
+   ]
+  },
+  {
+   "name": "werkzeug",
+   "version": "2.3.3",
+   "ids": [
+    "GHSA-hgf8-39gv-g3f2",
+    "CVE-2025-66221",
+    "PYSEC-2026-2046"
+   ],
+   "summary": "Werkzeug safe_join() allows Windows special device names",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.1.4"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-hgf8-39gv-g3f2",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-hgf8-39gv-g3f2",
+   "key": "werkzeug@2.3.3#GHSA-hgf8-39gv-g3f2",
+   "direct": true,
+   "runtime": true,
+   "source_file": "examples/celery/requirements.txt",
+   "component_key": "pypi:werkzeug@2.3.3#examples/celery/requirements.txt",
+   "path": [
+    "flask",
+    "pypi:werkzeug@2.3.3#examples/celery/requirements.txt"
+   ]
+  },
+  {
+   "name": "werkzeug",
+   "version": "3.1.8",
+   "ids": [
+    "GHSA-g6x2-hccm-hh4m",
+    "CVE-2026-102598",
+    "PYSEC-2026-4312"
+   ],
+   "summary": "Werkzeug safe_join() allows Windows special device names",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "3.1.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-g6x2-hccm-hh4m",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-g6x2-hccm-hh4m",
+   "key": "werkzeug@3.1.8#GHSA-g6x2-hccm-hh4m",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:werkzeug@3.1.8#uv.lock",
+   "path": [
+    "flask",
+    "pypi:flask@3.2.0.dev0#uv.lock",
+    "pypi:werkzeug@3.1.8#uv.lock"
+   ]
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-567q-5qvw-pf92",
+    "CVE-2026-112907"
+   ],
+   "summary": "filelock: On Windows an oplock on a soft lock's marker holds SoftFileLock.acquire() past its timeout and blocks the stale break",
+   "severity": "low",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-567q-5qvw-pf92",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-567q-5qvw-pf92",
+   "key": "filelock@3.32.2#GHSA-567q-5qvw-pf92",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ]
+  },
+  {
+   "name": "filelock",
+   "version": "3.32.2",
+   "ids": [
+    "GHSA-9vhv-jxww-xfm5",
+    "CVE-2026-112913"
+   ],
+   "summary": "filelock: ReadWriteLock on Windows acts on SQLite side files another local user places beside its database",
+   "severity": "low",
+   "severity_known": true,
+   "fixed": [
+    "4.2.1"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-9vhv-jxww-xfm5",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-9vhv-jxww-xfm5",
+   "key": "filelock@3.32.2#GHSA-9vhv-jxww-xfm5",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:filelock@3.32.2#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock",
+    "pypi:filelock@3.32.2#uv.lock"
+   ]
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-494p-63j8-28p3",
+    "BIT-virtualenv-2026-113714",
+    "CVE-2026-113714",
+    "PYSEC-2026-4373"
+   ],
+   "summary": "virtualenv: Downloaded wheel selection and caching precede verification",
+   "severity": "low",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-494p-63j8-28p3",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-494p-63j8-28p3",
+   "key": "virtualenv@21.7.1#GHSA-494p-63j8-28p3",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  },
+  {
+   "name": "virtualenv",
+   "version": "21.7.1",
+   "ids": [
+    "GHSA-cx28-75q4-x26q",
+    "BIT-virtualenv-2026-113717",
+    "CVE-2026-113717",
+    "PYSEC-2026-4376"
+   ],
+   "summary": "virtualenv: Pip seeding with download omits wheel digest verification",
+   "severity": "low",
+   "severity_known": true,
+   "fixed": [
+    "21.14.9"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-cx28-75q4-x26q",
+   "ecosystem": "pypi",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "id": "GHSA-cx28-75q4-x26q",
+   "key": "virtualenv@21.7.1#GHSA-cx28-75q4-x26q",
+   "direct": false,
+   "runtime": true,
+   "source_file": "uv.lock",
+   "component_key": "pypi:virtualenv@21.7.1#uv.lock",
+   "path": [
+    "flask",
+    "pypi:pre-commit-uv@4.3.0#uv.lock",
+    "pypi:pre-commit@4.6.1#uv.lock",
+    "pypi:virtualenv@21.7.1#uv.lock"
+   ]
+  }
+ ],
+ "errors": {},
+ "counts": {
+  "osv": 94,
+  "grype": 56,
+  "merged": 57,
+  "both": 55,
+  "packages": 12,
+  "by_severity": {
+   "critical": 3,
+   "high": 21,
+   "medium": 29,
+   "low": 4,
+   "info": 0
+  }
+ }
+}

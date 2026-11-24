@@ -27,6 +27,10 @@ HUMAN_TIMEOUT = 120  # seconds; after that the policy answer is used and the aud
 
 app = FastAPI(title="Supply Chain Guardian")
 
+from guardian.scoring.ahp_api import router as ahp_router  # noqa: E402  AI-advised AHP: propose -> referee -> human approves
+
+app.include_router(ahp_router)
+
 
 class Run:
     def __init__(self, run_id: str, mode: str, world: str):
@@ -239,6 +243,8 @@ def scores(project: str | None = None):
         latest.write_text(json.dumps(ptr))
     sp = Path(ptr["scores"]) if Path(ptr["scores"]).is_absolute() else ROOT / ptr["scores"]
     data = json.loads(sp.read_text())
+    from guardian.scoring.advisor import with_active_matrix  # show the scores under the human-approved AHP matrix, if one exists
+    data = with_active_matrix(d, data)
     if _auto_explain() and str(sp) not in _WARMED:  # opt-in: pre-write explanations (one batched, budgeted call)
         _WARMED.add(str(sp))
         from guardian.scoring.explain import warm
@@ -695,8 +701,10 @@ def _trigger_service():
             db = sp.run(["grype", "db", "status"], capture_output=True, text=True).stdout.strip().splitlines()
             return {"policy_sha256": file_sha256(ROOT / "guardian.yaml"), "profile_sha256": load_profile("uptime-kuma")[1],
                     "intel": next((x for x in db if "Built" in x), "unknown").strip()}
+        from guardian.trigger.github import GitHubRouter
+        router = GitHubRouter(dict(os.environ))  # per-repository tokens, falling back to GUARDIAN_GITHUB_TOKEN
         svc = Service(root, fetch=git_fetch_pr(root), engine=universal.check_any,
-                      github=GitHub(token) if token else None, identity_parts=parts)
+                      github=router if router.configured else None, identity_parts=parts)
         if os.environ.get("GUARDIAN_AUTO_AGENTS", "1") != "0":
             svc.after_scan = lambda rid, out, h, e: _auto_agents(svc, rid, out, h, e)
         _TRIGGER["svc"] = svc

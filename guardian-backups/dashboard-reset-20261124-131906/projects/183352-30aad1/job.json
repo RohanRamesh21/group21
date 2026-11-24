@@ -1,0 +1,80 @@
+{
+ "id": "183352-30aad1",
+ "kind": "git",
+ "label": "github.com/louislam/uptime-kuma",
+ "status": "done",
+ "message": "done",
+ "created": 1795439032.9118872,
+ "steps": [
+  {
+   "t": 64920.2,
+   "msg": "Rescan with the current engine: same commits (b0cd0f1daf70 -> fefb019d8962)"
+  },
+  {
+   "t": 64920.2,
+   "msg": "Day 1 pipeline: components -> SBOM -> dependency graph -> vulnerabilities -> suspicious changes -> evidence (comparing b0cd0f1daf708a6c04f074c925a20e0229e80258 -> fefb019d89620f0070c46358a43604dd9c707e63)"
+  },
+  {
+   "t": 64920.2,
+   "msg": "Exporting commit fefb019d (git archive: no hooks, no symlinks)"
+  },
+  {
+   "t": 64921.6,
+   "msg": "Building the SBOM with Syft (CycloneDX + SPDX), all ecosystems"
+  },
+  {
+   "t": 64922.6,
+   "msg": "87 dev-listed packages are imported by frontend code and treated as shipped (inferred)"
+  },
+  {
+   "t": 64922.8,
+   "msg": "Checking CI workflows and container images"
+  },
+  {
+   "t": 64923.0,
+   "msg": "Looking up vulnerabilities: OSV.dev (all ecosystems) + Grype (local DB)"
+  },
+  {
+   "t": 64930.9,
+   "msg": "Scanning the previous state b0cd0f1d to find what changed"
+  },
+  {
+   "t": 64932.4,
+   "msg": "Building the SBOM with Syft (CycloneDX + SPDX), all ecosystems"
+  },
+  {
+   "t": 64933.4,
+   "msg": "87 dev-listed packages are imported by frontend code and treated as shipped (inferred)"
+  },
+  {
+   "t": 64933.5,
+   "msg": "Checking CI workflows and container images"
+  },
+  {
+   "t": 64933.7,
+   "msg": "Looking up vulnerabilities: OSV.dev (all ecosystems) + Grype (local DB)"
+  }
+ ],
+ "url": "https://github.com/louislam/uptime-kuma",
+ "base": null,
+ "head": null,
+ "updated": 1795503974.073975,
+ "base_default": true,
+ "mode": "compare",
+ "out": "/Users/kirankishorev/Documents/BOSCH/guardian/guardian-out/projects/183352-30aad1/check",
+ "summary": {
+  "packages": 1353,
+  "ecosystems": {
+   "npm": 1284,
+   "github": 69
+  },
+  "verdict": "allow",
+  "reasons": [
+   "no high or critical risk introduced by this change"
+  ],
+  "head_commit": "fefb019d8962",
+  "base_commit": "b0cd0f1daf70",
+  "scores": true
+ },
+ "rescanned": 1795503953.063566
+}

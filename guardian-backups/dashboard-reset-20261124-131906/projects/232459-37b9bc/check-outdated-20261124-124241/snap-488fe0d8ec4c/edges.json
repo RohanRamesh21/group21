@@ -1,0 +1,778 @@
+[
+ {
+  "parent": "",
+  "child": "node_modules/@fontsource-variable/geist",
+  "name": "@fontsource-variable/geist",
+  "spec": "^5.3.0",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "",
+  "child": "node_modules/@fontsource-variable/geist-mono",
+  "name": "@fontsource-variable/geist-mono",
+  "spec": "^5.3.0",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "",
+  "child": "node_modules/@fontsource/instrument-serif",
+  "name": "@fontsource/instrument-serif",
+  "spec": "^5.3.0",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "",
+  "child": "node_modules/gsap",
+  "name": "gsap",
+  "spec": "^3.13.0",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "",
+  "child": "node_modules/lenis",
+  "name": "lenis",
+  "spec": "^1.3.26",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "",
+  "child": "node_modules/react",
+  "name": "react",
+  "spec": "^19.1.0",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "",
+  "child": "node_modules/react-dom",
+  "name": "react-dom",
+  "spec": "^19.1.0",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "",
+  "child": "node_modules/three",
+  "name": "three",
+  "spec": "^0.186.0",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "",
+  "child": "node_modules/@axe-core/playwright",
+  "name": "@axe-core/playwright",
+  "spec": "^4.10.0",
+  "kind": "dev",
+  "project": "."
+ },
+ {
+  "parent": "",
+  "child": "node_modules/@playwright/test",
+  "name": "@playwright/test",
+  "spec": "^1.55.0",
+  "kind": "dev",
+  "project": "."
+ },
+ {
+  "parent": "",
+  "child": "node_modules/@types/react",
+  "name": "@types/react",
+  "spec": "^19.1.0",
+  "kind": "dev",
+  "project": "."
+ },
+ {
+  "parent": "",
+  "child": "node_modules/@types/react-dom",
+  "name": "@types/react-dom",
+  "spec": "^19.1.0",
+  "kind": "dev",
+  "project": "."
+ },
+ {
+  "parent": "",
+  "child": "node_modules/@types/three",
+  "name": "@types/three",
+  "spec": "^0.186.0",
+  "kind": "dev",
+  "project": "."
+ },
+ {
+  "parent": "",
+  "child": "node_modules/typescript",
+  "name": "typescript",
+  "spec": "^5.8.3",
+  "kind": "dev",
+  "project": "."
+ },
+ {
+  "parent": "",
+  "child": "node_modules/vite",
+  "name": "vite",
+  "spec": "^7.0.0",
+  "kind": "dev",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/@axe-core/playwright",
+  "child": "node_modules/axe-core",
+  "name": "axe-core",
+  "spec": "~4.13.0",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/@axe-core/playwright",
+  "child": "node_modules/playwright-core",
+  "name": "playwright-core",
+  "spec": ">= 1.0.0",
+  "kind": "peer",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/@playwright/test",
+  "child": "node_modules/playwright",
+  "name": "playwright",
+  "spec": "1.63.0",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/@types/react",
+  "child": "node_modules/csstype",
+  "name": "csstype",
+  "spec": "^3.2.2",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/@types/react-dom",
+  "child": "node_modules/@types/react",
+  "name": "@types/react",
+  "spec": "^19.3.0",
+  "kind": "peer",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/@types/three",
+  "child": "node_modules/@dimforge/rapier3d-compat",
+  "name": "@dimforge/rapier3d-compat",
+  "spec": "~0.12.0",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/@types/three",
+  "child": "node_modules/@tweenjs/tween.js",
+  "name": "@tweenjs/tween.js",
+  "spec": "~23.1.3",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/@types/three",
+  "child": "node_modules/@types/stats.js",
+  "name": "@types/stats.js",
+  "spec": "*",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/@types/three",
+  "child": "node_modules/@types/webxr",
+  "name": "@types/webxr",
+  "spec": ">=0.5.17",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/@types/three",
+  "child": "node_modules/fflate",
+  "name": "fflate",
+  "spec": "~0.8.3",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/@types/three",
+  "child": "node_modules/meshoptimizer",
+  "name": "meshoptimizer",
+  "spec": "~1.1.1",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/aix-ppc64",
+  "name": "@esbuild/aix-ppc64",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/android-arm",
+  "name": "@esbuild/android-arm",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/android-arm64",
+  "name": "@esbuild/android-arm64",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/android-x64",
+  "name": "@esbuild/android-x64",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/darwin-arm64",
+  "name": "@esbuild/darwin-arm64",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/darwin-x64",
+  "name": "@esbuild/darwin-x64",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/freebsd-arm64",
+  "name": "@esbuild/freebsd-arm64",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/freebsd-x64",
+  "name": "@esbuild/freebsd-x64",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/linux-arm",
+  "name": "@esbuild/linux-arm",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/linux-arm64",
+  "name": "@esbuild/linux-arm64",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/linux-ia32",
+  "name": "@esbuild/linux-ia32",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/linux-loong64",
+  "name": "@esbuild/linux-loong64",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/linux-mips64el",
+  "name": "@esbuild/linux-mips64el",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/linux-ppc64",
+  "name": "@esbuild/linux-ppc64",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/linux-riscv64",
+  "name": "@esbuild/linux-riscv64",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/linux-s390x",
+  "name": "@esbuild/linux-s390x",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/linux-x64",
+  "name": "@esbuild/linux-x64",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/netbsd-arm64",
+  "name": "@esbuild/netbsd-arm64",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/netbsd-x64",
+  "name": "@esbuild/netbsd-x64",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/openbsd-arm64",
+  "name": "@esbuild/openbsd-arm64",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/openbsd-x64",
+  "name": "@esbuild/openbsd-x64",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/openharmony-arm64",
+  "name": "@esbuild/openharmony-arm64",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/sunos-x64",
+  "name": "@esbuild/sunos-x64",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/win32-arm64",
+  "name": "@esbuild/win32-arm64",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/win32-ia32",
+  "name": "@esbuild/win32-ia32",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/esbuild",
+  "child": "node_modules/@esbuild/win32-x64",
+  "name": "@esbuild/win32-x64",
+  "spec": "0.28.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/fdir",
+  "child": "node_modules/picomatch",
+  "name": "picomatch",
+  "spec": "^3 || ^4",
+  "kind": "peer_optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/lenis",
+  "child": "node_modules/react",
+  "name": "react",
+  "spec": ">=17.0.0",
+  "kind": "peer_optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/playwright",
+  "child": "node_modules/playwright-core",
+  "name": "playwright-core",
+  "spec": "1.63.0",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/postcss",
+  "child": "node_modules/nanoid",
+  "name": "nanoid",
+  "spec": "^3.3.18",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/postcss",
+  "child": "node_modules/picocolors",
+  "name": "picocolors",
+  "spec": "^1.1.1",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/postcss",
+  "child": "node_modules/source-map-js",
+  "name": "source-map-js",
+  "spec": "^1.2.1",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/react-dom",
+  "child": "node_modules/scheduler",
+  "name": "scheduler",
+  "spec": "^0.28.0",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/react-dom",
+  "child": "node_modules/react",
+  "name": "react",
+  "spec": "^19.3.0",
+  "kind": "peer",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@types/estree",
+  "name": "@types/estree",
+  "spec": "1.0.9",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@napi-rs/lzma-linux-x64-gnu",
+  "name": "@napi-rs/lzma-linux-x64-gnu",
+  "spec": "1.5.1",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-android-arm-eabi",
+  "name": "@rollup/rollup-android-arm-eabi",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-android-arm64",
+  "name": "@rollup/rollup-android-arm64",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-darwin-arm64",
+  "name": "@rollup/rollup-darwin-arm64",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-darwin-x64",
+  "name": "@rollup/rollup-darwin-x64",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-freebsd-arm64",
+  "name": "@rollup/rollup-freebsd-arm64",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-freebsd-x64",
+  "name": "@rollup/rollup-freebsd-x64",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-linux-arm-gnueabihf",
+  "name": "@rollup/rollup-linux-arm-gnueabihf",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-linux-arm-musleabihf",
+  "name": "@rollup/rollup-linux-arm-musleabihf",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-linux-arm64-gnu",
+  "name": "@rollup/rollup-linux-arm64-gnu",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-linux-arm64-musl",
+  "name": "@rollup/rollup-linux-arm64-musl",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-linux-loong64-gnu",
+  "name": "@rollup/rollup-linux-loong64-gnu",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-linux-loong64-musl",
+  "name": "@rollup/rollup-linux-loong64-musl",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-linux-ppc64-gnu",
+  "name": "@rollup/rollup-linux-ppc64-gnu",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-linux-ppc64-musl",
+  "name": "@rollup/rollup-linux-ppc64-musl",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-linux-riscv64-gnu",
+  "name": "@rollup/rollup-linux-riscv64-gnu",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-linux-riscv64-musl",
+  "name": "@rollup/rollup-linux-riscv64-musl",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-linux-s390x-gnu",
+  "name": "@rollup/rollup-linux-s390x-gnu",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-linux-x64-gnu",
+  "name": "@rollup/rollup-linux-x64-gnu",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-linux-x64-musl",
+  "name": "@rollup/rollup-linux-x64-musl",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-openbsd-x64",
+  "name": "@rollup/rollup-openbsd-x64",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-openharmony-arm64",
+  "name": "@rollup/rollup-openharmony-arm64",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-win32-arm64-msvc",
+  "name": "@rollup/rollup-win32-arm64-msvc",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-win32-ia32-msvc",
+  "name": "@rollup/rollup-win32-ia32-msvc",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-win32-x64-gnu",
+  "name": "@rollup/rollup-win32-x64-gnu",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/@rollup/rollup-win32-x64-msvc",
+  "name": "@rollup/rollup-win32-x64-msvc",
+  "spec": "4.63.3",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/rollup",
+  "child": "node_modules/fsevents",
+  "name": "fsevents",
+  "spec": "~2.3.2",
+  "kind": "optional",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/tinyglobby",
+  "child": "node_modules/fdir",
+  "name": "fdir",
+  "spec": "^6.5.0",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/tinyglobby",
+  "child": "node_modules/picomatch",
+  "name": "picomatch",
+  "spec": "^4.0.4",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/vite",
+  "child": "node_modules/esbuild",
+  "name": "esbuild",
+  "spec": "^0.27.0 || ^0.28.0",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/vite",
+  "child": "node_modules/fdir",
+  "name": "fdir",
+  "spec": "^6.5.0",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/vite",
+  "child": "node_modules/picomatch",
+  "name": "picomatch",
+  "spec": "^4.0.3",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/vite",
+  "child": "node_modules/postcss",
+  "name": "postcss",
+  "spec": "^8.5.6",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/vite",
+  "child": "node_modules/rollup",
+  "name": "rollup",
+  "spec": "^4.43.0",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/vite",
+  "child": "node_modules/tinyglobby",
+  "name": "tinyglobby",
+  "spec": "^0.2.15",
+  "kind": "prod",
+  "project": "."
+ },
+ {
+  "parent": "node_modules/vite",
+  "child": "node_modules/fsevents",
+  "name": "fsevents",
+  "spec": "~2.3.3",
+  "kind": "optional",
+  "project": "."
+ }
+]

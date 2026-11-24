@@ -1,0 +1,14 @@
+{
+  "archived": [
+    "check",
+    "projects",
+    "dashboard"
+  ],
+  "restore": "Stop the dashboard, move the fresh directories aside, then move these archived directories back to guardian-out/.",
+  "preserved": [
+    "application source",
+    "sandbox repositories",
+    "GitHub PR history",
+    "advisory caches"
+  ]
+}

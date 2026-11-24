@@ -1,0 +1,257 @@
+{
+ "vulnerabilities": [
+  {
+   "name": "source-map-js",
+   "version": "1.2.1",
+   "ids": [
+    "GHSA-68fv-2mgg-jv7q",
+    "CVE-2026-93749"
+   ],
+   "summary": "source-map-js allows event-loop denial of service through indexed source-map section offsets",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "1.2.2"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-68fv-2mgg-jv7q",
+   "ecosystem": "npm",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "high"
+   },
+   "id": "GHSA-68fv-2mgg-jv7q",
+   "key": "source-map-js@1.2.1#GHSA-68fv-2mgg-jv7q",
+   "direct": false,
+   "runtime": false,
+   "exposure": null,
+   "source_file": "package-lock.json",
+   "component_key": "node_modules/source-map-js",
+   "path": [
+    "KIRAN-S_PORTFOLIO",
+    "node_modules/vite",
+    "node_modules/postcss",
+    "node_modules/source-map-js"
+   ]
+  },
+  {
+   "name": "vite",
+   "version": "7.3.6",
+   "ids": [
+    "GHSA-587h-7wmj-h5pm",
+    "CVE-2026-112942"
+   ],
+   "summary": "launch-editor: `fs.existsSync()` existence check can be bypassed on Windows",
+   "severity": "high",
+   "severity_known": true,
+   "fixed": [
+    "6.4.4",
+    "7.3.7",
+    "8.1.6",
+    "8.2.4",
+    "8.3.3"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-587h-7wmj-h5pm",
+   "ecosystem": "npm",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "high",
+    "grype": "high"
+   },
+   "id": "GHSA-587h-7wmj-h5pm",
+   "key": "vite@7.3.6#GHSA-587h-7wmj-h5pm",
+   "direct": true,
+   "runtime": false,
+   "exposure": null,
+   "source_file": "package-lock.json",
+   "component_key": "node_modules/vite",
+   "path": [
+    "KIRAN-S_PORTFOLIO",
+    "node_modules/vite"
+   ]
+  },
+  {
+   "name": "vite",
+   "version": "7.3.6",
+   "ids": [
+    "GHSA-698v-4r3x-3vcv",
+    "CVE-2026-112943"
+   ],
+   "summary": "launch-editor: escapeCmdArgs() omits % escaping on Windows",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "6.4.4",
+    "7.3.7",
+    "8.1.6",
+    "8.2.4",
+    "8.3.3"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-698v-4r3x-3vcv",
+   "ecosystem": "npm",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-698v-4r3x-3vcv",
+   "key": "vite@7.3.6#GHSA-698v-4r3x-3vcv",
+   "direct": true,
+   "runtime": false,
+   "exposure": null,
+   "source_file": "package-lock.json",
+   "component_key": "node_modules/vite",
+   "path": [
+    "KIRAN-S_PORTFOLIO",
+    "node_modules/vite"
+   ]
+  },
+  {
+   "name": "vite",
+   "version": "7.3.6",
+   "ids": [
+    "GHSA-r825-w8mm-5pxw",
+    "CVE-2026-112944"
+   ],
+   "summary": "launch-editor: Editor CLI flag misinterpretation causing arbitrary command execution for some editors",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "6.4.4",
+    "7.3.7",
+    "8.1.6",
+    "8.2.4",
+    "8.3.3"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-r825-w8mm-5pxw",
+   "ecosystem": "npm",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-r825-w8mm-5pxw",
+   "key": "vite@7.3.6#GHSA-r825-w8mm-5pxw",
+   "direct": true,
+   "runtime": false,
+   "exposure": null,
+   "source_file": "package-lock.json",
+   "component_key": "node_modules/vite",
+   "path": [
+    "KIRAN-S_PORTFOLIO",
+    "node_modules/vite"
+   ]
+  },
+  {
+   "name": "vite",
+   "version": "7.3.6",
+   "ids": [
+    "GHSA-rq7h-c2jc-7f22",
+    "CVE-2026-112946"
+   ],
+   "summary": "Vite: Files outside `server.fs.allow` could be served when project paths match system paths on non-Windows machine",
+   "severity": "medium",
+   "severity_known": true,
+   "fixed": [
+    "6.4.4",
+    "7.3.7",
+    "8.1.6",
+    "8.2.4",
+    "8.3.3"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-rq7h-c2jc-7f22",
+   "ecosystem": "npm",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "medium",
+    "grype": "medium"
+   },
+   "id": "GHSA-rq7h-c2jc-7f22",
+   "key": "vite@7.3.6#GHSA-rq7h-c2jc-7f22",
+   "direct": true,
+   "runtime": false,
+   "exposure": null,
+   "source_file": "package-lock.json",
+   "component_key": "node_modules/vite",
+   "path": [
+    "KIRAN-S_PORTFOLIO",
+    "node_modules/vite"
+   ]
+  },
+  {
+   "name": "vite",
+   "version": "7.3.6",
+   "ids": [
+    "GHSA-9jrq-w75r-8gcw",
+    "CVE-2026-112945"
+   ],
+   "summary": "Vite: Cross origin script execution through Vite custom middleware",
+   "severity": "low",
+   "severity_known": true,
+   "fixed": [
+    "6.4.4",
+    "7.3.7",
+    "8.1.6",
+    "8.2.4",
+    "8.3.3"
+   ],
+   "malicious": false,
+   "url": "https://osv.dev/vulnerability/GHSA-9jrq-w75r-8gcw",
+   "ecosystem": "npm",
+   "sources": [
+    "osv",
+    "grype"
+   ],
+   "severity_by_source": {
+    "osv": "low",
+    "grype": "low"
+   },
+   "id": "GHSA-9jrq-w75r-8gcw",
+   "key": "vite@7.3.6#GHSA-9jrq-w75r-8gcw",
+   "direct": true,
+   "runtime": false,
+   "exposure": null,
+   "source_file": "package-lock.json",
+   "component_key": "node_modules/vite",
+   "path": [
+    "KIRAN-S_PORTFOLIO",
+    "node_modules/vite"
+   ]
+  }
+ ],
+ "errors": {},
+ "counts": {
+  "osv": 6,
+  "grype": 6,
+  "merged": 6,
+  "both": 6,
+  "packages": 2,
+  "by_severity": {
+   "critical": 0,
+   "high": 2,
+   "medium": 3,
+   "low": 1,
+   "info": 0
+  }
+ }
+}

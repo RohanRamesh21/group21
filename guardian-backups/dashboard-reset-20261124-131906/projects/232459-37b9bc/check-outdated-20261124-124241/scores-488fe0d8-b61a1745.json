@@ -1,0 +1,715 @@
+{
+ "verdict": "allow",
+ "reasons": [
+  "no high or critical risk introduced by this PR"
+ ],
+ "counts": {
+  "critical": {
+   "introduced": 0,
+   "pre_existing": 0
+  },
+  "high": {
+   "introduced": 0,
+   "pre_existing": 0
+  },
+  "medium": {
+   "introduced": 0,
+   "pre_existing": 0
+  },
+  "low": {
+   "introduced": 0,
+   "pre_existing": 7
+  }
+ },
+ "findings": [
+  {
+   "id": "vite@7.3.6#GHSA-587h-7wmj-h5pm",
+   "kind": "vulnerability",
+   "title": "vite@7.3.6: GHSA-587h-7wmj-h5pm",
+   "component": "vite@7.3.6",
+   "label": "pre_existing",
+   "summary": "launch-editor: `fs.existsSync()` existence check can be bypassed on Windows",
+   "decision": "Track",
+   "level": "low",
+   "score": 64.6,
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "total",
+    "mission": "minimal",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.777,
+     "weight": 0.4065,
+     "points": 31.6,
+     "why": "EPSS 0.017 (percentile 0.78)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.2,
+     "weight": 0.1428,
+     "points": 2.9,
+     "why": "dev-only tooling, not shipped"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 6.4.4, 7.3.7"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 6.4.4",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-587h-7wmj-h5pm",
+    "aliases": [
+     "CVE-2026-112942"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:A/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-112942",
+    "epss": {
+     "epss": 0.01694,
+     "percentile": 0.77733,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-587h-7wmj-h5pm",
+    "lockfile_line": 1367,
+    "file": "package-lock.json",
+    "sources": [
+     "osv",
+     "grype"
+    ]
+   }
+  },
+  {
+   "id": "vite@7.3.6#GHSA-rq7h-c2jc-7f22",
+   "kind": "vulnerability",
+   "title": "vite@7.3.6: GHSA-rq7h-c2jc-7f22",
+   "component": "vite@7.3.6",
+   "label": "pre_existing",
+   "summary": "Vite: Files outside `server.fs.allow` could be served when project paths match system paths on non-Windows machine",
+   "decision": "Track",
+   "level": "low",
+   "score": 49.6,
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "minimal",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.592,
+     "weight": 0.4065,
+     "points": 24.1,
+     "why": "EPSS 0.009 (percentile 0.59)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.2,
+     "weight": 0.1428,
+     "points": 2.9,
+     "why": "dev-only tooling, not shipped"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 6.4.4, 7.3.7"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 6.4.4",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-rq7h-c2jc-7f22",
+    "aliases": [
+     "CVE-2026-112946"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:L/VI:N/VA:N/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-112946",
+    "epss": {
+     "epss": 0.00852,
+     "percentile": 0.59174,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-rq7h-c2jc-7f22",
+    "lockfile_line": 1367,
+    "file": "package-lock.json",
+    "sources": [
+     "osv",
+     "grype"
+    ]
+   }
+  },
+  {
+   "id": "source-map-js@1.2.1#GHSA-68fv-2mgg-jv7q",
+   "kind": "vulnerability",
+   "title": "source-map-js@1.2.1: GHSA-68fv-2mgg-jv7q",
+   "component": "source-map-js@1.2.1",
+   "label": "pre_existing",
+   "summary": "source-map-js allows event-loop denial of service through indexed source-map section offsets",
+   "decision": "Track",
+   "level": "low",
+   "score": 49.4,
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "yes",
+    "technical_impact": "partial",
+    "mission": "minimal",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.403,
+     "weight": 0.4065,
+     "points": 16.4,
+     "why": "EPSS 0.005 (percentile 0.40)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.2,
+     "weight": 0.1428,
+     "points": 2.9,
+     "why": "dev-only tooling, not shipped"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 1.2.2"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 1.2.2",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-68fv-2mgg-jv7q",
+    "aliases": [
+     "CVE-2026-93749"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-93749",
+    "epss": {
+     "epss": 0.00455,
+     "percentile": 0.40278,
+     "date": "2026-11-23"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-68fv-2mgg-jv7q",
+    "lockfile_line": 1320,
+    "file": "package-lock.json",
+    "sources": [
+     "osv",
+     "grype"
+    ]
+   }
+  },
+  {
+   "id": "vite@7.3.6#GHSA-r825-w8mm-5pxw",
+   "kind": "vulnerability",
+   "title": "vite@7.3.6: GHSA-r825-w8mm-5pxw",
+   "component": "vite@7.3.6",
+   "label": "pre_existing",
+   "summary": "launch-editor: Editor CLI flag misinterpretation causing arbitrary command execution for some editors",
+   "decision": "Track",
+   "level": "low",
+   "score": 47.6,
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "minimal",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.543,
+     "weight": 0.4065,
+     "points": 22.1,
+     "why": "EPSS 0.007 (percentile 0.54)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.2,
+     "weight": 0.1428,
+     "points": 2.9,
+     "why": "dev-only tooling, not shipped"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 6.4.4, 7.3.7"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 6.4.4",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-r825-w8mm-5pxw",
+    "aliases": [
+     "CVE-2026-112944"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:L/VI:L/VA:L/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-112944",
+    "epss": {
+     "epss": 0.00705,
+     "percentile": 0.54284,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-r825-w8mm-5pxw",
+    "lockfile_line": 1367,
+    "file": "package-lock.json",
+    "sources": [
+     "osv",
+     "grype"
+    ]
+   }
+  },
+  {
+   "id": "vite@7.3.6#GHSA-698v-4r3x-3vcv",
+   "kind": "vulnerability",
+   "title": "vite@7.3.6: GHSA-698v-4r3x-3vcv",
+   "component": "vite@7.3.6",
+   "label": "pre_existing",
+   "summary": "launch-editor: escapeCmdArgs() omits % escaping on Windows",
+   "decision": "Track",
+   "level": "low",
+   "score": 40.3,
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "minimal",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.365,
+     "weight": 0.4065,
+     "points": 14.8,
+     "why": "EPSS 0.004 (percentile 0.37)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.2,
+     "weight": 0.1428,
+     "points": 2.9,
+     "why": "dev-only tooling, not shipped"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 6.4.4, 7.3.7"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 6.4.4",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-698v-4r3x-3vcv",
+    "aliases": [
+     "CVE-2026-112943"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:L/VI:L/VA:L/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-112943",
+    "epss": {
+     "epss": 0.00414,
+     "percentile": 0.36505,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-698v-4r3x-3vcv",
+    "lockfile_line": 1367,
+    "file": "package-lock.json",
+    "sources": [
+     "osv",
+     "grype"
+    ]
+   }
+  },
+  {
+   "id": "vite@7.3.6#GHSA-9jrq-w75r-8gcw",
+   "kind": "vulnerability",
+   "title": "vite@7.3.6: GHSA-9jrq-w75r-8gcw",
+   "component": "vite@7.3.6",
+   "label": "pre_existing",
+   "summary": "Vite: Cross origin script execution through Vite custom middleware",
+   "decision": "Track",
+   "level": "low",
+   "score": 39.6,
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "minimal",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.53,
+     "weight": 0.4065,
+     "points": 21.5,
+     "why": "EPSS 0.007 (percentile 0.53)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.2,
+     "weight": 0.249,
+     "points": 5.0,
+     "why": "severity low (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.2,
+     "weight": 0.1428,
+     "points": 2.9,
+     "why": "dev-only tooling, not shipped"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 6.4.4, 7.3.7"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 6.4.4",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-9jrq-w75r-8gcw",
+    "aliases": [
+     "CVE-2026-112945"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:A/VC:L/VI:L/VA:N/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-112945",
+    "epss": {
+     "epss": 0.00672,
+     "percentile": 0.53013,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-9jrq-w75r-8gcw",
+    "lockfile_line": 1367,
+    "file": "package-lock.json",
+    "sources": [
+     "osv",
+     "grype"
+    ]
+   }
+  },
+  {
+   "id": "install_script:fsevents@2.3.3",
+   "kind": "supply_chain",
+   "title": "fsevents@2.3.3: install script",
+   "component": "fsevents@2.3.3",
+   "label": "pre_existing",
+   "summary": "runs its own code during install (preinstall/install/postinstall)",
+   "decision": "Track",
+   "level": "low",
+   "score": 22.2,
+   "ssvc": null,
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.1,
+     "weight": 0.4065,
+     "points": 4.1,
+     "why": "no attack pattern"
+    },
+    {
+     "factor": "impact",
+     "value": 0.2,
+     "weight": 0.249,
+     "points": 5.0,
+     "why": "severity low"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.2,
+     "weight": 0.1428,
+     "points": 2.9,
+     "why": "dev-only tooling, not shipped"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "revert the change / remove the package"
+    }
+   ],
+   "counterfactuals": [],
+   "evidence": {
+    "detector": "D2",
+    "lockfile_line": 1091,
+    "file": "package-lock.json",
+    "resolved": "https://registry.npmjs.org/fsevents/-/fsevents-2.3.3.tgz",
+    "hard_signal": false
+   }
+  }
+ ],
+ "method": {
+  "ahp": {
+   "weights": {
+    "exploitation": 0.4065,
+    "impact": 0.249,
+    "exposure": 0.1428,
+    "introduced": 0.1428,
+    "actionable": 0.0589
+   },
+   "lambda_max": 5.0567,
+   "consistency_index": 0.0142,
+   "consistency_ratio": 0.0127,
+   "consistent": true,
+   "matrix": [
+    [
+     1,
+     2,
+     3,
+     3,
+     5
+    ],
+    [
+     0.5,
+     1,
+     2,
+     2,
+     4
+    ],
+    [
+     0.3333333333333333,
+     0.5,
+     1,
+     1,
+     3
+    ],
+    [
+     0.3333333333333333,
+     0.5,
+     1,
+     1,
+     3
+    ],
+    [
+     0.2,
+     0.25,
+     0.3333333333333333,
+     0.3333333333333333,
+     1
+    ]
+   ],
+   "criteria": [
+    "exploitation",
+    "impact",
+    "exposure",
+    "introduced",
+    "actionable"
+   ]
+  },
+  "criteria_text": {
+   "exploitation": "Being attacked? (KEV = attacked in the wild; EPSS = chance of attack in 30 days; hard supply-chain signals)",
+   "impact": "How bad if exploited (advisory severity / CVSS)",
+   "exposure": "Where it runs (shipped runtime code vs dev-only tooling)",
+   "introduced": "Added by this PR (vs already present before)",
+   "actionable": "A fix exists (upgrade or remove)"
+  },
+  "epss_poc_threshold": 0.088,
+  "floors": {
+   "malicious": {
+    "level": "critical",
+    "decision": "Act",
+    "why": "Known malicious package (OSV MAL- advisory)"
+   },
+   "lockfile_tamper": {
+    "level": "critical",
+    "decision": "Act",
+    "why": "Package resolved from a host that is not on the allow-list / integrity changed"
+   },
+   "source_change": {
+    "level": "critical",
+    "decision": "Act",
+    "why": "Package-manager config redirected (e.g. .npmrc registry)"
+   },
+   "new_install_script": {
+    "level": "high",
+    "decision": "Attend",
+    "why": "New package runs code at install time"
+   },
+   "typosquat": {
+    "level": "high",
+    "decision": "Attend",
+    "why": "Name is a near-copy of a popular package"
+   }
+  },
+  "levels": {
+   "Act": "critical",
+   "Attend": "high",
+   "Track*": "medium",
+   "Track": "low"
+  },
+  "verdict_rule": "block if this PR introduces a critical finding or an Act decision; review if it introduces a high finding; otherwise allow"
+ },
+ "data": {
+  "advisories": 6,
+  "cves": 6,
+  "epss_found": 6,
+  "kev_matches": 0,
+  "kev_catalog_size": 1790,
+  "errors": []
+ }
+}

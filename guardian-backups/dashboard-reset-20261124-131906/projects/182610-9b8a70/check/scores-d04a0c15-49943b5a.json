@@ -1,0 +1,7076 @@
+{
+ "verdict": "allow",
+ "reasons": [
+  "no high or critical risk introduced by this change"
+ ],
+ "complete": true,
+ "incomplete_reasons": [],
+ "counts": {
+  "critical": {
+   "introduced": 0,
+   "pre_existing": 0
+  },
+  "high": {
+   "introduced": 0,
+   "pre_existing": 2
+  },
+  "medium": {
+   "introduced": 0,
+   "pre_existing": 0
+  },
+  "low": {
+   "introduced": 0,
+   "pre_existing": 56
+  }
+ },
+ "findings": [
+  {
+   "id": "jquery@3.3.1#GHSA-jpcq-cgw6-v4j6",
+   "kind": "vulnerability",
+   "title": "jquery@3.3.1: GHSA-jpcq-cgw6-v4j6",
+   "component": "jquery@3.3.1",
+   "label": "pre_existing",
+   "summary": "Potential XSS vulnerability in jQuery",
+   "decision": "Attend",
+   "level": "high",
+   "score": 77.5,
+   "severity": "medium",
+   "version": "3.3.1",
+   "ssvc": {
+    "exploitation": "active",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "essential",
+    "rule": "attacked in the wild"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 1.0,
+     "weight": 0.4065,
+     "points": 40.6,
+     "why": "in CISA KEV: attacked in the wild"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 3.5.0"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "upgraded to 3.5.0",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-jpcq-cgw6-v4j6",
+    "aliases": [
+     "BIT-drupal-2020-11023",
+     "CVE-2020-11023"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:C/C:H/I:L/A:N/E:H",
+    "cve": "CVE-2020-11023",
+    "epss": {
+     "epss": 0.84887,
+     "percentile": 0.99718,
+     "date": "2026-11-22"
+    },
+    "kev": {
+     "date_added": "2025-01-23",
+     "ransomware": "Unknown",
+     "name": "JQuery Cross-Site Scripting (XSS) Vulnerability"
+    },
+    "url": "https://osv.dev/vulnerability/GHSA-jpcq-cgw6-v4j6",
+    "lockfile_line": 10,
+    "file": "examples/javascript/js_example/templates/jquery.html",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.3.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "github:pypa/gh-action-pypi-publish@v1.14.2#GHSA-5xjx-3w67-w9x9",
+   "kind": "vulnerability",
+   "title": "pypa/gh-action-pypi-publish@v1.14.2: GHSA-5xjx-3w67-w9x9",
+   "component": "pypa/gh-action-pypi-publish@v1.14.2",
+   "label": "pre_existing",
+   "summary": "pypi-publish action revocation of CA in the chain that Sigstore uses in Trusted Publishing and Digital Attestations for PyPI",
+   "decision": "Attend",
+   "level": "high",
+   "score": 61.6,
+   "severity": "critical",
+   "version": "v1.14.2",
+   "ssvc": {
+    "exploitation": "unknown",
+    "automatable": "yes",
+    "technical_impact": "total",
+    "mission": "essential",
+    "rule": "no attack seen, but automatable with total impact in a direct runtime dependency"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.3,
+     "weight": 0.4065,
+     "points": 12.2,
+     "why": "no EPSS data (treated as neutral 0.3)"
+    },
+    {
+     "factor": "impact",
+     "value": 1.0,
+     "weight": 0.249,
+     "points": 24.9,
+     "why": "severity critical (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 1.14.3, 7245906fb61fa33a13554f9d5fb856fe61758086"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "this were dev-only tooling",
+     "then": "decision would be Track (low)"
+    },
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Act (critical)"
+    },
+    {
+     "if": "upgraded to 1.14.3",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-5xjx-3w67-w9x9",
+    "aliases": [],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N",
+    "cve": null,
+    "epss": null,
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-5xjx-3w67-w9x9",
+    "lockfile_line": null,
+    "file": ".github/workflows/publish.yaml",
+    "sources": [
+     "osv"
+    ],
+    "severity_by_source": {
+     "osv": "critical"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version v1.14.2 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:werkzeug@2.3.3#GHSA-2g68-c3qc-8985",
+   "kind": "vulnerability",
+   "title": "werkzeug@2.3.3: GHSA-2g68-c3qc-8985",
+   "component": "werkzeug@2.3.3",
+   "label": "pre_existing",
+   "summary": "Werkzeug debugger vulnerable to remote execution when interacting with attacker controlled domain",
+   "decision": "Track",
+   "level": "low",
+   "score": 80.6,
+   "severity": "high",
+   "version": "2.3.3",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "total",
+    "mission": "essential",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.891,
+     "weight": 0.4065,
+     "points": 36.2,
+     "why": "EPSS 0.034 (percentile 0.89)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 3.0.3"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Act (critical)"
+    },
+    {
+     "if": "upgraded to 3.0.3",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-2g68-c3qc-8985",
+    "aliases": [
+     "CVE-2024-34069",
+     "PYSEC-2026-2043"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:U/C:H/I:H/A:H",
+    "cve": "CVE-2024-34069",
+    "epss": {
+     "epss": 0.03397,
+     "percentile": 0.8914,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-2g68-c3qc-8985",
+    "lockfile_line": null,
+    "file": "examples/celery/requirements.txt",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "high"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 2.3.3 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "jquery@3.3.1#GHSA-gxr4-xjj5-5px2",
+   "kind": "vulnerability",
+   "title": "jquery@3.3.1: GHSA-gxr4-xjj5-5px2",
+   "component": "jquery@3.3.1",
+   "label": "pre_existing",
+   "summary": "Potential XSS vulnerability in jQuery",
+   "decision": "Track",
+   "level": "low",
+   "score": 77.5,
+   "severity": "medium",
+   "version": "3.3.1",
+   "ssvc": {
+    "exploitation": "poc",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "essential",
+    "rule": "likely to be attacked, limited impact"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.999,
+     "weight": 0.4065,
+     "points": 40.6,
+     "why": "EPSS 0.992 (percentile 1.00)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 3.5.0"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 3.5.0",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-gxr4-xjj5-5px2",
+    "aliases": [
+     "BIT-drupal-2020-11022",
+     "CVE-2020-11022"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:R/S:C/C:H/I:L/A:N",
+    "cve": "CVE-2020-11022",
+    "epss": {
+     "epss": 0.99215,
+     "percentile": 0.99936,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-gxr4-xjj5-5px2",
+    "lockfile_line": 10,
+    "file": "examples/javascript/js_example/templates/jquery.html",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.3.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "jquery@3.3.1#GHSA-6c3j-c64m-qhgq",
+   "kind": "vulnerability",
+   "title": "jquery@3.3.1: GHSA-6c3j-c64m-qhgq",
+   "component": "jquery@3.3.1",
+   "label": "pre_existing",
+   "summary": "XSS in jQuery as used in Drupal, Backdrop CMS, and other products",
+   "decision": "Track",
+   "level": "low",
+   "score": 77.4,
+   "severity": "medium",
+   "version": "3.3.1",
+   "ssvc": {
+    "exploitation": "poc",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "essential",
+    "rule": "likely to be attacked, limited impact"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.997,
+     "weight": 0.4065,
+     "points": 40.5,
+     "why": "EPSS 0.868 (percentile 1.00)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 3.4.0"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 3.4.0",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-6c3j-c64m-qhgq",
+    "aliases": [
+     "CVE-2019-11358",
+     "DRUPAL-CORE-2019-006",
+     "PYSEC-2026-628",
+     "SNYK-JS-JQUERY-174006"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N",
+    "cve": "CVE-2019-11358",
+    "epss": {
+     "epss": 0.8682,
+     "percentile": 0.99749,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-6c3j-c64m-qhgq",
+    "lockfile_line": 10,
+    "file": "examples/javascript/js_example/templates/jquery.html",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.3.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:werkzeug@2.3.3#GHSA-hrfv-mqp8-q5rw",
+   "kind": "vulnerability",
+   "title": "werkzeug@2.3.3: GHSA-hrfv-mqp8-q5rw",
+   "component": "werkzeug@2.3.3",
+   "label": "pre_existing",
+   "summary": "Werkzeug DoS: High resource usage when parsing multipart/form-data containing a large part with CR/LF character at the beginning",
+   "decision": "Track",
+   "level": "low",
+   "score": 73.2,
+   "severity": "high",
+   "version": "2.3.3",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "essential",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.71,
+     "weight": 0.4065,
+     "points": 28.8,
+     "why": "EPSS 0.013 (percentile 0.71)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 2.3.8, 3.0.1"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 2.3.8",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-hrfv-mqp8-q5rw",
+    "aliases": [
+     "CVE-2023-46136",
+     "PYSEC-2023-221"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:A/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
+    "cve": "CVE-2023-46136",
+    "epss": {
+     "epss": 0.01288,
+     "percentile": 0.70951,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-hrfv-mqp8-q5rw",
+    "lockfile_line": null,
+    "file": "examples/celery/requirements.txt",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "medium",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 2.3.3 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "weak",
+      "why": "sources disagree on severity: grype medium, osv high"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": [
+     "contradictions: sources disagree on severity: grype medium, osv high"
+    ]
+   }
+  },
+  {
+   "id": "pypi:werkzeug@2.3.3#GHSA-q34m-jh98-gwm2",
+   "kind": "vulnerability",
+   "title": "werkzeug@2.3.3: GHSA-q34m-jh98-gwm2",
+   "component": "werkzeug@2.3.3",
+   "label": "pre_existing",
+   "summary": "Werkzeug possible resource exhaustion when parsing file data in forms",
+   "decision": "Track",
+   "level": "low",
+   "score": 71.4,
+   "severity": "high",
+   "version": "2.3.3",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "yes",
+    "technical_impact": "partial",
+    "mission": "essential",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.664,
+     "weight": 0.4065,
+     "points": 27.0,
+     "why": "EPSS 0.011 (percentile 0.66)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 3.0.6"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Act (critical)"
+    },
+    {
+     "if": "upgraded to 3.0.6",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-q34m-jh98-gwm2",
+    "aliases": [
+     "CVE-2024-49767",
+     "PYSEC-2026-1860",
+     "PYSEC-2026-3417"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:L/SC:N/SI:N/SA:N",
+    "cve": "CVE-2024-49767",
+    "epss": {
+     "epss": 0.01095,
+     "percentile": 0.66376,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-q34m-jh98-gwm2",
+    "lockfile_line": null,
+    "file": "examples/celery/requirements.txt",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "medium",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 2.3.3 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "weak",
+      "why": "sources disagree on severity: grype medium, osv high"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": [
+     "contradictions: sources disagree on severity: grype medium, osv high"
+    ]
+   }
+  },
+  {
+   "id": "pypi:jinja2@3.1.2#GHSA-q2x7-8rv6-6q7h",
+   "kind": "vulnerability",
+   "title": "jinja2@3.1.2: GHSA-q2x7-8rv6-6q7h",
+   "component": "jinja2@3.1.2",
+   "label": "pre_existing",
+   "summary": "Jinja has a sandbox breakout through indirect reference to format method",
+   "decision": "Track",
+   "level": "low",
+   "score": 62.8,
+   "severity": "high",
+   "version": "3.1.2",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "total",
+    "mission": "essential",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.452,
+     "weight": 0.4065,
+     "points": 18.4,
+     "why": "EPSS 0.005 (percentile 0.45)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 3.1.5"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Act (critical)"
+    },
+    {
+     "if": "upgraded to 3.1.5",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-q2x7-8rv6-6q7h",
+    "aliases": [
+     "CVE-2024-56326",
+     "PYSEC-2026-1475"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:L/AC:L/AT:P/PR:L/UI:P/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+    "cve": "CVE-2024-56326",
+    "epss": {
+     "epss": 0.00522,
+     "percentile": 0.45161,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-q2x7-8rv6-6q7h",
+    "lockfile_line": null,
+    "file": "examples/celery/requirements.txt",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "medium",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.1.2 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "weak",
+      "why": "sources disagree on severity: grype medium, osv high"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": [
+     "contradictions: sources disagree on severity: grype medium, osv high"
+    ]
+   }
+  },
+  {
+   "id": "pypi:jinja2@3.1.2#GHSA-h75v-3vvj-5mfj",
+   "kind": "vulnerability",
+   "title": "jinja2@3.1.2: GHSA-h75v-3vvj-5mfj",
+   "component": "jinja2@3.1.2",
+   "label": "pre_existing",
+   "summary": "Jinja vulnerable to HTML attribute injection when passing user input as keys to xmlattr filter",
+   "decision": "Track",
+   "level": "low",
+   "score": 62.5,
+   "severity": "medium",
+   "version": "3.1.2",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "essential",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.631,
+     "weight": 0.4065,
+     "points": 25.6,
+     "why": "EPSS 0.010 (percentile 0.63)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 3.1.4"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 3.1.4",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-h75v-3vvj-5mfj",
+    "aliases": [
+     "CVE-2024-34064",
+     "PYSEC-2026-1474"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N",
+    "cve": "CVE-2024-34064",
+    "epss": {
+     "epss": 0.00979,
+     "percentile": 0.63066,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-h75v-3vvj-5mfj",
+    "lockfile_line": null,
+    "file": "examples/celery/requirements.txt",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.1.2 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:jinja2@3.1.2#GHSA-h5c8-rqwp-cp95",
+   "kind": "vulnerability",
+   "title": "jinja2@3.1.2: GHSA-h5c8-rqwp-cp95",
+   "component": "jinja2@3.1.2",
+   "label": "pre_existing",
+   "summary": "Jinja vulnerable to HTML attribute injection when passing user input as keys to xmlattr filter",
+   "decision": "Track",
+   "level": "low",
+   "score": 61.4,
+   "severity": "medium",
+   "version": "3.1.2",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "essential",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.603,
+     "weight": 0.4065,
+     "points": 24.5,
+     "why": "EPSS 0.009 (percentile 0.60)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 3.1.3"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 3.1.3",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-h5c8-rqwp-cp95",
+    "aliases": [
+     "CVE-2024-22195",
+     "PYSEC-2026-1473"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:U/C:L/I:L/A:N",
+    "cve": "CVE-2024-22195",
+    "epss": {
+     "epss": 0.00892,
+     "percentile": 0.6032,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-h5c8-rqwp-cp95",
+    "lockfile_line": null,
+    "file": "examples/celery/requirements.txt",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.1.2 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:werkzeug@2.3.3#GHSA-f9vj-2wh5-fj8j",
+   "kind": "vulnerability",
+   "title": "werkzeug@2.3.3: GHSA-f9vj-2wh5-fj8j",
+   "component": "werkzeug@2.3.3",
+   "label": "pre_existing",
+   "summary": "Werkzeug safe_join not safe on Windows",
+   "decision": "Track",
+   "level": "low",
+   "score": 60.0,
+   "severity": "medium",
+   "version": "2.3.3",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "essential",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.567,
+     "weight": 0.4065,
+     "points": 23.1,
+     "why": "EPSS 0.008 (percentile 0.57)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 3.0.6"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 3.0.6",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-f9vj-2wh5-fj8j",
+    "aliases": [
+     "CVE-2024-49766",
+     "PYSEC-2026-2045"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:H/AT:N/PR:N/UI:N/VC:L/VI:N/VA:N/SC:N/SI:N/SA:N",
+    "cve": "CVE-2024-49766",
+    "epss": {
+     "epss": 0.00776,
+     "percentile": 0.56736,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-f9vj-2wh5-fj8j",
+    "lockfile_line": null,
+    "file": "examples/celery/requirements.txt",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 2.3.3 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:werkzeug@2.3.3#GHSA-29vq-49wr-vm6x",
+   "kind": "vulnerability",
+   "title": "werkzeug@2.3.3: GHSA-29vq-49wr-vm6x",
+   "component": "werkzeug@2.3.3",
+   "label": "pre_existing",
+   "summary": " Werkzeug safe_join() allows Windows special device names",
+   "decision": "Track",
+   "level": "low",
+   "score": 57.5,
+   "severity": "medium",
+   "version": "2.3.3",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "essential",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.508,
+     "weight": 0.4065,
+     "points": 20.6,
+     "why": "EPSS 0.006 (percentile 0.51)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 3.1.6"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 3.1.6",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-29vq-49wr-vm6x",
+    "aliases": [
+     "CVE-2026-27199",
+     "PYSEC-2026-2320"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:N/VI:N/VA:L/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-27199",
+    "epss": {
+     "epss": 0.00622,
+     "percentile": 0.50775,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-29vq-49wr-vm6x",
+    "lockfile_line": null,
+    "file": "examples/celery/requirements.txt",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 2.3.3 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:certifi@2026.7.22#GHSA-6q48-6c7w-9gw2",
+   "kind": "vulnerability",
+   "title": "certifi@2026.7.22: GHSA-6q48-6c7w-9gw2",
+   "component": "certifi@2026.7.22",
+   "label": "pre_existing",
+   "summary": "certifi bundles emSign root CAs with compromised intermediate CA keys",
+   "decision": "Track",
+   "level": "low",
+   "score": 57.3,
+   "severity": "critical",
+   "version": "2026.7.22",
+   "ssvc": {
+    "exploitation": "unknown",
+    "automatable": "no",
+    "technical_impact": "total",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.3,
+     "weight": 0.4065,
+     "points": 12.2,
+     "why": "no EPSS data (treated as neutral 0.3)"
+    },
+    {
+     "factor": "impact",
+     "value": 1.0,
+     "weight": 0.249,
+     "points": 24.9,
+     "why": "severity critical (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 2026.10.18"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Act (critical)"
+    },
+    {
+     "if": "upgraded to 2026.10.18",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-6q48-6c7w-9gw2",
+    "aliases": [
+     "PYSEC-2026-4320"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:H/AT:P/PR:N/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N",
+    "cve": null,
+    "epss": null,
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-6q48-6c7w-9gw2",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "critical",
+     "grype": "critical"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 2026.7.22 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:uv@0.12.0#GHSA-hq85-5cpj-mr62",
+   "kind": "vulnerability",
+   "title": "uv@0.12.0: GHSA-hq85-5cpj-mr62",
+   "component": "uv@0.12.0",
+   "label": "pre_existing",
+   "summary": "uv's bundled CA store trusts an emSign root whose intermediate CA keys are compromised",
+   "decision": "Track",
+   "level": "low",
+   "score": 57.3,
+   "severity": "critical",
+   "version": "0.12.0",
+   "ssvc": {
+    "exploitation": "unknown",
+    "automatable": "no",
+    "technical_impact": "total",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.3,
+     "weight": 0.4065,
+     "points": 12.2,
+     "why": "no EPSS data (treated as neutral 0.3)"
+    },
+    {
+     "factor": "impact",
+     "value": 1.0,
+     "weight": 0.249,
+     "points": 24.9,
+     "why": "severity critical (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 0.13.4"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Act (critical)"
+    },
+    {
+     "if": "upgraded to 0.13.4",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-hq85-5cpj-mr62",
+    "aliases": [
+     "PYSEC-2026-4321"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:H/AT:P/PR:N/UI:N/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N",
+    "cve": null,
+    "epss": null,
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-hq85-5cpj-mr62",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "critical",
+     "grype": "critical"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 0.12.0 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:urllib3@2.7.0#GHSA-vxq7-64xx-v4gw",
+   "kind": "vulnerability",
+   "title": "urllib3@2.7.0: GHSA-vxq7-64xx-v4gw",
+   "component": "urllib3@2.7.0",
+   "label": "pre_existing",
+   "summary": "urllib3: HTTPResponse.stream()/read_chunked() buffers an unbounded chunk-size line into memory",
+   "decision": "Track",
+   "level": "low",
+   "score": 56.0,
+   "severity": "high",
+   "version": "2.7.0",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.39,
+     "weight": 0.4065,
+     "points": 15.9,
+     "why": "EPSS 0.004 (percentile 0.39)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 2.8.0"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 2.8.0",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-vxq7-64xx-v4gw",
+    "aliases": [
+     "CVE-2026-97689",
+     "PYSEC-2026-4177"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:N/VI:N/VA:H/SC:N/SI:N/SA:H",
+    "cve": "CVE-2026-97689",
+    "epss": {
+     "epss": 0.0044,
+     "percentile": 0.39049,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-vxq7-64xx-v4gw",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "high"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 2.7.0 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:werkzeug@2.3.3#GHSA-hgf8-39gv-g3f2",
+   "kind": "vulnerability",
+   "title": "werkzeug@2.3.3: GHSA-hgf8-39gv-g3f2",
+   "component": "werkzeug@2.3.3",
+   "label": "pre_existing",
+   "summary": "Werkzeug safe_join() allows Windows special device names",
+   "decision": "Track",
+   "level": "low",
+   "score": 55.9,
+   "severity": "medium",
+   "version": "2.3.3",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "essential",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.468,
+     "weight": 0.4065,
+     "points": 19.0,
+     "why": "EPSS 0.005 (percentile 0.47)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 3.1.4"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 3.1.4",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-hgf8-39gv-g3f2",
+    "aliases": [
+     "CVE-2025-66221",
+     "PYSEC-2026-2046"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:N/VI:N/VA:L/SC:N/SI:N/SA:N",
+    "cve": "CVE-2025-66221",
+    "epss": {
+     "epss": 0.00547,
+     "percentile": 0.46756,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-hgf8-39gv-g3f2",
+    "lockfile_line": null,
+    "file": "examples/celery/requirements.txt",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 2.3.3 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:jinja2@3.1.2#GHSA-cpwx-vrp4-4pq7",
+   "kind": "vulnerability",
+   "title": "jinja2@3.1.2: GHSA-cpwx-vrp4-4pq7",
+   "component": "jinja2@3.1.2",
+   "label": "pre_existing",
+   "summary": "Jinja2 vulnerable to sandbox breakout through attr filter selecting format method",
+   "decision": "Track",
+   "level": "low",
+   "score": 54.8,
+   "severity": "medium",
+   "version": "3.1.2",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "total",
+    "mission": "essential",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.441,
+     "weight": 0.4065,
+     "points": 17.9,
+     "why": "EPSS 0.005 (percentile 0.44)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 3.1.6"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Act (critical)"
+    },
+    {
+     "if": "upgraded to 3.1.6",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-cpwx-vrp4-4pq7",
+    "aliases": [
+     "CVE-2025-27516",
+     "PYSEC-2026-1471"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:L/AC:L/AT:P/PR:L/UI:P/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+    "cve": "CVE-2025-27516",
+    "epss": {
+     "epss": 0.00507,
+     "percentile": 0.44125,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-cpwx-vrp4-4pq7",
+    "lockfile_line": null,
+    "file": "examples/celery/requirements.txt",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.1.2 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:jinja2@3.1.2#GHSA-gmj6-6f8f-6699",
+   "kind": "vulnerability",
+   "title": "jinja2@3.1.2: GHSA-gmj6-6f8f-6699",
+   "component": "jinja2@3.1.2",
+   "label": "pre_existing",
+   "summary": "Jinja has a sandbox breakout through malicious filenames",
+   "decision": "Track",
+   "level": "low",
+   "score": 54.1,
+   "severity": "high",
+   "version": "3.1.2",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "total",
+    "mission": "essential",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.239,
+     "weight": 0.4065,
+     "points": 9.7,
+     "why": "EPSS 0.003 (percentile 0.24)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 3.1.5"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Act (critical)"
+    },
+    {
+     "if": "upgraded to 3.1.5",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-gmj6-6f8f-6699",
+    "aliases": [
+     "CVE-2024-56201",
+     "PYSEC-2026-1472"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:L/AC:L/AT:P/PR:L/UI:P/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+    "cve": "CVE-2024-56201",
+    "epss": {
+     "epss": 0.00307,
+     "percentile": 0.23922,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-gmj6-6f8f-6699",
+    "lockfile_line": null,
+    "file": "examples/celery/requirements.txt",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "medium",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.1.2 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "weak",
+      "why": "sources disagree on severity: grype medium, osv high"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": [
+     "contradictions: sources disagree on severity: grype medium, osv high"
+    ]
+   }
+  },
+  {
+   "id": "pypi:werkzeug@2.3.3#GHSA-87hc-h4r5-73f7",
+   "kind": "vulnerability",
+   "title": "werkzeug@2.3.3: GHSA-87hc-h4r5-73f7",
+   "component": "werkzeug@2.3.3",
+   "label": "pre_existing",
+   "summary": " Werkzeug safe_join() allows Windows special device names with compound extensions",
+   "decision": "Track",
+   "level": "low",
+   "score": 53.9,
+   "severity": "medium",
+   "version": "2.3.3",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "essential",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.419,
+     "weight": 0.4065,
+     "points": 17.0,
+     "why": "EPSS 0.005 (percentile 0.42)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 3.1.5"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 3.1.5",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-87hc-h4r5-73f7",
+    "aliases": [
+     "CVE-2026-21860",
+     "PYSEC-2026-2044"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:N/VI:N/VA:L/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-21860",
+    "epss": {
+     "epss": 0.00475,
+     "percentile": 0.4188,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-87hc-h4r5-73f7",
+    "lockfile_line": null,
+    "file": "examples/celery/requirements.txt",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 2.3.3 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:virtualenv@21.7.1#GHSA-5vjq-rrrf-7h2q",
+   "kind": "vulnerability",
+   "title": "virtualenv@21.7.1: GHSA-5vjq-rrrf-7h2q",
+   "component": "virtualenv@21.7.1",
+   "label": "pre_existing",
+   "summary": "virtualenv activate runs commands from the environment name in zsh with PROMPT_SUBST",
+   "decision": "Track",
+   "level": "low",
+   "score": 53.4,
+   "severity": "high",
+   "version": "21.7.1",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "total",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.326,
+     "weight": 0.4065,
+     "points": 13.3,
+     "why": "EPSS 0.004 (percentile 0.33)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 21.14.4"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Act (critical)"
+    },
+    {
+     "if": "upgraded to 21.14.4",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-5vjq-rrrf-7h2q",
+    "aliases": [
+     "BIT-virtualenv-2026-113726",
+     "CVE-2026-113726",
+     "PYSEC-2026-4385"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
+    "cve": "CVE-2026-113726",
+    "epss": {
+     "epss": 0.00379,
+     "percentile": 0.32618,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-5vjq-rrrf-7h2q",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "high"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 21.7.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:cryptography@49.0.0#GHSA-g6cj-pr64-35w5",
+   "kind": "vulnerability",
+   "title": "cryptography@49.0.0: GHSA-g6cj-pr64-35w5",
+   "component": "cryptography@49.0.0",
+   "label": "pre_existing",
+   "summary": "cryptography: PKCS#7 EnvelopedData decryption exposes a Bleichenbacher oracle through distinguishable errors and timing",
+   "decision": "Track",
+   "level": "low",
+   "score": 52.6,
+   "severity": "high",
+   "version": "49.0.0",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "essential",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.201,
+     "weight": 0.4065,
+     "points": 8.2,
+     "why": "EPSS 0.003 (percentile 0.20)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 50.0.0"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 50.0.0",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-g6cj-pr64-35w5",
+    "aliases": [
+     "CVE-2026-69247",
+     "PYSEC-2026-3552"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:H/AT:P/PR:N/UI:N/VC:H/VI:N/VA:N/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-69247",
+    "epss": {
+     "epss": 0.00274,
+     "percentile": 0.20091,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-g6cj-pr64-35w5",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "high"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 49.0.0 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:flask@2.3.2#GHSA-68rp-wp8r-4726",
+   "kind": "vulnerability",
+   "title": "flask@2.3.2: GHSA-68rp-wp8r-4726",
+   "component": "flask@2.3.2",
+   "label": "pre_existing",
+   "summary": "Flask session does not add `Vary: Cookie` header when accessed in some ways",
+   "decision": "Track",
+   "level": "low",
+   "score": 50.9,
+   "severity": "medium",
+   "version": "2.3.2",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "essential",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.344,
+     "weight": 0.4065,
+     "points": 14.0,
+     "why": "EPSS 0.004 (percentile 0.34)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 3.1.3"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 3.1.3",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-68rp-wp8r-4726",
+    "aliases": [
+     "CVE-2026-27205",
+     "PYSEC-2026-2151"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:P/VC:L/VI:N/VA:N/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-27205",
+    "epss": {
+     "epss": 0.00394,
+     "percentile": 0.34421,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-68rp-wp8r-4726",
+    "lockfile_line": null,
+    "file": "examples/celery/requirements.txt",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "low"
+    }
+   },
+   "confidence": {
+    "band": "medium",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 2.3.2 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "weak",
+      "why": "sources disagree on severity: grype low, osv medium"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": [
+     "contradictions: sources disagree on severity: grype low, osv medium"
+    ]
+   }
+  },
+  {
+   "id": "pypi:werkzeug@2.3.3#GHSA-g6x2-hccm-hh4m",
+   "kind": "vulnerability",
+   "title": "werkzeug@2.3.3: GHSA-g6x2-hccm-hh4m",
+   "component": "werkzeug@2.3.3",
+   "label": "pre_existing",
+   "summary": "Werkzeug safe_join() allows Windows special device names",
+   "decision": "Track",
+   "level": "low",
+   "score": 49.7,
+   "severity": "medium",
+   "version": "2.3.3",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "essential",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.316,
+     "weight": 0.4065,
+     "points": 12.8,
+     "why": "EPSS 0.004 (percentile 0.32)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 3.1.9"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 3.1.9",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-g6x2-hccm-hh4m",
+    "aliases": [
+     "CVE-2026-102598",
+     "PYSEC-2026-4312"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:N/VI:N/VA:L/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-102598",
+    "epss": {
+     "epss": 0.0037,
+     "percentile": 0.31551,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-g6x2-hccm-hh4m",
+    "lockfile_line": null,
+    "file": "examples/celery/requirements.txt",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 2.3.3 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:virtualenv@21.7.1#GHSA-8rjx-v5ww-45pp",
+   "kind": "vulnerability",
+   "title": "virtualenv@21.7.1: GHSA-8rjx-v5ww-45pp",
+   "component": "virtualenv@21.7.1",
+   "label": "pre_existing",
+   "summary": "virtualenv activation scripts run code from a path that contains a placeholder name",
+   "decision": "Track",
+   "level": "low",
+   "score": 49.0,
+   "severity": "high",
+   "version": "21.7.1",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "total",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.219,
+     "weight": 0.4065,
+     "points": 8.9,
+     "why": "EPSS 0.003 (percentile 0.22)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 21.14.2"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Act (critical)"
+    },
+    {
+     "if": "upgraded to 21.14.2",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-8rjx-v5ww-45pp",
+    "aliases": [
+     "BIT-virtualenv-2026-113776",
+     "CVE-2026-113776",
+     "PYSEC-2026-4387"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
+    "cve": "CVE-2026-113776",
+    "epss": {
+     "epss": 0.0029,
+     "percentile": 0.21909,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-8rjx-v5ww-45pp",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "high"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 21.7.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:virtualenv@21.7.1#GHSA-vxj4-q4g9-crj7",
+   "kind": "vulnerability",
+   "title": "virtualenv@21.7.1: GHSA-vxj4-q4g9-crj7",
+   "component": "virtualenv@21.7.1",
+   "label": "pre_existing",
+   "summary": "virtualenv bash activate runs commands from an environment name with a backslash before $",
+   "decision": "Track",
+   "level": "low",
+   "score": 48.4,
+   "severity": "high",
+   "version": "21.7.1",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "total",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.204,
+     "weight": 0.4065,
+     "points": 8.3,
+     "why": "EPSS 0.003 (percentile 0.20)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 21.14.7"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Act (critical)"
+    },
+    {
+     "if": "upgraded to 21.14.7",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-vxj4-q4g9-crj7",
+    "aliases": [
+     "BIT-virtualenv-2026-113725",
+     "CVE-2026-113725",
+     "PYSEC-2026-4384"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
+    "cve": "CVE-2026-113725",
+    "epss": {
+     "epss": 0.00277,
+     "percentile": 0.20418,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-vxj4-q4g9-crj7",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "high"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 21.7.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:virtualenv@21.7.1#GHSA-c978-59m8-c77v",
+   "kind": "vulnerability",
+   "title": "virtualenv@21.7.1: GHSA-c978-59m8-c77v",
+   "component": "virtualenv@21.7.1",
+   "label": "pre_existing",
+   "summary": "virtualenv: Generated POSIX console launchers interpret destination paths as shell syntax",
+   "decision": "Track",
+   "level": "low",
+   "score": 47.5,
+   "severity": "high",
+   "version": "21.7.1",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "total",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.181,
+     "weight": 0.4065,
+     "points": 7.4,
+     "why": "EPSS 0.003 (percentile 0.18)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 21.14.9"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Act (critical)"
+    },
+    {
+     "if": "upgraded to 21.14.9",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-c978-59m8-c77v",
+    "aliases": [
+     "BIT-virtualenv-2026-113722",
+     "CVE-2026-113722",
+     "PYSEC-2026-4381"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
+    "cve": "CVE-2026-113722",
+    "epss": {
+     "epss": 0.00261,
+     "percentile": 0.18087,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-c978-59m8-c77v",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "high"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 21.7.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:virtualenv@21.7.1#GHSA-c947-3pg5-gm8q",
+   "kind": "vulnerability",
+   "title": "virtualenv@21.7.1: GHSA-c947-3pg5-gm8q",
+   "component": "virtualenv@21.7.1",
+   "label": "pre_existing",
+   "summary": "virtualenv activate.fish runs commands from a path or prompt with a backslash before a quote",
+   "decision": "Track",
+   "level": "low",
+   "score": 47.4,
+   "severity": "high",
+   "version": "21.7.1",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "total",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.179,
+     "weight": 0.4065,
+     "points": 7.3,
+     "why": "EPSS 0.003 (percentile 0.18)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 21.14.2"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Act (critical)"
+    },
+    {
+     "if": "upgraded to 21.14.2",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-c947-3pg5-gm8q",
+    "aliases": [
+     "BIT-virtualenv-2026-113732",
+     "CVE-2026-113732",
+     "PYSEC-2026-4386"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
+    "cve": "CVE-2026-113732",
+    "epss": {
+     "epss": 0.0026,
+     "percentile": 0.17875,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-c947-3pg5-gm8q",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "high"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 21.7.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:virtualenv@21.7.1#GHSA-qmx5-4p3x-wvqf",
+   "kind": "vulnerability",
+   "title": "virtualenv@21.7.1: GHSA-qmx5-4p3x-wvqf",
+   "component": "virtualenv@21.7.1",
+   "label": "pre_existing",
+   "summary": "virtualenv: Venv configuration readback can reinterpret path boundaries",
+   "decision": "Track",
+   "level": "low",
+   "score": 46.6,
+   "severity": "high",
+   "version": "21.7.1",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.161,
+     "weight": 0.4065,
+     "points": 6.5,
+     "why": "EPSS 0.002 (percentile 0.16)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 21.14.9"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 21.14.9",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-qmx5-4p3x-wvqf",
+    "aliases": [
+     "BIT-virtualenv-2026-113715",
+     "CVE-2026-113715",
+     "PYSEC-2026-4374"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:L/AC:H/AT:P/PR:N/UI:P/VC:L/VI:L/VA:L/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-113715",
+    "epss": {
+     "epss": 0.00247,
+     "percentile": 0.16059,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-qmx5-4p3x-wvqf",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "low"
+    }
+   },
+   "confidence": {
+    "band": "medium",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 21.7.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "weak",
+      "why": "sources disagree on severity: grype low, osv high"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": [
+     "contradictions: sources disagree on severity: grype low, osv high"
+    ]
+   }
+  },
+  {
+   "id": "pypi:urllib3@2.7.0#GHSA-8988-9cw3-xx77",
+   "kind": "vulnerability",
+   "title": "urllib3@2.7.0: GHSA-8988-9cw3-xx77",
+   "component": "urllib3@2.7.0",
+   "label": "pre_existing",
+   "summary": "urllib3: HTTPS proxy TLS configuration may be ignored or overridden",
+   "decision": "Track",
+   "level": "low",
+   "score": 46.5,
+   "severity": "high",
+   "version": "2.7.0",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "total",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.158,
+     "weight": 0.4065,
+     "points": 6.4,
+     "why": "EPSS 0.002 (percentile 0.16)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 2.8.0"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Act (critical)"
+    },
+    {
+     "if": "upgraded to 2.8.0",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-8988-9cw3-xx77",
+    "aliases": [
+     "CVE-2026-97687",
+     "PYSEC-2026-4175"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:P/VC:H/VI:H/VA:N/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-97687",
+    "epss": {
+     "epss": 0.00245,
+     "percentile": 0.15774,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-8988-9cw3-xx77",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "high"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 2.7.0 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:virtualenv@21.7.1#GHSA-394h-qwmc-48pf",
+   "kind": "vulnerability",
+   "title": "virtualenv@21.7.1: GHSA-394h-qwmc-48pf",
+   "component": "virtualenv@21.7.1",
+   "label": "pre_existing",
+   "summary": "virtualenv: Xonsh activation literals depend on the script decoding codec",
+   "decision": "Track",
+   "level": "low",
+   "score": 46.0,
+   "severity": "high",
+   "version": "21.7.1",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "total",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.145,
+     "weight": 0.4065,
+     "points": 5.9,
+     "why": "EPSS 0.002 (percentile 0.14)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 21.14.9"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Act (critical)"
+    },
+    {
+     "if": "upgraded to 21.14.9",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-394h-qwmc-48pf",
+    "aliases": [
+     "BIT-virtualenv-2026-113718",
+     "CVE-2026-113718",
+     "PYSEC-2026-4377"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:L/AC:H/AT:P/PR:N/UI:A/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-113718",
+    "epss": {
+     "epss": 0.00235,
+     "percentile": 0.1448,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-394h-qwmc-48pf",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "high"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 21.7.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:virtualenv@21.7.1#GHSA-6w3r-xr62-4xcp",
+   "kind": "vulnerability",
+   "title": "virtualenv@21.7.1: GHSA-6w3r-xr62-4xcp",
+   "component": "virtualenv@21.7.1",
+   "label": "pre_existing",
+   "summary": "virtualenv: Bash prompt values can change meaning under older compatibility modes",
+   "decision": "Track",
+   "level": "low",
+   "score": 46.0,
+   "severity": "high",
+   "version": "21.7.1",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "total",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.145,
+     "weight": 0.4065,
+     "points": 5.9,
+     "why": "EPSS 0.002 (percentile 0.14)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 21.14.9"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Act (critical)"
+    },
+    {
+     "if": "upgraded to 21.14.9",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-6w3r-xr62-4xcp",
+    "aliases": [
+     "BIT-virtualenv-2026-113723",
+     "CVE-2026-113723",
+     "PYSEC-2026-4382"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:L/AC:H/AT:P/PR:N/UI:A/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-113723",
+    "epss": {
+     "epss": 0.00235,
+     "percentile": 0.1448,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-6w3r-xr62-4xcp",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "high"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 21.7.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:virtualenv@21.7.1#GHSA-94p9-xgh2-xp45",
+   "kind": "vulnerability",
+   "title": "virtualenv@21.7.1: GHSA-94p9-xgh2-xp45",
+   "component": "virtualenv@21.7.1",
+   "label": "pre_existing",
+   "summary": "virtualenv: Downloaded seed wheels (pip/setuptools) are not integrity-checked before use",
+   "decision": "Track",
+   "level": "low",
+   "score": 45.6,
+   "severity": "high",
+   "version": "21.7.1",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "total",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.134,
+     "weight": 0.4065,
+     "points": 5.5,
+     "why": "EPSS 0.002 (percentile 0.13)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 21.7.12"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Act (critical)"
+    },
+    {
+     "if": "upgraded to 21.7.12",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-94p9-xgh2-xp45",
+    "aliases": [
+     "BIT-virtualenv-2026-102930",
+     "CVE-2026-102930",
+     "PYSEC-2026-4011"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:H/AT:P/PR:N/UI:P/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-102930",
+    "epss": {
+     "epss": 0.00226,
+     "percentile": 0.13409,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-94p9-xgh2-xp45",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "high"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 21.7.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:werkzeug@3.1.8#GHSA-g6x2-hccm-hh4m",
+   "kind": "vulnerability",
+   "title": "werkzeug@3.1.8: GHSA-g6x2-hccm-hh4m",
+   "component": "werkzeug@3.1.8",
+   "label": "pre_existing",
+   "summary": "Werkzeug safe_join() allows Windows special device names",
+   "decision": "Track",
+   "level": "low",
+   "score": 45.4,
+   "severity": "medium",
+   "version": "3.1.8",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.316,
+     "weight": 0.4065,
+     "points": 12.8,
+     "why": "EPSS 0.004 (percentile 0.32)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 3.1.9"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 3.1.9",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-g6x2-hccm-hh4m",
+    "aliases": [
+     "CVE-2026-102598",
+     "PYSEC-2026-4312"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:L/AT:P/PR:N/UI:N/VC:N/VI:N/VA:L/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-102598",
+    "epss": {
+     "epss": 0.0037,
+     "percentile": 0.31551,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-g6x2-hccm-hh4m",
+    "lockfile_line": null,
+    "file": "examples/celery/requirements.txt",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.1.8 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:virtualenv@21.7.1#GHSA-x78j-v8h9-3j2q",
+   "kind": "vulnerability",
+   "title": "virtualenv@21.7.1: GHSA-x78j-v8h9-3j2q",
+   "component": "virtualenv@21.7.1",
+   "label": "pre_existing",
+   "summary": "virtualenv: Command injection via --prompt in activate.bat (batch activator)",
+   "decision": "Track",
+   "level": "low",
+   "score": 44.6,
+   "severity": "high",
+   "version": "21.7.1",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "total",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.111,
+     "weight": 0.4065,
+     "points": 4.5,
+     "why": "EPSS 0.002 (percentile 0.11)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 21.7.12"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Act (critical)"
+    },
+    {
+     "if": "upgraded to 21.7.12",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-x78j-v8h9-3j2q",
+    "aliases": [
+     "BIT-virtualenv-2026-102937",
+     "CVE-2026-102937",
+     "PYSEC-2026-4014"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:L/AC:L/AT:P/PR:N/UI:P/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-102937",
+    "epss": {
+     "epss": 0.00209,
+     "percentile": 0.11087,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-x78j-v8h9-3j2q",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "high"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 21.7.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:filelock@3.32.2#GHSA-v4x8-3wr5-3wq8",
+   "kind": "vulnerability",
+   "title": "filelock@3.32.2: GHSA-v4x8-3wr5-3wq8",
+   "component": "filelock@3.32.2",
+   "label": "pre_existing",
+   "summary": "filelock ReadWriteLock: SQLite reopens the lock database by name, so a planted symlink or journal file makes the lock user's process overwrite or unlink its own files",
+   "decision": "Track",
+   "level": "low",
+   "score": 43.6,
+   "severity": "high",
+   "version": "3.32.2",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.087,
+     "weight": 0.4065,
+     "points": 3.5,
+     "why": "EPSS 0.002 (percentile 0.09)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 4.2.1"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 4.2.1",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-v4x8-3wr5-3wq8",
+    "aliases": [
+     "CVE-2026-112940"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:H",
+    "cve": "CVE-2026-112940",
+    "epss": {
+     "epss": 0.0019,
+     "percentile": 0.08705,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-v4x8-3wr5-3wq8",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "high"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.32.2 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:virtualenv@21.7.1#GHSA-fc2g-4w5p-6whm",
+   "kind": "vulnerability",
+   "title": "virtualenv@21.7.1: GHSA-fc2g-4w5p-6whm",
+   "component": "virtualenv@21.7.1",
+   "label": "pre_existing",
+   "summary": "virtualenv: Seeded files retain permissions from an older cache",
+   "decision": "Track",
+   "level": "low",
+   "score": 43.3,
+   "severity": "high",
+   "version": "21.7.1",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.078,
+     "weight": 0.4065,
+     "points": 3.2,
+     "why": "EPSS 0.002 (percentile 0.08)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 21.14.9"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 21.14.9",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-fc2g-4w5p-6whm",
+    "aliases": [
+     "BIT-virtualenv-2026-113720",
+     "CVE-2026-113720",
+     "PYSEC-2026-4379"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:L/AC:H/AT:P/PR:L/UI:P/VC:L/VI:H/VA:L/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-113720",
+    "epss": {
+     "epss": 0.00182,
+     "percentile": 0.07786,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-fc2g-4w5p-6whm",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "medium",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 21.7.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "weak",
+      "why": "sources disagree on severity: grype medium, osv high"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": [
+     "contradictions: sources disagree on severity: grype medium, osv high"
+    ]
+   }
+  },
+  {
+   "id": "pypi:virtualenv@21.7.1#GHSA-p58f-9548-mpm2",
+   "kind": "vulnerability",
+   "title": "virtualenv@21.7.1: GHSA-p58f-9548-mpm2",
+   "component": "virtualenv@21.7.1",
+   "label": "pre_existing",
+   "summary": "virtualenv bash and fish activation scripts execute commands embedded in paths",
+   "decision": "Track",
+   "level": "low",
+   "score": 42.4,
+   "severity": "high",
+   "version": "21.7.1",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "total",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.056,
+     "weight": 0.4065,
+     "points": 2.3,
+     "why": "EPSS 0.002 (percentile 0.06)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.8,
+     "weight": 0.249,
+     "points": 19.9,
+     "why": "severity high (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 21.7.13"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Act (critical)"
+    },
+    {
+     "if": "upgraded to 21.7.13",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-p58f-9548-mpm2",
+    "aliases": [
+     "BIT-virtualenv-2026-102925",
+     "CVE-2026-102925",
+     "PYSEC-2026-4013"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:R/S:U/C:H/I:H/A:H",
+    "cve": "CVE-2026-102925",
+    "epss": {
+     "epss": 0.00164,
+     "percentile": 0.05624,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-p58f-9548-mpm2",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "high",
+     "grype": "high"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 21.7.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:urllib3@2.7.0#GHSA-gh4c-6fx4-qh6g",
+   "kind": "vulnerability",
+   "title": "urllib3@2.7.0: GHSA-gh4c-6fx4-qh6g",
+   "component": "urllib3@2.7.0",
+   "label": "pre_existing",
+   "summary": "urllib3: Chunked Deflate streaming can enter an infinite loop",
+   "decision": "Track",
+   "level": "low",
+   "score": 41.6,
+   "severity": "medium",
+   "version": "2.7.0",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "yes",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.221,
+     "weight": 0.4065,
+     "points": 9.0,
+     "why": "EPSS 0.003 (percentile 0.22)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 2.8.0"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Act (critical)"
+    },
+    {
+     "if": "upgraded to 2.8.0",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-gh4c-6fx4-qh6g",
+    "aliases": [
+     "CVE-2026-97688",
+     "PYSEC-2026-4176"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:L/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-97688",
+    "epss": {
+     "epss": 0.00292,
+     "percentile": 0.22077,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-gh4c-6fx4-qh6g",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 2.7.0 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "remote_script_no_sri:jquery@3.3.1",
+   "kind": "supply_chain",
+   "title": "jquery@3.3.1: remote script no sri",
+   "component": "jquery@3.3.1",
+   "label": "pre_existing",
+   "summary": "examples/javascript/js_example/templates/jquery.html:10 loads https://code.jquery.com/jquery-3.3.1.min.js from code.jquery.com without an integrity hash: whoever controls that server can change the code your users run",
+   "decision": "Track",
+   "level": "low",
+   "score": 41.0,
+   "severity": "medium",
+   "type": "remote_script_no_sri",
+   "ssvc": null,
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.1,
+     "weight": 0.4065,
+     "points": 4.1,
+     "why": "no attack pattern"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium"
+    },
+    {
+     "factor": "exposure",
+     "value": 1.0,
+     "weight": 0.1428,
+     "points": 14.3,
+     "why": "shipped runtime code, direct dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "revert the change / remove the package"
+    }
+   ],
+   "counterfactuals": [],
+   "evidence": {
+    "detector": "D11",
+    "lockfile_line": 10,
+    "file": "examples/javascript/js_example/templates/jquery.html",
+    "resolved": "https://code.jquery.com/jquery-3.3.1.min.js",
+    "hard_signal": false
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "the producing check completed"
+     },
+     "applicability": {
+      "status": "not_applicable",
+      "why": "not an advisory match"
+     },
+     "freshness": {
+      "status": "not_applicable",
+      "why": "no external threat data used"
+     },
+     "contradictions": {
+      "status": "not_applicable",
+      "why": "single deterministic detector"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:filelock@3.32.2#GHSA-j8f7-rjxc-mr56",
+   "kind": "vulnerability",
+   "title": "filelock@3.32.2: GHSA-j8f7-rjxc-mr56",
+   "component": "filelock@3.32.2",
+   "label": "pre_existing",
+   "summary": "filelock: ReadWriteLock follows a symlink at the lock path into SQLite",
+   "decision": "Track",
+   "level": "low",
+   "score": 38.4,
+   "severity": "medium",
+   "version": "3.32.2",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.142,
+     "weight": 0.4065,
+     "points": 5.8,
+     "why": "EPSS 0.002 (percentile 0.14)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 4.0.9"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 4.0.9",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-j8f7-rjxc-mr56",
+    "aliases": [
+     "CVE-2026-112936"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:H/A:L",
+    "cve": "CVE-2026-112936",
+    "epss": {
+     "epss": 0.00232,
+     "percentile": 0.14161,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-j8f7-rjxc-mr56",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.32.2 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:filelock@3.32.2#GHSA-69hj-f68j-2879",
+   "kind": "vulnerability",
+   "title": "filelock@3.32.2: GHSA-69hj-f68j-2879",
+   "component": "filelock@3.32.2",
+   "label": "pre_existing",
+   "summary": "filelock: UnixFileLock truncates and chmods any regular file another user renames or hard-links onto the lock path",
+   "decision": "Track",
+   "level": "low",
+   "score": 37.7,
+   "severity": "medium",
+   "version": "3.32.2",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.126,
+     "weight": 0.4065,
+     "points": 5.1,
+     "why": "EPSS 0.002 (percentile 0.13)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 4.2.1"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 4.2.1",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-69hj-f68j-2879",
+    "aliases": [
+     "CVE-2026-112909"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:H/A:N",
+    "cve": "CVE-2026-112909",
+    "epss": {
+     "epss": 0.0022,
+     "percentile": 0.12638,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-69hj-f68j-2879",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.32.2 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:filelock@3.32.2#GHSA-cwqr-hh33-gh44",
+   "kind": "vulnerability",
+   "title": "filelock@3.32.2: GHSA-cwqr-hh33-gh44",
+   "component": "filelock@3.32.2",
+   "label": "pre_existing",
+   "summary": "filelock ReadWriteLock: a crafted lock database makes every acquire stall or hang regardless of timeout",
+   "decision": "Track",
+   "level": "low",
+   "score": 37.6,
+   "severity": "medium",
+   "version": "3.32.2",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.123,
+     "weight": 0.4065,
+     "points": 5.0,
+     "why": "EPSS 0.002 (percentile 0.12)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 4.2.1"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 4.2.1",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-cwqr-hh33-gh44",
+    "aliases": [
+     "CVE-2026-112915"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:H",
+    "cve": "CVE-2026-112915",
+    "epss": {
+     "epss": 0.00218,
+     "percentile": 0.12265,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-cwqr-hh33-gh44",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.32.2 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:virtualenv@21.7.1#GHSA-43mp-35q3-x3fq",
+   "kind": "vulnerability",
+   "title": "virtualenv@21.7.1: GHSA-43mp-35q3-x3fq",
+   "component": "virtualenv@21.7.1",
+   "label": "pre_existing",
+   "summary": "virtualenv: Deletion recovery can change a symlink target's mode",
+   "decision": "Track",
+   "level": "low",
+   "score": 36.4,
+   "severity": "medium",
+   "version": "21.7.1",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.093,
+     "weight": 0.4065,
+     "points": 3.8,
+     "why": "EPSS 0.002 (percentile 0.09)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 21.14.9"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 21.14.9",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-43mp-35q3-x3fq",
+    "aliases": [
+     "BIT-virtualenv-2026-113724",
+     "CVE-2026-113724",
+     "PYSEC-2026-4383"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:L/I:L/A:L",
+    "cve": "CVE-2026-113724",
+    "epss": {
+     "epss": 0.00196,
+     "percentile": 0.09335,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-43mp-35q3-x3fq",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 21.7.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:virtualenv@21.7.1#GHSA-558c-9hv2-4prj",
+   "kind": "vulnerability",
+   "title": "virtualenv@21.7.1: GHSA-558c-9hv2-4prj",
+   "component": "virtualenv@21.7.1",
+   "label": "pre_existing",
+   "summary": "virtualenv: Generated files can follow existing destination links",
+   "decision": "Track",
+   "level": "low",
+   "score": 36.4,
+   "severity": "medium",
+   "version": "21.7.1",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.093,
+     "weight": 0.4065,
+     "points": 3.8,
+     "why": "EPSS 0.002 (percentile 0.09)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 21.14.9"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 21.14.9",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-558c-9hv2-4prj",
+    "aliases": [
+     "BIT-virtualenv-2026-113721",
+     "CVE-2026-113721",
+     "PYSEC-2026-4380"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:L/I:L/A:L",
+    "cve": "CVE-2026-113721",
+    "epss": {
+     "epss": 0.00196,
+     "percentile": 0.09334,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-558c-9hv2-4prj",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 21.7.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:virtualenv@21.7.1#GHSA-cw65-gx24-rc82",
+   "kind": "vulnerability",
+   "title": "virtualenv@21.7.1: GHSA-cw65-gx24-rc82",
+   "component": "virtualenv@21.7.1",
+   "label": "pre_existing",
+   "summary": "virtualenv: Builtin creation follows linked environment directories",
+   "decision": "Track",
+   "level": "low",
+   "score": 36.4,
+   "severity": "medium",
+   "version": "21.7.1",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.093,
+     "weight": 0.4065,
+     "points": 3.8,
+     "why": "EPSS 0.002 (percentile 0.09)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 21.14.9"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 21.14.9",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-cw65-gx24-rc82",
+    "aliases": [
+     "BIT-virtualenv-2026-113716",
+     "CVE-2026-113716",
+     "PYSEC-2026-4375"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:L/I:L/A:L",
+    "cve": "CVE-2026-113716",
+    "epss": {
+     "epss": 0.00196,
+     "percentile": 0.09335,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-cw65-gx24-rc82",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 21.7.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:virtualenv@21.7.1#GHSA-hhxq-47xx-j5xx",
+   "kind": "vulnerability",
+   "title": "virtualenv@21.7.1: GHSA-hhxq-47xx-j5xx",
+   "component": "virtualenv@21.7.1",
+   "label": "pre_existing",
+   "summary": "virtualenv: Seed replacement does not contain metadata deletion paths",
+   "decision": "Track",
+   "level": "low",
+   "score": 36.4,
+   "severity": "medium",
+   "version": "21.7.1",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.093,
+     "weight": 0.4065,
+     "points": 3.8,
+     "why": "EPSS 0.002 (percentile 0.09)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 21.14.9"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 21.14.9",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-hhxq-47xx-j5xx",
+    "aliases": [
+     "BIT-virtualenv-2026-113719",
+     "CVE-2026-113719",
+     "PYSEC-2026-4378"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:L/I:L/A:L",
+    "cve": "CVE-2026-113719",
+    "epss": {
+     "epss": 0.00196,
+     "percentile": 0.09334,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-hhxq-47xx-j5xx",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 21.7.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:filelock@3.32.2#GHSA-8mx5-7m5m-r77g",
+   "kind": "vulnerability",
+   "title": "filelock@3.32.2: GHSA-8mx5-7m5m-r77g",
+   "component": "filelock@3.32.2",
+   "label": "pre_existing",
+   "summary": "filelock: WindowsFileLock ignores mode: a 0o600 lock file and the ReadWriteLock database inherit the directory ACL",
+   "decision": "Track",
+   "level": "low",
+   "score": 36.2,
+   "severity": "medium",
+   "version": "3.32.2",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.089,
+     "weight": 0.4065,
+     "points": 3.6,
+     "why": "EPSS 0.002 (percentile 0.09)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 4.2.1"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 4.2.1",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-8mx5-7m5m-r77g",
+    "aliases": [
+     "CVE-2026-112910"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:L/I:L/A:L",
+    "cve": "CVE-2026-112910",
+    "epss": {
+     "epss": 0.00192,
+     "percentile": 0.08878,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-8mx5-7m5m-r77g",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.32.2 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:virtualenv@21.7.1#GHSA-4f8h-vr72-p32c",
+   "kind": "vulnerability",
+   "title": "virtualenv@21.7.1: GHSA-4f8h-vr72-p32c",
+   "component": "virtualenv@21.7.1",
+   "label": "pre_existing",
+   "summary": "virtualenv is a tool for creating isolated virtual python environments. From 21.14.8 until 21.14.10, the app-data seeder can leave an environment linked to temporary package files that virtualenv dele",
+   "decision": "Track",
+   "level": "low",
+   "score": 36.0,
+   "severity": "medium",
+   "version": "21.7.1",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.084,
+     "weight": 0.4065,
+     "points": 3.4,
+     "why": "EPSS 0.002 (percentile 0.08)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 21.14.10"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 21.14.10",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-4f8h-vr72-p32c",
+    "aliases": [
+     "BIT-virtualenv-2026-113713",
+     "CVE-2026-113713",
+     "PYSEC-2026-4372"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:L/AC:H/AT:P/PR:L/UI:P/VC:L/VI:H/VA:L/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-113713",
+    "epss": {
+     "epss": 0.00188,
+     "percentile": 0.08363,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-4f8h-vr72-p32c",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv"
+    ],
+    "severity_by_source": {
+     "osv": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 21.7.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:filelock@3.32.2#GHSA-6627-m3xw-93mp",
+   "kind": "vulnerability",
+   "title": "filelock@3.32.2: GHSA-6627-m3xw-93mp",
+   "component": "filelock@3.32.2",
+   "label": "pre_existing",
+   "summary": "filelock: StrictSoftFileLock creates its claim directories without the lock mode, so another local user with a write bit on them can end a live hold",
+   "decision": "Track",
+   "level": "low",
+   "score": 34.9,
+   "severity": "medium",
+   "version": "3.32.2",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.058,
+     "weight": 0.4065,
+     "points": 2.3,
+     "why": "EPSS 0.002 (percentile 0.06)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 4.2.1"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 4.2.1",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-6627-m3xw-93mp",
+    "aliases": [
+     "CVE-2026-112908"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:N/I:H/A:L",
+    "cve": "CVE-2026-112908",
+    "epss": {
+     "epss": 0.00165,
+     "percentile": 0.0578,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-6627-m3xw-93mp",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.32.2 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:virtualenv@21.7.1#GHSA-9h9j-4vrj-gf7g",
+   "kind": "vulnerability",
+   "title": "virtualenv@21.7.1: GHSA-9h9j-4vrj-gf7g",
+   "component": "virtualenv@21.7.1",
+   "label": "pre_existing",
+   "summary": "virtualenv writes prompt values into pyvenv.cfg without sanitizing line boundaries, allowing configuration injection",
+   "decision": "Track",
+   "level": "low",
+   "score": 34.4,
+   "severity": "medium",
+   "version": "21.7.1",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.044,
+     "weight": 0.4065,
+     "points": 1.8,
+     "why": "EPSS 0.002 (percentile 0.04)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 21.7.11"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 21.7.11",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-9h9j-4vrj-gf7g",
+    "aliases": [
+     "BIT-virtualenv-2026-102938",
+     "CVE-2026-102938",
+     "PYSEC-2026-4012"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:L/AC:L/AT:P/PR:N/UI:P/VC:L/VI:H/VA:L/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-102938",
+    "epss": {
+     "epss": 0.00153,
+     "percentile": 0.04423,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-9h9j-4vrj-gf7g",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 21.7.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:filelock@3.32.2#GHSA-9c4x-gm8v-wgc4",
+   "kind": "vulnerability",
+   "title": "filelock@3.32.2: GHSA-9c4x-gm8v-wgc4",
+   "component": "filelock@3.32.2",
+   "label": "pre_existing",
+   "summary": "filelock: StrictSoftFileLock and SoftReadWriteLock adopt a protocol directory another user created first, losing mutual exclusion",
+   "decision": "Track",
+   "level": "low",
+   "score": 34.2,
+   "severity": "medium",
+   "version": "3.32.2",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.04,
+     "weight": 0.4065,
+     "points": 1.6,
+     "why": "EPSS 0.001 (percentile 0.04)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 4.2.1"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 4.2.1",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-9c4x-gm8v-wgc4",
+    "aliases": [
+     "CVE-2026-112911"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:N/I:H/A:H",
+    "cve": "CVE-2026-112911",
+    "epss": {
+     "epss": 0.00148,
+     "percentile": 0.03953,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-9c4x-gm8v-wgc4",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.32.2 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:filelock@3.32.2#GHSA-rfpc-qcw5-3pc4",
+   "kind": "vulnerability",
+   "title": "filelock@3.32.2: GHSA-rfpc-qcw5-3pc4",
+   "component": "filelock@3.32.2",
+   "label": "pre_existing",
+   "summary": "filelock: SoftFileLock removes a live holder's marker when another user forges the PID in a writable marker",
+   "decision": "Track",
+   "level": "low",
+   "score": 33.9,
+   "severity": "medium",
+   "version": "3.32.2",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.033,
+     "weight": 0.4065,
+     "points": 1.3,
+     "why": "EPSS 0.001 (percentile 0.03)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 4.2.1"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 4.2.1",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-rfpc-qcw5-3pc4",
+    "aliases": [
+     "CVE-2026-112939"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:N/I:H/A:N",
+    "cve": "CVE-2026-112939",
+    "epss": {
+     "epss": 0.0014,
+     "percentile": 0.03301,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-rfpc-qcw5-3pc4",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.32.2 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:filelock@3.32.2#GHSA-fq56-3cx3-fjxp",
+   "kind": "vulnerability",
+   "title": "filelock@3.32.2: GHSA-fq56-3cx3-fjxp",
+   "component": "filelock@3.32.2",
+   "label": "pre_existing",
+   "summary": "filelock: SoftFileLock stale-lock break removes a live lock file on a reused inode number and admits two holders",
+   "decision": "Track",
+   "level": "low",
+   "score": 33.7,
+   "severity": "medium",
+   "version": "3.32.2",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.028,
+     "weight": 0.4065,
+     "points": 1.1,
+     "why": "EPSS 0.001 (percentile 0.03)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 4.2.1"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 4.2.1",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-fq56-3cx3-fjxp",
+    "aliases": [
+     "CVE-2026-112935"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:N/I:H/A:N",
+    "cve": "CVE-2026-112935",
+    "epss": {
+     "epss": 0.00132,
+     "percentile": 0.02767,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-fq56-3cx3-fjxp",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.32.2 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:filelock@3.32.2#GHSA-m462-7rxw-wvpg",
+   "kind": "vulnerability",
+   "title": "filelock@3.32.2: GHSA-m462-7rxw-wvpg",
+   "component": "filelock@3.32.2",
+   "label": "pre_existing",
+   "summary": "filelock: StrictSoftFileLock follows a symbolic link swapped in at <path>.filelock and creates claim files in a directory another local user chooses",
+   "decision": "Track",
+   "level": "low",
+   "score": 33.2,
+   "severity": "medium",
+   "version": "3.32.2",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.014,
+     "weight": 0.4065,
+     "points": 0.6,
+     "why": "EPSS 0.001 (percentile 0.01)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.5,
+     "weight": 0.249,
+     "points": 12.4,
+     "why": "severity medium (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 4.2.1"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 4.2.1",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-m462-7rxw-wvpg",
+    "aliases": [
+     "CVE-2026-112938"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:L/I:L/A:H",
+    "cve": "CVE-2026-112938",
+    "epss": {
+     "epss": 0.00112,
+     "percentile": 0.01371,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-m462-7rxw-wvpg",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "medium",
+     "grype": "medium"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.32.2 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:virtualenv@21.7.1#GHSA-cx28-75q4-x26q",
+   "kind": "vulnerability",
+   "title": "virtualenv@21.7.1: GHSA-cx28-75q4-x26q",
+   "component": "virtualenv@21.7.1",
+   "label": "pre_existing",
+   "summary": "virtualenv: Pip seeding with download omits wheel digest verification",
+   "decision": "Track",
+   "level": "low",
+   "score": 29.6,
+   "severity": "low",
+   "version": "21.7.1",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.109,
+     "weight": 0.4065,
+     "points": 4.4,
+     "why": "EPSS 0.002 (percentile 0.11)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.2,
+     "weight": 0.249,
+     "points": 5.0,
+     "why": "severity low (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 21.14.9"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 21.14.9",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-cx28-75q4-x26q",
+    "aliases": [
+     "BIT-virtualenv-2026-113717",
+     "CVE-2026-113717",
+     "PYSEC-2026-4376"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:H/AT:P/PR:N/UI:P/VC:L/VI:L/VA:L/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-113717",
+    "epss": {
+     "epss": 0.00208,
+     "percentile": 0.10907,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-cx28-75q4-x26q",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "low",
+     "grype": "low"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 21.7.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:virtualenv@21.7.1#GHSA-494p-63j8-28p3",
+   "kind": "vulnerability",
+   "title": "virtualenv@21.7.1: GHSA-494p-63j8-28p3",
+   "component": "virtualenv@21.7.1",
+   "label": "pre_existing",
+   "summary": "virtualenv: Downloaded wheel selection and caching precede verification",
+   "decision": "Track",
+   "level": "low",
+   "score": 29.5,
+   "severity": "low",
+   "version": "21.7.1",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.106,
+     "weight": 0.4065,
+     "points": 4.3,
+     "why": "EPSS 0.002 (percentile 0.11)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.2,
+     "weight": 0.249,
+     "points": 5.0,
+     "why": "severity low (CVSS:4.0)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 21.14.9"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 21.14.9",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-494p-63j8-28p3",
+    "aliases": [
+     "BIT-virtualenv-2026-113714",
+     "CVE-2026-113714",
+     "PYSEC-2026-4373"
+    ],
+    "cvss_vector": "CVSS:4.0/AV:N/AC:H/AT:P/PR:N/UI:P/VC:L/VI:L/VA:L/SC:N/SI:N/SA:N",
+    "cve": "CVE-2026-113714",
+    "epss": {
+     "epss": 0.00206,
+     "percentile": 0.1061,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-494p-63j8-28p3",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "low",
+     "grype": "low"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 21.7.1 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:filelock@3.32.2#GHSA-9vhv-jxww-xfm5",
+   "kind": "vulnerability",
+   "title": "filelock@3.32.2: GHSA-9vhv-jxww-xfm5",
+   "component": "filelock@3.32.2",
+   "label": "pre_existing",
+   "summary": "filelock: ReadWriteLock on Windows acts on SQLite side files another local user places beside its database",
+   "decision": "Track",
+   "level": "low",
+   "score": 27.7,
+   "severity": "low",
+   "version": "3.32.2",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.061,
+     "weight": 0.4065,
+     "points": 2.5,
+     "why": "EPSS 0.002 (percentile 0.06)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.2,
+     "weight": 0.249,
+     "points": 5.0,
+     "why": "severity low (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 4.2.1"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 4.2.1",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-9vhv-jxww-xfm5",
+    "aliases": [
+     "CVE-2026-112913"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L",
+    "cve": "CVE-2026-112913",
+    "epss": {
+     "epss": 0.00168,
+     "percentile": 0.06073,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-9vhv-jxww-xfm5",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "low",
+     "grype": "low"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.32.2 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  },
+  {
+   "id": "pypi:filelock@3.32.2#GHSA-567q-5qvw-pf92",
+   "kind": "vulnerability",
+   "title": "filelock@3.32.2: GHSA-567q-5qvw-pf92",
+   "component": "filelock@3.32.2",
+   "label": "pre_existing",
+   "summary": "filelock: On Windows an oplock on a soft lock's marker holds SoftFileLock.acquire() past its timeout and blocks the stale break",
+   "decision": "Track",
+   "level": "low",
+   "score": 27.2,
+   "severity": "low",
+   "version": "3.32.2",
+   "ssvc": {
+    "exploitation": "none",
+    "automatable": "no",
+    "technical_impact": "partial",
+    "mission": "support",
+    "rule": "no sign of attack"
+   },
+   "floor": null,
+   "contributions": [
+    {
+     "factor": "exploitation",
+     "value": 0.05,
+     "weight": 0.4065,
+     "points": 2.0,
+     "why": "EPSS 0.002 (percentile 0.05)"
+    },
+    {
+     "factor": "impact",
+     "value": 0.2,
+     "weight": 0.249,
+     "points": 5.0,
+     "why": "severity low (CVSS:3.1)"
+    },
+    {
+     "factor": "exposure",
+     "value": 0.7,
+     "weight": 0.1428,
+     "points": 10.0,
+     "why": "shipped runtime code, indirect dependency"
+    },
+    {
+     "factor": "introduced",
+     "value": 0.3,
+     "weight": 0.1428,
+     "points": 4.3,
+     "why": "already present before this PR"
+    },
+    {
+     "factor": "actionable",
+     "value": 1.0,
+     "weight": 0.0589,
+     "points": 5.9,
+     "why": "fixed in 4.2.1"
+    }
+   ],
+   "counterfactuals": [
+    {
+     "if": "it showed up in CISA KEV (attacked in the wild)",
+     "then": "decision would be Attend (high)"
+    },
+    {
+     "if": "upgraded to 4.2.1",
+     "then": "this finding disappears"
+    }
+   ],
+   "evidence": {
+    "advisory": "GHSA-567q-5qvw-pf92",
+    "aliases": [
+     "CVE-2026-112907"
+    ],
+    "cvss_vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:N/I:N/A:L",
+    "cve": "CVE-2026-112907",
+    "epss": {
+     "epss": 0.00158,
+     "percentile": 0.04987,
+     "date": "2026-11-22"
+    },
+    "kev": null,
+    "url": "https://osv.dev/vulnerability/GHSA-567q-5qvw-pf92",
+    "lockfile_line": null,
+    "file": "uv.lock",
+    "sources": [
+     "osv",
+     "grype"
+    ],
+    "severity_by_source": {
+     "osv": "low",
+     "grype": "low"
+    }
+   },
+   "confidence": {
+    "band": "high",
+    "dimensions": {
+     "collection": {
+      "status": "ok",
+      "why": "all vulnerability scanners completed"
+     },
+     "applicability": {
+      "status": "ok",
+      "why": "exact version 3.32.2 matched against the advisory's affected ranges"
+     },
+     "freshness": {
+      "status": "ok",
+      "why": "EPSS and KEV loaded (cached at most one day)"
+     },
+     "contradictions": {
+      "status": "ok",
+      "why": "no disagreement between sources"
+     },
+     "evidence": {
+      "status": "ok",
+      "why": "all evidence required for this finding type is stored"
+     }
+    },
+    "missing": []
+   }
+  }
+ ],
+ "method": {
+  "ahp": {
+   "weights": {
+    "exploitation": 0.4065,
+    "impact": 0.249,
+    "exposure": 0.1428,
+    "introduced": 0.1428,
+    "actionable": 0.0589
+   },
+   "lambda_max": 5.0567,
+   "consistency_index": 0.0142,
+   "consistency_ratio": 0.0127,
+   "consistent": true,
+   "matrix": [
+    [
+     1,
+     2,
+     3,
+     3,
+     5
+    ],
+    [
+     0.5,
+     1,
+     2,
+     2,
+     4
+    ],
+    [
+     0.3333333333333333,
+     0.5,
+     1,
+     1,
+     3
+    ],
+    [
+     0.3333333333333333,
+     0.5,
+     1,
+     1,
+     3
+    ],
+    [
+     0.2,
+     0.25,
+     0.3333333333333333,
+     0.3333333333333333,
+     1
+    ]
+   ],
+   "criteria": [
+    "exploitation",
+    "impact",
+    "exposure",
+    "introduced",
+    "actionable"
+   ]
+  },
+  "criteria_text": {
+   "exploitation": "Being attacked? (KEV = attacked in the wild; EPSS = chance of attack in 30 days; hard supply-chain signals)",
+   "impact": "How bad if exploited (advisory severity / CVSS)",
+   "exposure": "Where it runs (shipped runtime code vs dev-only tooling)",
+   "introduced": "Added by this PR (vs already present before)",
+   "actionable": "A fix exists (upgrade or remove)"
+  },
+  "epss_poc_threshold": 0.088,
+  "floors": {
+   "malicious": {
+    "level": "critical",
+    "decision": "Act",
+    "why": "Known malicious package (OSV MAL- advisory)"
+   },
+   "lockfile_tamper": {
+    "level": "critical",
+    "decision": "Act",
+    "why": "Package resolved from a host that is not on the allow-list / integrity changed"
+   },
+   "source_change": {
+    "level": "critical",
+    "decision": "Act",
+    "why": "Package-manager config redirected (e.g. .npmrc registry)"
+   },
+   "untrusted_source": {
+    "level": "critical",
+    "decision": "Act",
+    "why": "Package downloaded from a server that is not on the registry allow-list"
+   },
+   "new_install_script": {
+    "level": "high",
+    "decision": "Attend",
+    "why": "New package runs code at install time"
+   },
+   "typosquat": {
+    "level": "high",
+    "decision": "Attend",
+    "why": "Name is a near-copy of a popular package"
+   }
+  },
+  "levels": {
+   "Act": "critical",
+   "Attend": "high",
+   "Track*": "medium",
+   "Track": "low"
+  },
+  "verdict_rule": "block if the change introduces a critical finding or an SSVC 'Act' decision; review if it introduces a finding of high or critical severity (CVE, supply-chain or CI), even when exploitation data lowered its priority level; otherwise allow"
+ },
+ "data": {
+  "advisories": 56,
+  "cves": 53,
+  "epss_found": 53,
+  "kev_matches": 1,
+  "kev_catalog_size": 1792,
+  "errors": []
+ }
+}

@@ -88,7 +88,7 @@ export default function App() {
               {view === "replay" && <Replay />}
               {s && view === "summary" && <Summary s={s} steps={steps} onPick={setView} />}
               {s && view === "discover" && <Discover s={s} project={project} />}
-              {s && view === "detect" && <Detect s={s} />}
+              {s && view === "detect" && <Detect s={s} project={project} refresh={refresh} />}
               {s && view === "investigate" && <Agents s={s} project={project} refresh={refresh} onPick={setView} />}
               {s && view === "fix" && <FixApprove s={s} project={project} refresh={refresh} />}
               {s && view === "validate" && <Validate s={s} project={project} refresh={refresh} />}

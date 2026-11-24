@@ -1,4 +1,5 @@
-"""Explainable risk scoring for a `guardian check` report. Deterministic: no AI changes a score.
+"""Explainable risk scoring for a `guardian check` report. Deterministic: no AI computes or edits a score.
+An AI may only PROPOSE the AHP pairwise matrix (guardian/scoring/advisor.py); it takes effect after a code referee and a human approve it.
 
 Four layers:
   1. Hard floors      supply-chain attacks (malware, tampering, registry redirect, ...) get a minimum level
@@ -36,8 +37,12 @@ AHP_MATRIX = [
 RANDOM_INDEX = {1: 0.0, 2: 0.0, 3: 0.58, 4: 0.90, 5: 1.12, 6: 1.24, 7: 1.32}
 
 
-def ahp(matrix=AHP_MATRIX) -> dict:
-    """Principal eigenvector by power iteration, lambda_max, consistency index and ratio (Saaty)."""
+def ahp(matrix=AHP_MATRIX, criteria=None) -> dict:
+    """Principal eigenvector by power iteration, lambda_max, consistency index and ratio (Saaty).
+
+    `criteria` names the rows (defaults to the five priority-score criteria); the contextual scoring reuses this for its own matrices.
+    """
+    criteria = criteria or CRITERIA
     n = len(matrix)
     w = [1.0 / n] * n
     for _ in range(200):
@@ -52,9 +57,9 @@ def ahp(matrix=AHP_MATRIX) -> dict:
     lam = sum(aw[i] / w[i] for i in range(n)) / n
     ci = (lam - n) / (n - 1)
     cr = ci / RANDOM_INDEX[n]
-    return {"weights": dict(zip(CRITERIA, [round(x, 4) for x in w])), "lambda_max": round(lam, 4),
+    return {"weights": dict(zip(criteria, [round(x, 4) for x in w])), "lambda_max": round(lam, 4),
             "consistency_index": round(ci, 4), "consistency_ratio": round(cr, 4), "consistent": cr < 0.10,
-            "matrix": matrix, "criteria": CRITERIA}
+            "matrix": matrix, "criteria": criteria}
 
 
 AHP = ahp()
@@ -77,6 +82,9 @@ FLOORS = {
     "untrusted_source": ("critical", "Act", "Package downloaded from a server that is not on the registry allow-list"),
     "new_install_script": ("high", "Attend", "New package runs code at install time"),
     "typosquat": ("high", "Attend", "Name is a near-copy of a popular package"),
+    # Added with contextual scoring (hard-signal list): produced by guardian/detectors/ci_drift.py
+    "action_sha_to_tag": ("high", "Attend", "CI action changed from a pinned commit SHA to a movable tag"),
+    "history_rewrite": ("high", "Attend", "Base commit is not an ancestor of head: history was rewritten"),
 }
 COMBOS = [({"typosquat", "new_install_script"}, ("critical", "Act", "Look-alike name AND install-time code"))]
 
@@ -133,9 +141,10 @@ def ssvc(expl: str, auto: str, impact: str, mis: str) -> tuple[str, str]:
     return "Track", "no sign of attack"
 
 
-def _contrib(factors: dict) -> tuple[float, list]:
-    rows = [{"factor": k, "value": round(factors[k]["value"], 3), "weight": W[k],
-             "points": round(100 * W[k] * factors[k]["value"], 1), "why": factors[k]["why"]} for k in CRITERIA]
+def _contrib(factors: dict, w: dict | None = None) -> tuple[float, list]:
+    w = w or W
+    rows = [{"factor": k, "value": round(factors[k]["value"], 3), "weight": w[k],
+             "points": round(100 * w[k] * factors[k]["value"], 1), "why": factors[k]["why"]} for k in CRITERIA]
     return round(sum(r["points"] for r in rows), 1), rows
 
 
@@ -146,7 +155,15 @@ def _decide(level_from_rules: str | None, decision: str) -> str:
     return lv
 
 
-def score_report(report: dict) -> dict:
+def score_report(report: dict, reach: dict | None = None, weights: dict | None = None, matrix_info: dict | None = None) -> dict:
+    """Score a check report. `reach` (optional, contextual scoring) maps a vulnerability key to a reachability record
+    (guardian/scoring/contextual/reachability.py). It only ever changes CVE findings, never a hard-signal finding.
+
+    `weights` (optional): the AHP weights to use instead of the baseline. They come from a pairwise matrix that
+    guardian/scoring/advisor.py proposed, a code referee validated (Saaty scale, CR < 0.10, bounded drift) and a HUMAN
+    approved. The score stays a deterministic function of those weights; levels, decisions and floors never depend on them."""
+    reach = reach or {}
+    w = weights or W
     inv = {p["key"]: p for p in report.get("inventory", [])}
     by_name = {}
     for p in report.get("inventory", []):
@@ -167,7 +184,11 @@ def score_report(report: dict) -> dict:
         cve = next((a for a in [v["id"]] + d.get("aliases", []) if a.startswith("CVE-")), None)
         vector = d.get("cvss_v4") or d.get("cvss_v3")
         m = parse_cvss(vector)
-        auto, impact, mis = automatable(m), technical_impact(m), mission(v)
+        auto, impact, mis0 = automatable(m), technical_impact(m), mission(v)
+        ri = reach.get(v.get("key"))
+        # Reachability (contextual scoring, estimated): "no import found" lowers the importance of a direct runtime
+        # dependency by ONE step only (essential -> support); never to dev-only, since dynamic requires are missed.
+        mis = "support" if (ri and ri.get("tier") == "declared" and mis0 == "essential" and not v.get("malicious")) else mis0
         e = ep.get(cve) if cve else None
         in_kev = bool(cve and cve in kv)
         if v.get("malicious"):
@@ -191,12 +212,12 @@ def score_report(report: dict) -> dict:
             "impact": {"value": SEV_IMPACT.get(v["severity"], 0.5), "why": f"severity {v['severity']}" + (f" ({m.get('_version')})" if m else "")},
             "exposure": {"value": EXPOSURE[mis], "why": EXPOSURE_TEXT[mis] + (
                 "; listed as a devDependency but imported by frontend code, so bundled for users (inferred)"
-                if v.get("exposure") == "shipped_frontend_inferred" else "")},
+                if v.get("exposure") == "shipped_frontend_inferred" else "") + (f" · reachability {ri['tier']} (estimated)" if ri else "")},
             "introduced": {"value": 1.0 if v["label"] == "introduced" else 0.3, "why": "added by this PR" if v["label"] == "introduced" else "already present before this PR"},
             "actionable": {"value": 1.0 if v.get("fixed") or v.get("malicious") else 0.4,
                            "why": f"fixed in {', '.join(v['fixed'][:2])}" if v.get("fixed") else ("remove the package" if v.get("malicious") else "no fixed version published")},
         }
-        sc, rows = _contrib(factors)
+        sc, rows = _contrib(factors, w)
         level = _decide(floor[0] if floor else None, decision)
         cf = []
         if not floor:
@@ -208,6 +229,10 @@ def score_report(report: dict) -> dict:
                 d2, _ = ssvc(args["expl"], args["auto"], args["impact"], args["mis"])
                 if d2 != decision:
                     cf.append({"if": label, "then": f"decision would be {d2} ({LEVEL[d2]})"})
+        if not floor and mis != mis0:
+            d2, _ = ssvc("active" if expl == "active" else ("poc" if expl == "poc" else "none"), auto, impact, mis0)
+            if d2 != decision:
+                cf.append({"if": "first-party code imported this package", "then": f"decision would be {d2} ({LEVEL[d2]})"})
         if v.get("fixed"):
             cf.append({"if": f"upgraded to {v['fixed'][0]}", "then": "this finding disappears"})
         if v["label"] == "introduced":
@@ -218,6 +243,9 @@ def score_report(report: dict) -> dict:
             "label": v["label"], "summary": v.get("summary", ""), "decision": decision, "level": level, "score": sc,
             "severity": v["severity"], "version": v.get("version", ""), "ssvc": {"exploitation": expl, "automatable": auto, "technical_impact": impact, "mission": mis, "rule": rule},
             "floor": floor[2] if floor else None, "contributions": rows, "counterfactuals": cf,
+            "fixed": list(v.get("fixed") or []), "reachability": ri,
+            "package": {"name": v["name"], "version": v["version"], "ecosystem": v.get("ecosystem") or p.get("ecosystem", "npm"),
+                        "direct": bool(v.get("direct")), "runtime": bool(v.get("runtime")), "key": v.get("component_key")},
             "evidence": {"advisory": v["id"], "aliases": d.get("aliases", []), "cvss_vector": vector, "cve": cve,
                          "epss": e, "kev": kv.get(cve) if in_kev else None, "url": f"https://osv.dev/vulnerability/{v['id']}",
                          "lockfile_line": p.get("lockfile_line"), "file": p.get("source_file") or v.get("source_file"),
@@ -251,7 +279,7 @@ def score_report(report: dict) -> dict:
             "introduced": {"value": 1.0 if s.get("label", "introduced") == "introduced" else 0.3, "why": "added by this PR" if s.get("label", "introduced") == "introduced" else "already present"},
             "actionable": {"value": 1.0, "why": "revert the change / remove the package"},
         }
-        sc, rows = _contrib(factors)
+        sc, rows = _contrib(factors, w)
         level = _decide(floor[0] if floor else None, decision)
         findings.append({
             "id": f"{s['type']}:{comp}", "kind": "supply_chain", "title": f"{comp}: {s['type'].replace('_', ' ')}", "component": comp,
@@ -275,7 +303,7 @@ def score_report(report: dict) -> dict:
             "introduced": {"value": 1.0 if c["label"] == "introduced" else 0.3, "why": "added by this PR" if c["label"] == "introduced" else "already present"},
             "actionable": {"value": 1.0, "why": "pin by digest / SHA or tighten the workflow"},
         }
-        sc, rows = _contrib(factors)
+        sc, rows = _contrib(factors, w)
         findings.append({"id": f"{c.get('detector')}:{c.get('file')}:{c.get('line')}:{c.get('type')}", "kind": "ci_image",
                          "title": f"{c.get('file')}: {c.get('type')}", "component": c.get("component"), "label": c["label"],
                          "summary": c.get("summary", ""), "decision": decision, "level": LEVEL[decision], "score": sc, "ssvc": None,
@@ -298,7 +326,8 @@ def score_report(report: dict) -> dict:
     return {
         "verdict": dec["verdict"], "reasons": dec["reasons"], "complete": dec["complete"],
         "incomplete_reasons": dec["incomplete_reasons"], "counts": counts, "findings": findings,
-        "method": {"ahp": AHP, "criteria_text": CRITERIA_TEXT, "epss_poc_threshold": EPSS_POC,
+        "method": {"ahp": AHP, "ahp_active": matrix_info or {"id": "baseline", "source": "baseline matrix", "weights": dict(W)},
+                   "criteria_text": CRITERIA_TEXT, "epss_poc_threshold": EPSS_POC,
                    "floors": {k: {"level": v[0], "decision": v[1], "why": v[2]} for k, v in FLOORS.items()},
                    "levels": LEVEL, "verdict_rule": dec["rule"]},
         "data": {"advisories": len(ids), "cves": len(cves), "epss_found": len(ep), "kev_matches": sum(1 for c in cves if c in kv),

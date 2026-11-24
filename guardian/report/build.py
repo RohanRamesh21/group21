@@ -49,6 +49,9 @@ def build(out: Path) -> dict:
     latest = json.loads((out / "latest.json").read_text())
     report = json.loads(Path(latest["path"]).read_text())
     scores = _load(Path(latest["scores"])) if latest.get("scores") else None
+    if scores:  # a human-approved AHP matrix re-weights the stored factor values (levels, decisions, verdict untouched)
+        from guardian.scoring.advisor import with_active_matrix
+        scores = with_active_matrix(out, scores)
     h = report["headline"]
     plan, validation = _load(out / "fix-plan.json"), _load(out / "validation.json")
     approval = ap.latest_approval(out)
@@ -70,7 +73,14 @@ def build(out: Path) -> dict:
                                                                    "source_file", "path")} for p in inv]}
     sections["findings"] = {"counts": (scores or {}).get("counts"), "method": (scores or {}).get("method", {}).get("verdict_rule"),
                             "items": [{k: f.get(k) for k in ("id", "title", "kind", "label", "level", "severity", "decision", "score",
-                                                             "floor", "confidence", "evidence", "contributions")} for f in findings]}
+                                                             "floor", "confidence", "evidence", "contributions", "component", "summary",
+                                                             "ssvc", "counterfactuals", "reachability", "rank_stability", "fixed", "package")}
+                                      for f in findings],
+                            # contextual scoring: how the priority was computed, which AHP matrix scored it, fix ranking
+                            "scoring": {k: (scores or {}).get("method", {}).get(k) for k in ("ahp", "ahp_active", "criteria_text", "floors", "epss_poc_threshold")}
+                                       | {"data": (scores or {}).get("data"), "fix_candidates": (scores or {}).get("fix_candidates") or {},
+                                          "rank_stability_summary": (scores or {}).get("rank_stability_summary"),
+                                          "contextual": (scores or {}).get("contextual")}}
     agents = _load(out / "agents" / "verdict.json")
     sections["investigation"] = ({"status": "done", **agents} if agents else
                                  {"status": "pending", "reason": "live agent investigation needs the AI model (API key not configured yet)"})
@@ -85,7 +95,8 @@ def build(out: Path) -> dict:
     if validation:
         sections["validation"] = {"status": "executed" if validation.get("executed") else "refused", **{
             k: validation.get(k) for k in ("gate", "profile", "baseline", "candidate", "approval_id")}}
-        sections["before_after"] = {"rescan": validation.get("rescan"), "sbom_diff": (validation.get("gate") or {}).get("sbom_diff")}
+        sections["before_after"] = {"rescan": validation.get("rescan"), "sbom_diff": (validation.get("gate") or {}).get("sbom_diff"),
+                                    "delta": validation.get("delta")}
     else:
         sections["validation"] = {"status": "not_started", "reason": "no validation has run for this run"}
         sections["before_after"] = {"status": "not_started"}

@@ -1,0 +1,21 @@
+{
+  "from": "1.0.0",
+  "maintainer_change": false,
+  "new": {
+    "lifecycle_scripts": {},
+    "maintainers": [],
+    "published": "2026-11-23T10:18:40.404Z",
+    "unpacked_size": null,
+    "version": "1.0.1"
+  },
+  "new_install_hooks": false,
+  "old": {
+    "lifecycle_scripts": {},
+    "maintainers": [],
+    "published": "2026-11-23T10:18:40.007Z",
+    "unpacked_size": null,
+    "version": "1.0.0"
+  },
+  "package": "kuma-helper",
+  "to": "1.0.1"
+}

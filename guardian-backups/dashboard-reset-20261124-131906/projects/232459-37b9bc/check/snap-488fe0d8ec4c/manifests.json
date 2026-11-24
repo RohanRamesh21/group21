@@ -1,0 +1,12 @@
+[
+ {
+  "path": "package-lock.json",
+  "ecosystem": "npm",
+  "role": "lockfile"
+ },
+ {
+  "path": "package.json",
+  "ecosystem": "npm",
+  "role": "manifest"
+ }
+]

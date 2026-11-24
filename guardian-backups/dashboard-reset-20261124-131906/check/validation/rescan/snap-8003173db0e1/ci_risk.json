@@ -1,0 +1,211 @@
+{
+ "findings": [
+  {
+   "detector": "D8",
+   "type": "image_not_pinned",
+   "severity": "medium",
+   "component": "louislam/uptime-kuma:2",
+   "file": "compose.yaml",
+   "line": 3,
+   "summary": "louislam/uptime-kuma:2 is pulled by tag; pin it with @sha256 so the image cannot change underneath the build"
+  },
+  {
+   "detector": "D8",
+   "type": "image_not_pinned",
+   "severity": "medium",
+   "component": "golang:1-buster",
+   "file": "docker/builder-go.dockerfile",
+   "line": 5,
+   "summary": "golang:1-buster is pulled by tag; pin it with @sha256 so the image cannot change underneath the build"
+  },
+  {
+   "detector": "D8",
+   "type": "image_not_pinned",
+   "severity": "medium",
+   "component": "node:22-bookworm-slim",
+   "file": "docker/debian-base.dockerfile",
+   "line": 2,
+   "summary": "node:22-bookworm-slim is pulled by tag; pin it with @sha256 so the image cannot change underneath the build"
+  },
+  {
+   "detector": "D8",
+   "type": "image_not_pinned",
+   "severity": "medium",
+   "component": "node:22-bookworm-slim",
+   "file": "docker/debian-base.dockerfile",
+   "line": 12,
+   "summary": "node:22-bookworm-slim is pulled by tag; pin it with @sha256 so the image cannot change underneath the build"
+  },
+  {
+   "detector": "D8",
+   "type": "image_not_pinned",
+   "severity": "medium",
+   "component": "louislam/uptime-kuma:base2-slim",
+   "file": "docker/debian-base.dockerfile",
+   "line": 71,
+   "summary": "louislam/uptime-kuma:base2-slim is pulled by tag; pin it with @sha256 so the image cannot change underneath the build"
+  },
+  {
+   "detector": "D8",
+   "type": "image_not_pinned",
+   "severity": "medium",
+   "component": "louislam/uptime-kuma:nightly2",
+   "file": "docker/docker-compose-dev.yml",
+   "line": 6,
+   "summary": "louislam/uptime-kuma:nightly2 is pulled by tag; pin it with @sha256 so the image cannot change underneath the build"
+  },
+  {
+   "detector": "D8",
+   "type": "image_not_pinned",
+   "severity": "medium",
+   "component": "node:22-bookworm-slim",
+   "file": "extra/uptime-kuma-push/Dockerfile",
+   "line": 1,
+   "summary": "node:22-bookworm-slim is pulled by tag; pin it with @sha256 so the image cannot change underneath the build"
+  },
+  {
+   "detector": "D8",
+   "type": "image_not_pinned",
+   "severity": "medium",
+   "component": "debian:bookworm-slim",
+   "file": "extra/uptime-kuma-push/Dockerfile",
+   "line": 10,
+   "summary": "debian:bookworm-slim is pulled by tag; pin it with @sha256 so the image cannot change underneath the build"
+  },
+  {
+   "detector": "D8",
+   "type": "image_not_pinned",
+   "severity": "medium",
+   "component": "redis:latest",
+   "file": "test/manual-test-radius-tls/compose.yaml",
+   "line": 5,
+   "summary": "redis:latest is pulled by tag; pin it with @sha256 so the image cannot change underneath the build"
+  },
+  {
+   "detector": "D8",
+   "type": "image_not_pinned",
+   "severity": "medium",
+   "component": "redis:latest",
+   "file": "test/manual-test-radius/compose.yaml",
+   "line": 5,
+   "summary": "redis:latest is pulled by tag; pin it with @sha256 so the image cannot change underneath the build"
+  },
+  {
+   "detector": "D8",
+   "type": "image_not_pinned",
+   "severity": "medium",
+   "component": "freeradius/freeradius-server:latest",
+   "file": "test/test-radius.dockerfile",
+   "line": 4,
+   "summary": "freeradius/freeradius-server:latest is pulled by tag; pin it with @sha256 so the image cannot change underneath the build"
+  },
+  {
+   "detector": "D9",
+   "type": "ci_dangerous_triggers",
+   "severity": "high",
+   "component": ".github/workflows/ai-slop.yml",
+   "file": ".github/workflows/ai-slop.yml",
+   "line": 3,
+   "summary": "use of fundamentally insecure workflow trigger (dangerous-triggers)",
+   "excerpt": "on:\n  pull_request_target:\n    types:\n      - labeled\n  issues:\n    types:\n      - labeled",
+   "url": "https://docs.zizmor.sh/audits/#dangerous-triggers"
+  },
+  {
+   "detector": "D9",
+   "type": "ci_adhoc_packages",
+   "severity": "low",
+   "component": ".github/workflows/auto-test.yml",
+   "file": ".github/workflows/auto-test.yml",
+   "line": 49,
+   "summary": "ad-hoc installation of packages (adhoc-packages)",
+   "excerpt": "run: npm install npm -g\n\n      # Print the npm version",
+   "url": "https://docs.zizmor.sh/audits/#adhoc-packages"
+  },
+  {
+   "detector": "D9",
+   "type": "ci_adhoc_packages",
+   "severity": "low",
+   "component": ".github/workflows/build-docker-push.yml",
+   "file": ".github/workflows/build-docker-push.yml",
+   "line": 44,
+   "summary": "ad-hoc installation of packages (adhoc-packages)",
+   "excerpt": "name: Install cross-env\n        run: npm install -g cross-env",
+   "url": "https://docs.zizmor.sh/audits/#adhoc-packages"
+  },
+  {
+   "detector": "D9",
+   "type": "ci_dangerous_triggers",
+   "severity": "high",
+   "component": ".github/workflows/deleted-pr.yml",
+   "file": ".github/workflows/deleted-pr.yml",
+   "line": 3,
+   "summary": "use of fundamentally insecure workflow trigger (dangerous-triggers)",
+   "excerpt": "on:\n  pull_request_target:\n    types:\n      - labeled\n  issues:\n    types:\n      - labeled",
+   "url": "https://docs.zizmor.sh/audits/#dangerous-triggers"
+  },
+  {
+   "detector": "D9",
+   "type": "ci_dangerous_triggers",
+   "severity": "high",
+   "component": ".github/workflows/duplicate-issues.yml",
+   "file": ".github/workflows/duplicate-issues.yml",
+   "line": 7,
+   "summary": "use of fundamentally insecure workflow trigger (dangerous-triggers)",
+   "excerpt": "on:\n  issues:\n    types: [opened]\n  issue_comment:\n    types: [created]",
+   "url": "https://docs.zizmor.sh/audits/#dangerous-triggers"
+  },
+  {
+   "detector": "D9",
+   "type": "ci_artipacked",
+   "severity": "medium",
+   "component": ".github/workflows/npm-update.yml",
+   "file": ".github/workflows/npm-update.yml",
+   "line": 22,
+   "summary": "credential persistence through GitHub Actions artifacts (artipacked)",
+   "excerpt": "name: Checkout master branch\n        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1\n        with:\n          ref: master\n          token: ${{ secrets.GITHUB_TOKEN }}",
+   "url": "https://docs.zizmor.sh/audits/#artipacked"
+  },
+  {
+   "detector": "D9",
+   "type": "ci_adhoc_packages",
+   "severity": "low",
+   "component": ".github/workflows/npm-update.yml",
+   "file": ".github/workflows/npm-update.yml",
+   "line": 33,
+   "summary": "ad-hoc installation of packages (adhoc-packages)",
+   "excerpt": "name: Generate lockfile from scratch\n        run: |\n          npm install npm -g\n          npm -v\n          rm -f package-lock.json\n          npm install --package-lock-only\n          npm approve-scripts --all",
+   "url": "https://docs.zizmor.sh/audits/#adhoc-packages"
+  },
+  {
+   "detector": "D9",
+   "type": "ci_excessive_permissions",
+   "severity": "high",
+   "component": ".github/workflows/release.yml",
+   "file": ".github/workflows/release.yml",
+   "line": 26,
+   "summary": "overly broad permissions (excessive-permissions)",
+   "excerpt": "  contents: write",
+   "url": "https://docs.zizmor.sh/audits/#excessive-permissions"
+  },
+  {
+   "detector": "D9",
+   "type": "ci_excessive_permissions",
+   "severity": "high",
+   "component": ".github/workflows/release.yml",
+   "file": ".github/workflows/release.yml",
+   "line": 27,
+   "summary": "overly broad permissions (excessive-permissions)",
+   "excerpt": "  pull-requests: write",
+   "url": "https://docs.zizmor.sh/audits/#excessive-permissions"
+  }
+ ],
+ "errors": {},
+ "actions": {
+  "total": 79,
+  "pinned": 79
+ },
+ "images": {
+  "total": 11,
+  "pinned": 0
+ }
+}

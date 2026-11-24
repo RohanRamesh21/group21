@@ -1,0 +1,182 @@
+[
+ {
+  "path": ".github/workflows/ai-slop.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/auto-test.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/autofix.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/build-docker-base.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/build-docker-pr-test.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/build-docker-push.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/close-incorrect-issue.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/codeql-analysis.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/conflict-labeler.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/deleted-pr.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/duplicate-issues.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/mark-as-draft-on-requesting-changes.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/new-contributor-pr.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/npm-update.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/pr-description-check.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/pr-title.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/prevent-file-change.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/release-nightly.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/release.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/stale-bot.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": ".github/workflows/validate.yml",
+  "ecosystem": "ci",
+  "role": "ci"
+ },
+ {
+  "path": "compose.yaml",
+  "ecosystem": "container",
+  "role": "container"
+ },
+ {
+  "path": "docker/builder-go.dockerfile",
+  "ecosystem": "container",
+  "role": "container"
+ },
+ {
+  "path": "docker/debian-base.dockerfile",
+  "ecosystem": "container",
+  "role": "container"
+ },
+ {
+  "path": "docker/docker-compose-dev.yml",
+  "ecosystem": "container",
+  "role": "container"
+ },
+ {
+  "path": "extra/uptime-kuma-push/Dockerfile",
+  "ecosystem": "container",
+  "role": "container"
+ },
+ {
+  "path": "test/manual-test-radius-tls/compose.yaml",
+  "ecosystem": "container",
+  "role": "container"
+ },
+ {
+  "path": "test/manual-test-radius/compose.yaml",
+  "ecosystem": "container",
+  "role": "container"
+ },
+ {
+  "path": "test/test-radius.dockerfile",
+  "ecosystem": "container",
+  "role": "container"
+ },
+ {
+  "path": "package-lock.json",
+  "ecosystem": "npm",
+  "role": "lockfile"
+ },
+ {
+  "path": "extra/kuma-pr/package.json",
+  "ecosystem": "npm",
+  "role": "manifest"
+ },
+ {
+  "path": "extra/push-examples/javascript-fetch/package.json",
+  "ecosystem": "npm",
+  "role": "manifest"
+ },
+ {
+  "path": "extra/push-examples/typescript-fetch/package.json",
+  "ecosystem": "npm",
+  "role": "manifest"
+ },
+ {
+  "path": "extra/uptime-kuma-push/package.json",
+  "ecosystem": "npm",
+  "role": "manifest"
+ },
+ {
+  "path": "package.json",
+  "ecosystem": "npm",
+  "role": "manifest"
+ },
+ {
+  "path": ".npmrc",
+  "ecosystem": "config",
+  "role": "registry-config"
+ }
+]

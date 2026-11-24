@@ -120,3 +120,82 @@ class GitHub:
             code, _, _ = self._req("POST", f"{API}/repos/{repo}/issues", json={"title": title, "body": body})
         if code not in (200, 201):
             raise RuntimeError(f"issue update failed with {code}")
+
+
+def token_env_name(repo: str) -> str:
+    """Per-repository token: GUARDIAN_GITHUB_TOKEN__<OWNER>__<REPO> (non-alphanumerics become _)."""
+    owner, name = repo.split("/", 1)
+    norm = lambda x: re.sub(r"[^A-Za-z0-9]", "_", x).upper()  # noqa: E731
+    return f"GUARDIAN_GITHUB_TOKEN__{norm(owner)}__{norm(name)}"
+
+
+class GitHubRouter:
+    """Same methods as GitHub, but each call uses the token configured for that repository (falling back to
+    GUARDIAN_GITHUB_TOKEN). Fine-grained tokens are scoped to repositories, so one token per repo is normal."""
+
+    def __init__(self, env: dict, client=GitHub):
+        self.__tokens = {k: v for k, v in env.items() if k.startswith("GUARDIAN_GITHUB_TOKEN") and v}
+        self.__client, self.__cache, self.__good = client, {}, {}
+
+    def __repr__(self) -> str:
+        return f"GitHubRouter(tokens={len(self.__tokens)} configured, values hidden)"
+
+    @property
+    def configured(self) -> bool:
+        return bool(self.__tokens)
+
+    def _candidates(self, repo: str) -> list[str]:
+        """Repo-specific token first, then the default, then any other configured token (deduplicated)."""
+        order = [self.__tokens.get(token_env_name(repo)), self.__tokens.get("GUARDIAN_GITHUB_TOKEN"), *self.__tokens.values()]
+        if self.__good.get(repo):
+            order.insert(0, self.__good[repo])
+        seen, out = set(), []
+        for t in order:
+            if t and t not in seen:
+                seen.add(t)
+                out.append(t)
+        return out
+
+    def _client(self, tok: str):
+        if tok not in self.__cache:
+            self.__cache[tok] = self.__client(tok)
+        return self.__cache[tok]
+
+    def _for(self, repo: str):
+        c = self._candidates(repo)
+        if not c:
+            raise RuntimeError(f"no GitHub token configured for {repo}")
+        return self._client(c[0])
+
+    def _call(self, method: str, repo: str, *a, **k):
+        """A 403 means this token lacks permission on this repo: try the next configured token and remember the one
+        that worked. Other errors are not retried with another token."""
+        cands = self._candidates(repo)
+        if not cands:
+            raise RuntimeError(f"no GitHub token configured for {repo}")
+        last = None
+        for tok in cands:
+            try:
+                res = getattr(self._client(tok), method)(repo, *a, **k)
+                self.__good[repo] = tok
+                return res
+            except RuntimeError as e:
+                if "403" not in str(e):
+                    raise
+                last = e
+        raise last
+
+    def open_pulls(self, repo, *a, **k):
+        return self._call("open_pulls", repo, *a, **k)
+
+    def statuses(self, repo, *a, **k):
+        return self._call("statuses", repo, *a, **k)
+
+    def set_status(self, repo, *a, **k):
+        return self._call("set_status", repo, *a, **k)
+
+    def upsert_comment(self, repo, *a, **k):
+        return self._call("upsert_comment", repo, *a, **k)
+
+    def upsert_issue(self, repo, *a, **k):
+        return self._call("upsert_issue", repo, *a, **k)

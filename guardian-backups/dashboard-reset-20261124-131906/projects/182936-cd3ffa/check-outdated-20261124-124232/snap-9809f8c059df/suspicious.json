@@ -1,0 +1,22 @@
+[
+ {
+  "detector": "D12",
+  "type": "extension_sensitive_permissions",
+  "severity": "low",
+  "hard_signal": false,
+  "component": "ark-outreach-coach@4.0.2",
+  "file": "linkedin extention/manifest.json",
+  "line": 10,
+  "summary": "asks for powerful browser permissions: tabs, scripting"
+ },
+ {
+  "detector": "D12",
+  "type": "extension_network_destinations",
+  "severity": "info",
+  "hard_signal": false,
+  "component": "ark-outreach-coach@4.0.2",
+  "file": "linkedin extention/manifest.json",
+  "line": 14,
+  "summary": "talks to: api.anthropic.com, www.linkedin.com (check each one is expected; page data can be sent there)"
+ }
+]

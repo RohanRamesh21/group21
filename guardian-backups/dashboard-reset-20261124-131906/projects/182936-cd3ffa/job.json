@@ -1,0 +1,71 @@
+{
+ "id": "182936-cd3ffa",
+ "kind": "git",
+ "label": "github.com/kirankishoreV-07/ARKABROAD",
+ "status": "done",
+ "message": "done",
+ "created": 1795438776.697907,
+ "steps": [
+  {
+   "t": 65575.8,
+   "msg": "Rescan with the current engine: same commits (9809f8c059df -> 1c54273fc48b)"
+  },
+  {
+   "t": 65575.8,
+   "msg": "Day 1 pipeline: components -> SBOM -> dependency graph -> vulnerabilities -> suspicious changes -> evidence (comparing 9809f8c059df35b31a4068ac93c37adee088af19 -> 1c54273fc48be8df1b179b7250aa68272688c702)"
+  },
+  {
+   "t": 65575.8,
+   "msg": "Exporting commit 1c54273f (git archive: no hooks, no symlinks)"
+  },
+  {
+   "t": 65575.9,
+   "msg": "Building the SBOM with Syft (CycloneDX + SPDX), all ecosystems"
+  },
+  {
+   "t": 65576.9,
+   "msg": "Checking CI workflows and container images"
+  },
+  {
+   "t": 65576.9,
+   "msg": "Looking up vulnerabilities: OSV.dev (all ecosystems) + Grype (local DB)"
+  },
+  {
+   "t": 65580.5,
+   "msg": "Scanning the previous state 9809f8c0 to find what changed"
+  },
+  {
+   "t": 65580.6,
+   "msg": "Building the SBOM with Syft (CycloneDX + SPDX), all ecosystems"
+  },
+  {
+   "t": 65581.1,
+   "msg": "Checking CI workflows and container images"
+  },
+  {
+   "t": 65581.1,
+   "msg": "Looking up vulnerabilities: OSV.dev (all ecosystems) + Grype (local DB)"
+  }
+ ],
+ "url": "https://github.com/kirankishoreV-07/ARKABROAD",
+ "base": null,
+ "head": null,
+ "updated": 1795504361.1882482,
+ "base_default": true,
+ "mode": "compare",
+ "out": "/Users/kirankishorev/Documents/BOSCH/guardian/guardian-out/projects/182936-cd3ffa/check",
+ "summary": {
+  "packages": 1,
+  "ecosystems": {
+   "browser-extension": 1
+  },
+  "verdict": "allow",
+  "reasons": [
+   "no high or critical risk introduced by this change"
+  ],
+  "head_commit": "1c54273fc48b",
+  "base_commit": "9809f8c059df",
+  "scores": true
+ },
+ "rescanned": 1795504352.493752
+}

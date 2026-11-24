@@ -1,0 +1,213 @@
+{
+ "created": 1795475619.933868,
+ "repo": "/Users/kirankishorev/Documents/BOSCH/guardian/sandbox/uptime-kuma",
+ "base_sha": "da938350cc858e845e4a41aaf5fa9c1091f343ce",
+ "head_sha": "576752d0a257fcb1438a5eea68660cf25f4dff2f",
+ "report": "/Users/kirankishorev/Documents/BOSCH/guardian/guardian-out/check/latest.json",
+ "findings_considered": [
+  "axois@1.0.0#MAL-2025-15245",
+  "untrusted_source:axois@1.0.0",
+  "typosquat:axois@1.0.0",
+  "new_install_script:axois@1.0.0",
+  "source_change:.npmrc",
+  "axois@1.0.0#GHSA-wpfc-3w63-g4hm",
+  "axois@1.0.0#GHSA-ch9v-rq66-537x",
+  "sensitive_file_change:.npmrc",
+  "new_dependency:axois@1.0.0"
+ ],
+ "candidates": [
+  {
+   "id": "FIX-fb3403d0ca",
+   "type": "remove_package",
+   "finding_ids": [
+    "axois@1.0.0#GHSA-ch9v-rq66-537x",
+    "axois@1.0.0#GHSA-wpfc-3w63-g4hm",
+    "axois@1.0.0#MAL-2025-15245",
+    "new_dependency:axois@1.0.0",
+    "new_install_script:axois@1.0.0",
+    "typosquat:axois@1.0.0",
+    "untrusted_source:axois@1.0.0"
+   ],
+   "expected_risk_reduction": {
+    "critical": 4,
+    "high": 1,
+    "medium": 0,
+    "low": 2
+   },
+   "forecast": true,
+   "approval_required": true,
+   "resolves_target": true,
+   "semver_jump": null,
+   "lock_changes": 1,
+   "rollback_ease": 1,
+   "sources": [],
+   "package": "axois",
+   "version": "1.0.0",
+   "rationale": "the change adds a package with hard supply-chain signals and a known-malware record; remove it",
+   "compatibility": {
+    "note": "nothing in the base revision depends on it"
+   },
+   "rollback": "git revert the fix commit (restores package.json and package-lock.json)"
+  },
+  {
+   "id": "FIX-51d721ef5a",
+   "type": "revert_change",
+   "finding_ids": [
+    "sensitive_file_change:.npmrc",
+    "source_change:.npmrc"
+   ],
+   "expected_risk_reduction": {
+    "critical": 1,
+    "high": 0,
+    "medium": 0,
+    "low": 1
+   },
+   "forecast": true,
+   "approval_required": true,
+   "resolves_target": true,
+   "semver_jump": null,
+   "lock_changes": 1,
+   "rollback_ease": 1,
+   "sources": [],
+   "file": ".npmrc",
+   "rationale": "restore .npmrc to its content in the base revision",
+   "compatibility": {
+    "note": "returns the build configuration to its previous, reviewed state"
+   },
+   "rollback": "git revert the fix commit"
+  }
+ ],
+ "patch": {
+  "patch_path": "/Users/kirankishorev/Documents/BOSCH/guardian/guardian-out/check/fix-25b647572696.patch",
+  "patch_sha256": "25b6475726963e5f4ec6f2c71abd1a63177a9914c0132bfcd4d0898a08222f05",
+  "files": [
+   ".npmrc",
+   "package-lock.json",
+   "package.json"
+  ],
+  "results": [
+   {
+    "id": "FIX-51d721ef5a",
+    "type": "revert_change",
+    "status": "applied",
+    "detail": ".npmrc restored from base"
+   },
+   {
+    "id": "FIX-fb3403d0ca",
+    "type": "remove_package",
+    "status": "applied",
+    "detail": "\nup to date in 554ms\n"
+   }
+  ],
+  "lock_entries_changed": {
+   "added": [],
+   "removed": [
+    "node_modules/axois"
+   ],
+   "changed": []
+  },
+  "base": "da938350cc858e845e4a41aaf5fa9c1091f343ce",
+  "head": "576752d0a257fcb1438a5eea68660cf25f4dff2f",
+  "complete": true
+ },
+ "pending": [],
+ "review": {
+  "created": 1795506084.502321,
+  "patch_sha256": "25b6475726963e5f4ec6f2c71abd1a63177a9914c0132bfcd4d0898a08222f05",
+  "explanations": [
+   {
+    "candidate_id": "FIX-fb3403d0ca",
+    "text": "This removes the axois package entirely; the rationale and finding_ids identify it as malicious or typosquatted with advisories and an install script, and compatibility states nothing in the base revision depends on it.",
+    "cites": [
+     "type",
+     "package",
+     "rationale",
+     "compatibility",
+     "finding_ids"
+    ],
+    "status": "inferred",
+    "cites_checked": true
+   },
+   {
+    "candidate_id": "FIX-51d721ef5a",
+    "text": "This reverts .npmrc to its base-revision content, which compatibility describes as the prior reviewed state, addressing the sensitive-file and source-change findings.",
+    "cites": [
+     "type",
+     "file",
+     "rationale",
+     "compatibility",
+     "finding_ids"
+    ],
+    "status": "inferred",
+    "cites_checked": true
+   }
+  ],
+  "challenges": [
+   {
+    "candidate_id": "FIX-fb3403d0ca",
+    "concern": "The candidate is labeled remove_package, but the rationale says 'the change adds a package'; the reviewer should reconcile whether the intended operation is removal or addition before approving.",
+    "cites": [
+     "type",
+     "rationale"
+    ],
+    "status": "inferred",
+    "cites_checked": true
+   },
+   {
+    "candidate_id": "FIX-fb3403d0ca",
+    "concern": "The compatibility note only says nothing in the base revision depends on axois; it does not establish that the lockfile has no transitive references or that removal will not alter the resolved dependency graph, so the manifest and lockfile should be checked.",
+    "cites": [
+     "compatibility",
+     "rollback",
+     "package"
+    ],
+    "status": "inferred",
+    "cites_checked": true
+   },
+   {
+    "candidate_id": "FIX-fb3403d0ca",
+    "concern": "The finding_ids include new_dependency, new_install_script, typosquat, and untrusted_source for axois@1.0.0; the reviewer should confirm those artifacts are actually present in the current manifests and that the removal covers all entries.",
+    "cites": [
+     "finding_ids"
+    ],
+    "status": "inferred",
+    "cites_checked": true
+   },
+   {
+    "candidate_id": "FIX-51d721ef5a",
+    "concern": "The from and to fields are null, so the candidate does not show the exact .npmrc content being restored; check the diff to ensure the base content is appropriate and does not reintroduce stale registry, auth, or proxy settings.",
+    "cites": [
+     "rationale",
+     "file"
+    ],
+    "status": "inferred",
+    "cites_checked": false
+   },
+   {
+    "candidate_id": "FIX-51d721ef5a",
+    "concern": "The compatibility note asserts a return to a previously reviewed state, but it does not establish that the current build can consume that configuration or that the revert will not break installs; verify the .npmrc diff and CI behavior.",
+    "cites": [
+     "compatibility",
+     "finding_ids",
+     "expected_risk_reduction"
+    ],
+    "status": "inferred",
+    "cites_checked": true
+   }
+  ],
+  "rejected": [],
+  "status": "done",
+  "model": "deepseek-v4-flash-0731",
+  "usage": {
+   "prompt_tokens": 1971,
+   "completion_tokens": 3571,
+   "total_tokens": 5542,
+   "prompt_tokens_details": {
+    "cached_tokens": 1280
+   },
+   "completion_tokens_details": {
+    "reasoning_tokens": 1012
+   }
+  }
+ }
+}
