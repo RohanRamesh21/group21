@@ -1,0 +1,33 @@
+# Automatic profile for any npm repository that no other profile names (runner.profile_for).
+# Same isolation as every profile: disposable container, no internet except the local registry, no secrets,
+# all capabilities dropped, non-root. Hashed and bound into approvals like any profile.
+name: generic-npm
+version: 1
+repos: []
+image: node:20-bookworm
+workdir: /work
+user: "1000:1000"
+resources: {cpus: "2", memory: "4g", pids: 1024}
+network: guardian-validate
+registry: http://verdaccio:4873/
+env:
+  npm_config_replace_registry_host: always
+  npm_config_audit: "false"
+  npm_config_fund: "false"
+  npm_config_update_notifier: "false"
+stages:
+  - id: install
+    required: true
+    timeout: 900
+    cmd: npm ci --ignore-scripts
+  - id: build
+    required: true
+    timeout: 900
+    cmd: npm run build --if-present
+  - id: unit                # the repository's own tests, when it has a test script (informational: many repos have none)
+    required: false
+    timeout: 600
+    cmd: npm test --if-present
+# Upgraded packages that no project test reaches get AI-written behaviour tests (validation/gentests.py),
+# checked against the PR's version first so a wrong test is discarded, never blamed on the fix.
+excluded: []

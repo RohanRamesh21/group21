@@ -56,19 +56,39 @@ def out(tmp_path, monkeypatch):
     return tmp_path, use
 
 
-def test_critical_cases_are_investigated_first_and_low_ones_are_rule_covered(out):
+def test_critical_cases_are_investigated_first_and_the_low_tail_is_rule_covered(out):
     tmp, use = out
     cases = [_case(i, f".github/workflows/w{i}.yml", "low") for i in range(1, 8)] + [_case(50, "express@4.22.3", "critical")]
     use(cases)
     fake = Fake()
     r = wf.investigate(tmp, chat=fake, max_cases=2)
     deep = [i for k, ids in fake.calls if k == "deep" for i in ids]
-    assert deep == ["K050"]  # the only critical case, although alphabetically last
+    assert deep[0] == "K050" and len(deep) == 2  # the critical case first (alphabetically last), then the next slot
     by = {c["case_id"]: c for c in r["cases"]}
     assert by["K050"]["status"] == "done"
-    assert all(by[f"K{i:03d}"]["status"] == "rules_only" for i in range(1, 8))
-    assert r["status"] == "done"
-    assert r["plan"]["rules_only"] == 7 and r["plan"]["deep"] == 1
+    assert sum(c["status"] == "rules_only" for c in r["cases"]) == 6  # only the tail beyond the deep slots
+    assert r["status"] == "done" and r["plan"]["rules_only"] == 6 and r["plan"]["deep"] == 2
+
+
+def test_a_small_pr_with_only_medium_and_low_cases_is_still_investigated(out):
+    tmp, use = out  # PR #11: follow-redirects (2 advisories, level low) + two workflow files: nothing high
+    use([_case(1, ".github/workflows/guardian.yml", "medium"), _case(2, ".github/workflows/nightly.yml", "low"),
+         _case(3, "follow-redirects@1.15.5", "low")])
+    fake = Fake()
+    r = wf.investigate(tmp, chat=fake, max_cases=6)
+    assert sorted(i for k, ids in fake.calls if k == "deep" for i in ids) == ["K001", "K002", "K003"]
+    assert r["plan"]["rules_only"] == 0 and all(c["status"] == "done" for c in r["cases"])
+    assert any(k == "verifier" for k, _ in fake.calls)
+
+
+def test_advisory_severity_counts_when_the_level_is_lower(out):
+    tmp, use = out  # level "low" (not exploited) but the advisory itself is high: rank it above a plain medium
+    sev = _case(9, "follow-redirects@1.15.5", "low")
+    sev["max_severity"] = "high"
+    use([_case(1, "a@1.0.0", "medium"), sev])
+    fake = Fake()
+    wf.investigate(tmp, chat=fake, max_cases=1)
+    assert [i for k, ids in fake.calls if k == "deep" for i in ids] == ["K009"]
 
 
 def test_extra_high_cases_go_to_batched_triage(out):

@@ -156,6 +156,7 @@ def build_packets(out: Path, tarballs: Path | None = None) -> dict:
         cid = "C-" + hashlib.sha256(comp.encode()).hexdigest()[:8]
         cases.append({"case_id": cid, "component": comp, "finding_ids": [f["id"] for f in fs],
                       "max_level": min((f.get("level") for f in fs), key=_RANK.get, default=None) if fs else None,
+                      "max_severity": min((f.get("severity") for f in fs), key=lambda x: _RANK.get(x, 9), default=None) if fs else None,
                       "injection_signals": signals, "evidence": evidence})
     sha = hashlib.sha256(json.dumps(cases, sort_keys=True).encode()).hexdigest()
     return {"sha256": sha, "repo": repo, "base_sha": base, "head_sha": head, "cases": cases,

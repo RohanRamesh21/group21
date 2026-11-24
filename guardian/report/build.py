@@ -109,7 +109,7 @@ def build(out: Path) -> dict:
         sections["remediation"] = {"status": "not_started", "reason": "no fix plan has been requested for this run"}
     if validation:
         sections["validation"] = {"status": "executed" if validation.get("executed") else "refused", **{
-            k: validation.get(k) for k in ("gate", "profile", "baseline", "candidate", "approval_id", "started", "finished", "timings")}}
+            k: validation.get(k) for k in ("gate", "profile", "baseline", "candidate", "approval_id", "started", "finished", "timings", "test_exposure", "generated_tests")}}
         sections["before_after"] = {"rescan": validation.get("rescan"), "sbom_diff": (validation.get("gate") or {}).get("sbom_diff"),
                                     "delta": validation.get("delta"), "verdict_change": validation.get("verdict_change")}
     else:

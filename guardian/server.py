@@ -499,6 +499,16 @@ def risk_accept(req: RiskReq):
 class ValidateReq(BaseModel):
     project: str | None = None
     profile: str = "uptime-kuma"
+    force: bool = False  # run even when the readiness pre-check predicts failure (the gate still decides honestly)
+
+
+@app.get("/api/validation/readiness")
+def validation_readiness(project: str | None = None):
+    """Can this fix pass validation? Static pre-check (no code runs): plan, merge base, profile, required packages,
+    approval, sandbox prerequisites. Shown before approving and before validating."""
+    from guardian.validation import readiness
+    run = _gh_run(project)
+    return readiness.check(_check_dir(project), run["repo"] if run else None, _profile_of(project))
 
 
 _VALIDATING: dict[str, str] = {}
@@ -521,6 +531,13 @@ def validate_start(req: ValidateReq):
     key = str(out)
     if _VALIDATING.get(key) == "running":
         raise HTTPException(409, "validation already running")
+    if not req.force:  # a run that cannot pass costs minutes and teaches nothing: say why before starting
+        from guardian.validation import readiness
+        run = _gh_run(req.project)
+        ready = readiness.check(out, run["repo"] if run else None, _profile_of(req.project))
+        blocking = [c for c in ready["checks"] if c["blocking"] and not c["ok"]]
+        if blocking:
+            raise HTTPException(409, "not ready to validate: " + "; ".join(f"{c['title']}: {c['detail']}" for c in blocking)[:600])
     _VALIDATING[key] = "running"
     stop_session_flags.pop(key, None)
 

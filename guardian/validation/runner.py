@@ -22,6 +22,7 @@ import yaml
 
 PROFILES = Path(__file__).resolve().parent / "profiles"
 NETWORK = "guardian-validate"
+RETRY_STAGES = {"target_test", "unit", "integration"}  # test stages only
 REGISTRY_CONTAINER = "verdaccio"
 
 
@@ -122,8 +123,11 @@ def docker_run_args(prof: dict, name: str, tree: str, image_ref: str) -> list[st
 # ---------------------------------------------------------------- gate (pure)
 def gate(*, approval_ok: bool, approval_error: str | None, baseline: list[dict], candidate: list[dict], targets_resolved: list[str],
          targets_remaining: list[str], new_high: list[str], rescans_complete: bool, sbom_diff: dict, same_snapshot: bool,
-         evidence_ok: bool) -> dict:
+         evidence_ok: bool, generated: list[dict] | None = None) -> dict:
     reasons, failed, incomplete = [], False, False
+    for g in generated or []:  # AI-written test that passed on the PR's version and fails on the fixed one
+        failed = True
+        reasons.append(f"AI-written behaviour test for {g.get('package')}: {g.get('reason')}")
     if not approval_ok:
         failed = True
         reasons.append(f"approval: {approval_error}")
@@ -217,7 +221,8 @@ def run_profile(tree: Path, prof: dict, folder: Path, label: str, log=print) -> 
     ensure_network()
     ref = image_digest(prof["image"])
     name = f"guardian-val-{label}-{uuid.uuid4().hex[:6]}"
-    shutil.copy(folder / "integration.cjs", tree / ".guardian-integration.cjs")
+    if (folder / "integration.cjs").exists():  # profiles without an integration script (e.g. generic-npm) skip it
+        shutil.copy(folder / "integration.cjs", tree / ".guardian-integration.cjs")
     started = _run(docker_run_args(prof, name, str(tree), ref))
     if started.returncode != 0:
         raise RuntimeError(f"could not start the worker: {started.stderr[-300:]}")
@@ -236,6 +241,14 @@ def run_profile(tree: Path, prof: dict, folder: Path, label: str, log=print) -> 
                 cmd = st.get("cmd") or f"node .guardian-integration.cjs"
                 log(f"[{label}] {st['id']}: {cmd[:90]}")
                 code, out, dur = _exec(name, cmd, st.get("timeout", 600))
+                if code != 0 and st["id"] in RETRY_STAGES:
+                    # one retry for test stages: flaky tests are a known threat to reproducible validation (BUMP,
+                    # SANER 2024). A pass on retry is labelled, never silent; install/build failures are not retried.
+                    log(f"[{label}] {st['id']}: retry once (exit {code})")
+                    first = code
+                    code, out2, dur2 = _exec(name, cmd, st.get("timeout", 600))
+                    rec.update(retried=True, first_exit=first, flaky=code == 0)
+                    out, dur = out2, round(dur + dur2, 1)
                 rec.update(status="passed" if code == 0 else "failed", exit=code, seconds=dur, command=cmd, output=out)
                 if st["id"] == "integration":
                     line = next((ln for ln in reversed(out.splitlines()) if ln.startswith("{")), "{}")
@@ -285,4 +298,4 @@ def profile_for(repo: str) -> str:
         doc = yaml.safe_load(f.read_text()) or {}
         if repo in (doc.get("repos") or []):
             return doc["name"]
-    return "uptime-kuma"
+    return "generic-npm" if repo else "uptime-kuma"  # any other repository: the automatic npm profile

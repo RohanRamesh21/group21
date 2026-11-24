@@ -264,10 +264,16 @@ def investigate(out: Path, chat: Callable | None = None, max_cases: int = 6, wor
     # Lead (rules, no AI): order cases by risk, not by name, then assign the work. High/critical cases get the
     # Investigators (deep, one call each), more of them go to batched triage; medium/low/info cases are covered by the
     # rule findings and their evidence (labelled as such, never reported as a failure).
-    ordered = sorted(packet["cases"], key=lambda c: (RANK.get(c.get("max_level"), 9), c["component"]))
-    ai = [c for c in ordered if c.get("max_level") in AI_LEVELS]
-    rules = [c for c in ordered if c.get("max_level") not in AI_LEVELS]
-    todo, triage, beyond = ai[:max_cases], ai[max_cases:max_cases + TRIAGE_CAP], ai[max_cases + TRIAGE_CAP:]
+    # Rank by the stronger of the Guardian level and the advisory's own severity: a "low" level (nothing exploits it
+    # yet) on a high-severity advisory still deserves an Investigator before a plain medium.
+    eff = lambda c: min(RANK.get(c.get("max_level"), 9), RANK.get(c.get("max_severity"), 9))  # noqa: E731
+    ordered = sorted(packet["cases"], key=lambda c: (eff(c), c["component"]))
+    # The first `max_cases` cases are always investigated, whatever their level: a small PR is examined in full.
+    # Beyond them, more high/critical cases go to batched triage; only the remaining medium/low tail is rule-covered.
+    todo, rest = ordered[:max_cases], ordered[max_cases:]
+    severe = [c for c in rest if eff(c) <= RANK["high"]]
+    triage, beyond = severe[:TRIAGE_CAP], severe[TRIAGE_CAP:]
+    rules = [c for c in rest if eff(c) > RANK["high"]]
     emit({"agent": "lead", "state": "done", "cases": len(todo) + len(triage), "skipped": len(beyond), "rules_only": len(rules),
           "findings": sum(len(c["finding_ids"]) for c in packet["cases"])})
 
@@ -293,8 +299,8 @@ def investigate(out: Path, chat: Callable | None = None, max_cases: int = 6, wor
             retries += r
     retries += sum(1 for c in cases if c.get("retried"))
     cases += [_blank(c, "not_investigated", f"beyond {max_cases} deep + {TRIAGE_CAP} triage slots for high/critical cases", "none") for c in beyond]
-    cases += [_blank(c, "rules_only", f"{c.get('max_level') or 'low'} severity: the rule finding and its evidence stand; "
-                                      "Investigators examine high and critical cases", "rules") for c in rules]
+    cases += [_blank(c, "rules_only", f"{c.get('max_level') or 'low'} severity, beyond the {max_cases} investigated cases: "
+                                      "the rule finding and its evidence stand", "rules") for c in rules]
     if stop():
         verifier = {"status": "cancelled", "error": "stopped by the user", "challenges": [], "missed_risks": [], "rejected": []}
     else:
