@@ -1,58 +1,87 @@
-import { MotionConfig, motion } from "motion/react";
-import { useState } from "react";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
+import { useEffect, useMemo, useState } from "react";
+import { Play } from "@phosphor-icons/react";
 import { AgentLanes } from "./components/AgentLanes";
 import { CaseBoard } from "./components/CaseBoard";
-import { Day1Report } from "./components/Day1Report";
-import { DepGraph } from "./components/DepGraph";
 import { Debate } from "./components/Debate";
 import { EvidenceDrawer } from "./components/EvidenceDrawer";
 import { GraphView } from "./components/GraphView";
 import { HumanModal } from "./components/HumanModal";
 import { Overview } from "./components/Overview";
 import { ProjectScan } from "./components/ProjectScan";
-import { RiskScores } from "./components/RiskScores";
-import { TopBar } from "./components/TopBar";
+import { Agents } from "./run/Agents";
+import { Detect } from "./run/Detect";
+import { Discover } from "./run/Discover";
+import { FixApprove } from "./run/FixApprove";
+import { Report } from "./run/Report";
+import { Header, Journey } from "./run/Shell";
+import { Summary } from "./run/Summary";
+import { Validate } from "./run/Validate";
+import { api, journey, type StepId } from "./run/shared";
+import { useRunModel } from "./run/useRunModel";
 import { useMeta, useRun } from "./useRun";
 
-export default function App() {
+type View = StepId | "scan" | "replay";
+
+function Replay() {
   const meta = useMeta();
-  const { runId, state, feed, error, start, answer } = useRun();
-  const [mode, setMode] = useState<"replay" | "live">("replay");
+  const { runId, state, feed, start, answer } = useRun();
   const [evidence, setEvidence] = useState<string | null>(null);
-  const [tab, setTab] = useState<"investigation" | "day1" | "graph" | "scores" | "scan">("investigation");
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-3 rounded-xl bg-high/8 px-4 py-3 text-[12.5px] text-high ring-1 ring-high/30">
+        RECORDED: this replays an earlier run of the older multi-agent loop, for illustration only. The live, budgeted agents are in step 3 “Investigate”.
+        <button onClick={() => start("replay", "canned")} className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-high/90 px-3 py-1.5 font-medium text-canvas"><Play weight="fill" /> Play recording</button>
+      </div>
+      <Overview meta={meta} state={state} />
+      <div className="grid gap-4 xl:h-[640px] xl:grid-cols-[1.35fr_1fr]">
+        <AgentLanes feed={feed} onEvidence={setEvidence} />
+        <div className="grid min-h-0 gap-4" style={{ gridTemplateRows: "1fr 1fr" }}><GraphView state={state} /><Debate feed={feed} state={state} /></div>
+      </div>
+      <CaseBoard state={state} onEvidence={setEvidence} />
+      <HumanModal state={state} onAnswer={answer} />
+      <EvidenceDrawer runId={runId} id={evidence} onClose={() => setEvidence(null)} />
+    </div>);
+}
+
+export default function App() {
+  const [project, setProject] = useState<string | null>(null);
+  const VIEWS: View[] = ["summary", "discover", "detect", "investigate", "fix", "validate", "report", "scan", "replay"];
+  const fromHash = () => (VIEWS.find((v) => v === window.location.hash.slice(1)) ?? "summary") as View;
+  const [view, setView] = useState<View>(fromHash);
+  useEffect(() => { if (window.location.hash.slice(1) !== view) window.history.replaceState(null, "", `#${view}`); }, [view]);
+  useEffect(() => { const on = () => setView(fromHash()); window.addEventListener("hashchange", on); return () => window.removeEventListener("hashchange", on); }, []);
+  const [jobs, setJobs] = useState<{ id: string; label: string }[]>([]);
+  const { model, err, refresh } = useRunModel(project);
+  const s = model?.sections;
+  const steps = useMemo(() => journey(s), [s]);
+  useEffect(() => { api("/api/projects").then((j) => setJobs((j.jobs ?? j).filter((x: { status: string }) => x.status === "done"))).catch(() => undefined); }, [view]);
+  useEffect(() => { window.scrollTo({ top: 0, behavior: "smooth" }); }, [view]);
+  const isStep = view !== "scan" && view !== "replay";
 
   return (
     <MotionConfig reducedMotion="user">
-      <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-[1600px] flex-col">
-        <TopBar meta={meta} state={state} mode={mode} setMode={setMode} onStart={() => start(mode, mode === "live" ? "real" : "canned")} />
-        {(error || meta?.error) && (
-          <div className="mx-6 mb-2 rounded-lg border border-crit/30 bg-crit/8 px-4 py-2 text-sm text-crit">{error ?? meta?.error}</div>
-        )}
-        <nav className="mx-6 mb-3 flex gap-1 border-b border-line text-sm" aria-label="Views">
-          {([["investigation", "Investigation"], ["day1", "Day 1 report"], ["graph", "Dependency graph"], ["scores", "Risk scores"], ["scan", "Scan a project"]] as const).map(([k, label]) => (
-            <button key={k} onClick={() => setTab(k)} className={`relative px-3 pb-2.5 pt-1 transition-colors ${tab === k ? "text-ink" : "text-muted hover:text-ink"}`}>
-              {label}
-              {tab === k && <motion.span layoutId="tab-line" className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-accent" />}
-            </button>))}
-        </nav>
-        {tab === "day1" && <main className="flex flex-1 flex-col gap-4 px-6 pb-6"><Day1Report /></main>}
-        {tab === "graph" && <main className="flex flex-1 flex-col gap-4 px-6 pb-6"><DepGraph /></main>}
-        {tab === "scores" && <main className="flex flex-1 flex-col gap-4 px-6 pb-6"><RiskScores /></main>}
-        {tab === "scan" && <main className="flex flex-1 flex-col gap-4 px-6 pb-6"><ProjectScan /></main>}
-        <main className={`flex flex-1 flex-col gap-4 px-6 pb-6 ${tab !== "investigation" ? "hidden" : ""}`}>
-          <Overview meta={meta} state={state} />
-          <div className="grid gap-4 xl:h-[640px] xl:grid-cols-[1.35fr_1fr]">
-            <AgentLanes feed={feed} onEvidence={setEvidence} />
-            <div className="grid min-h-0 gap-4" style={{ gridTemplateRows: "1fr 1fr" }}>
-              <GraphView state={state} />
-              <Debate feed={feed} state={state} />
-            </div>
-          </div>
-          <CaseBoard state={state} onEvidence={setEvidence} />
+      <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-accent focus:px-3 focus:py-1.5">Skip to content</a>
+      <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-[1560px] flex-col">
+        <Header s={s} project={project} setProject={(p) => { setProject(p); setView("summary"); }} jobs={jobs} view={view} setView={setView} />
+        {s && <Journey steps={steps} active={isStep ? view : ""} onPick={setView} />}
+        <main id="main" className="flex-1 px-6 pb-10 pt-5">
+          {isStep && err && <div role="alert" className="panel p-8 text-[13px] text-muted">{err === "no run yet" ? "No run yet. Use “Scan a project”, or run `guardian check` in the terminal." : `Could not load the run: ${err}`}</div>}
+          {isStep && !s && !err && <div className="panel h-48 animate-pulse" aria-busy="true" />}
+          <AnimatePresence mode="wait">
+            <motion.div key={view + (project ?? "")} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}>
+              {view === "scan" && <ProjectScan />}
+              {view === "replay" && <Replay />}
+              {s && view === "summary" && <Summary s={s} steps={steps} onPick={setView} />}
+              {s && view === "discover" && <Discover s={s} project={project} />}
+              {s && view === "detect" && <Detect s={s} />}
+              {s && view === "investigate" && <Agents s={s} project={project} refresh={refresh} onPick={setView} />}
+              {s && view === "fix" && <FixApprove s={s} project={project} refresh={refresh} />}
+              {s && view === "validate" && <Validate s={s} project={project} refresh={refresh} />}
+              {s && view === "report" && <Report s={s} project={project} />}
+            </motion.div>
+          </AnimatePresence>
         </main>
       </div>
-      <HumanModal state={state} onAnswer={answer} />
-      <EvidenceDrawer runId={runId} id={evidence} onClose={() => setEvidence(null)} />
-    </MotionConfig>
-  );
+    </MotionConfig>);
 }

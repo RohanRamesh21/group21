@@ -62,7 +62,8 @@ def ci_image_scan(src_dir: Path, actions: list[dict], images: list[dict]) -> dic
 
 
 def label_ci(base: list[dict], head: list[dict]) -> list[dict]:
-    key = lambda f: (f["type"], f["component"], f.get("excerpt", "")[:80])  # noqa: E731  line numbers shift, content doesn't
+    # per workflow/Dockerfile: the same risky line added to another file is a new finding; line numbers shift, content doesn't
+    key = lambda f: (f.get("file"), f["type"], f["component"], f.get("excerpt", "")[:80])  # noqa: E731
     bk, hk = {key(f) for f in base}, {key(f) for f in head}
     return [{**f, "label": "pre_existing" if key(f) in bk else "introduced"} for f in head] + \
            [{**f, "label": "fixed"} for f in base if key(f) not in hk]

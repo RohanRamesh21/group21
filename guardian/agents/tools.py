@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from typing import Callable
 
 from guardian.agents.board import Board, RoutingError
-from guardian.agents.constitution import ConstitutionError, check_message, check_resolution, check_verdict
+from guardian.agents.constitution import ConstitutionError, check_citations, check_message, check_resolution, check_verdict
 from guardian.agents.protocol import RISK_ORDER, AgentMessage, BoardFinding, CaseState, Task
 from guardian.store.evidence import EvidenceStore
 
@@ -264,6 +264,7 @@ class ToolRegistry:
     def _submit_verdict(self, agent, a):
         try:
             check_verdict(self.board, a["decision"])
+            check_citations(self.board, self.store, a["case_ids"], a["evidence_ids"])
         except ConstitutionError as e:
             self.board.log(event="rejected", agent=agent, kind="verdict", reason=str(e))
             return f"REJECTED: {e}"

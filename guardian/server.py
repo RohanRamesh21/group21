@@ -195,6 +195,12 @@ def _check_dir(project: str | None) -> Path:
 _WARMED: set[str] = set()
 
 
+def _auto_explain() -> bool:
+    """Opening the scores page spends no tokens unless GUARDIAN_AUTO_EXPLAIN=1 (explanations are made on request)."""
+    import os
+    return os.environ.get("GUARDIAN_AUTO_EXPLAIN") == "1"
+
+
 @app.get("/api/scores")
 def scores(project: str | None = None):
     """Explainable risk scores (floors + SSVC + AHP-weighted priority) for the latest check of the main
@@ -214,7 +220,7 @@ def scores(project: str | None = None):
         latest.write_text(json.dumps(ptr))
     sp = Path(ptr["scores"]) if Path(ptr["scores"]).is_absolute() else ROOT / ptr["scores"]
     data = json.loads(sp.read_text())
-    if str(sp) not in _WARMED:  # pre-write explanations in the background so the UI opens them instantly
+    if _auto_explain() and str(sp) not in _WARMED:  # opt-in: pre-write explanations (one batched, budgeted call)
         _WARMED.add(str(sp))
         from guardian.scoring.explain import warm
         threading.Thread(target=warm, args=(data["findings"],), kwargs={"limit": 10}, daemon=True).start()
@@ -262,6 +268,27 @@ def get_project(pid: str):
     return j
 
 
+class LocalReq(BaseModel):
+    name: str
+    base: str
+    head: str
+
+
+@app.get("/api/sandbox")
+def sandbox_repos():
+    from guardian import projects
+    return projects.list_sandbox()
+
+
+@app.post("/api/projects/local")
+def project_local(req: LocalReq):
+    from guardian import projects
+    try:
+        return {"id": projects.start_local(req.name, req.base, req.head)}
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
 @app.post("/api/projects/git")
 def project_git(req: GitReq):
     from guardian import projects
@@ -300,6 +327,342 @@ def _latest(project: str | None) -> tuple[dict, dict | None]:
     sp = ptr.get("scores")
     sc = json.loads((Path(sp) if Path(sp).is_absolute() else ROOT / sp).read_text()) if sp else None
     return rep, sc
+
+
+class FixReq(BaseModel):
+    project: str | None = None
+    include: list[str] = []
+
+
+@app.post("/api/fix-plan")
+def fix_plan_create(req: FixReq):
+    """Propose fixes for the latest run: deterministic candidates + one combined patch (nothing is applied)."""
+    import guardian.remediation.plan as plan_mod
+    out = _check_dir(req.project)
+    latest = out / "latest.json"
+    if not latest.exists():
+        raise HTTPException(404, "no run yet")
+    h = json.loads(Path(json.loads(latest.read_text())["path"]).read_text())["headline"]
+    if not h.get("repo_path"):
+        raise HTTPException(409, "this run predates fix support: rescan first")
+    try:
+        return plan_mod.propose(Path(h["repo_path"]), h.get("base_sha"), h["head_sha"], out, include=req.include)
+    except plan_mod.StaleRun as e:
+        raise HTTPException(409, str(e))
+
+
+@app.post("/api/fix-plan/review")
+def fix_plan_review(req: FixReq):
+    """Fixer + Verifier review by the model (one call). Checked by code; never changes the plan."""
+    from guardian.remediation.review import review
+    out = _check_dir(req.project)
+    f = out / "fix-plan.json"
+    if not f.exists():
+        raise HTTPException(404, "no fix plan yet")
+    plan = json.loads(f.read_text())
+    plan["review"] = review(plan)
+    if plan["review"]["status"] == "done":
+        plan["pending"] = [p for p in plan.get("pending", []) if "explanations" not in p]
+    f.write_text(json.dumps(plan, indent=1))
+    return plan["review"]
+
+
+@app.get("/api/fix-plan")
+def fix_plan_get(project: str | None = None):
+    f = _check_dir(project) / "fix-plan.json"
+    if not f.exists():
+        raise HTTPException(404, "no fix plan yet")
+    plan = json.loads(f.read_text())
+    p = Path(plan["patch"]["patch_path"])
+    plan["patch_text"] = p.read_text(errors="replace")[:200_000] if p.exists() else ""
+    return plan
+
+
+class ApprovalReq(BaseModel):
+    project: str | None = None
+    decision: str
+    approver: str
+    reason: str
+    hours: float = 24
+
+
+@app.post("/api/approval")
+def approval_create(req: ApprovalReq):
+    """A person approves or rejects the current fix plan. Bound to base, head, patch hash, policy hash, profile hash."""
+    from guardian import approval as ap
+    from guardian.validation.runner import load_profile
+    from guardian.validation.validate import policy_sha256
+    out = _check_dir(req.project)
+    f = out / "fix-plan.json"
+    if not f.exists():
+        raise HTTPException(404, "no fix plan to approve")
+    try:
+        return ap.decide(out, json.loads(f.read_text()), req.decision, approver=req.approver, reason=req.reason,
+                         ttl_seconds=int(req.hours * 3600), policy_sha256=policy_sha256(), profile_sha256=load_profile("uptime-kuma")[1])
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+class RiskReq(BaseModel):
+    project: str | None = None
+    finding_id: str
+    owner: str
+    scope: str
+    reason: str
+    days: float = 30
+
+
+@app.post("/api/risk-acceptance")
+def risk_accept(req: RiskReq):
+    from guardian import approval as ap
+    try:
+        return ap.accept_risk(_check_dir(req.project), req.finding_id, owner=req.owner, scope=req.scope, reason=req.reason,
+                              ttl_seconds=int(req.days * 86400))
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+
+
+class ValidateReq(BaseModel):
+    project: str | None = None
+    profile: str = "uptime-kuma"
+
+
+_VALIDATING: dict[str, str] = {}
+
+
+@app.post("/api/validate")
+def validate_start(req: ValidateReq):
+    """Run validation in the background (it takes minutes). Refuses to execute anything without a matching approval."""
+    import threading
+
+    from guardian.validation.validate import validate
+    out = _check_dir(req.project)
+    key = str(out)
+    if _VALIDATING.get(key) == "running":
+        raise HTTPException(409, "validation already running")
+    _VALIDATING[key] = "running"
+
+    def work():
+        try:
+            validate(out, req.profile, log=lambda m: _VALIDATING.__setitem__(key + ":msg", m))
+            _VALIDATING[key] = "done"
+        except Exception as e:  # recorded, never hidden
+            _VALIDATING[key] = f"error: {type(e).__name__}: {e}"[:300]
+    threading.Thread(target=work, daemon=True).start()
+    return {"status": "started"}
+
+
+@app.get("/api/validation")
+def validation_get(project: str | None = None):
+    out = _check_dir(project)
+    f = out / "validation.json"
+    state = _VALIDATING.get(str(out))
+    if not f.exists():
+        if state:
+            return {"status": state, "message": _VALIDATING.get(str(out) + ":msg")}
+        raise HTTPException(404, "no validation yet")
+    return {**json.loads(f.read_text()), "status": state or "done"}
+
+
+_INVESTIGATING: dict[str, dict] = {}
+
+
+class InvestigateReq(BaseModel):
+    project: str | None = None
+    explain: bool = False  # case summaries already explain; per-finding explanations are made on request
+    fix_review: bool = True  # then the Fixer: rules propose the patch (if none yet), the model explains and questions it
+
+
+@app.post("/api/investigate")
+def investigate_start(req: InvestigateReq):
+    """Budgeted AI investigation in the background: 1 call per case (parallel) + 1 Verifier call (+1 batched
+    explanation call). Every call is budget-checked, recorded in the token ledger and cached."""
+    from guardian.ai import workflow
+    out = _check_dir(req.project)
+    key = str(out)
+    if (_INVESTIGATING.get(key) or {}).get("status") == "running":
+        raise HTTPException(409, "investigation already running")
+    if not (out / "latest.json").exists():
+        raise HTTPException(404, "no run yet")
+    _INVESTIGATING[key] = {"status": "running", "events": []}
+
+    def work():
+        st = _INVESTIGATING[key]
+        try:
+            workflow.investigate(out, on_event=lambda e: st["events"].append(e))
+            if req.fix_review:
+                _fixer(out, st["events"].append)
+            if req.explain:
+                from guardian.scoring.explain import warm
+                ptr = json.loads((out / "latest.json").read_text())
+                if ptr.get("scores"):
+                    st["events"].append({"stage": "explain", "state": "running"})
+                    warm([f for f in json.loads(Path(ptr["scores"]).read_text())["findings"] if f["label"] == "introduced"])
+                    st["events"].append({"stage": "explain", "state": "done"})
+            st["status"] = "finished"
+        except Exception as e:  # recorded, never hidden
+            st["status"] = f"error: {type(e).__name__}: {e}"[:300]
+    threading.Thread(target=work, daemon=True).start()
+    return {"status": "started"}
+
+
+def _fixer(out: Path, emit) -> None:
+    """Fixer step of the one-click run. Versions and the patch come from rules; the model only explains and questions."""
+    import guardian.remediation.plan as plan_mod
+    from guardian.remediation import review as rv
+    emit({"agent": "fixer", "state": "running"})
+    try:
+        f = out / "fix-plan.json"
+        if not f.exists():
+            h = json.loads(Path(json.loads((out / "latest.json").read_text())["path"]).read_text())["headline"]
+            plan_mod.propose(Path(h["repo_path"]), h.get("base_sha"), h["head_sha"], out, include=[])
+        plan = json.loads(f.read_text())
+        plan["review"] = rv.review(plan)
+        if plan["review"]["status"] == "done":
+            plan["pending"] = [p for p in plan.get("pending", []) if "explanations" not in p]
+        f.write_text(json.dumps(plan, indent=1))
+        emit({"agent": "fixer", "state": plan["review"]["status"], "candidates": len(plan.get("candidates", [])),
+              "explanations": len(plan["review"].get("explanations", [])), "challenges": len(plan["review"].get("challenges", []))})
+        emit({"agent": "human", "state": "waiting", "note": "approve or reject the patch"})
+    except Exception as e:  # recorded, never hidden
+        emit({"agent": "fixer", "state": "failed", "error": f"{type(e).__name__}: {e}"[:200]})
+
+
+@app.get("/api/investigation/events")
+def investigation_events(project: str | None = None):
+    st = _INVESTIGATING.get(str(_check_dir(project)))
+    return {"status": st["status"] if st else "idle", "events": st["events"] if st else []}
+
+
+@app.get("/api/investigation")
+def investigation_get(project: str | None = None):
+    out = _check_dir(project)
+    st = _INVESTIGATING.get(str(out))
+    f = out / "agents" / "verdict.json"
+    if st and st["status"] == "running":
+        return {"status": "running", "events": st["events"]}
+    if not f.exists():
+        if st:
+            return {"status": st["status"], "events": st["events"]}
+        raise HTTPException(404, "no investigation yet")
+    return json.loads(f.read_text())
+
+
+@app.get("/api/ai/usage")
+def ai_usage(run_id: str | None = None):
+    """Token ledger summary (calls, tokens, budget). Never contains the key or prompts."""
+    from guardian import llm_budget
+    return llm_budget.summary(run_id)
+
+
+@app.get("/api/run")
+def run_view(project: str | None = None):
+    """Everything the Run page shows, from the same builder as the Guardian report (one source of truth)."""
+    from guardian.report.build import build
+    out = _check_dir(project)
+    if not (out / "latest.json").exists():
+        raise HTTPException(404, "no run yet")
+    return build(out)
+
+
+@app.get("/api/report")
+def report_get(project: str | None = None, fmt: str = "json"):
+    from guardian.report.build import write
+    paths = write(_check_dir(project))
+    if fmt == "html":
+        return FileResponse(paths["html"], media_type="text/html")
+    return FileResponse(paths["json"], media_type="application/json", filename="guardian-report.json")
+
+
+class GitHubEvent(BaseModel):
+    repo: str
+    pr: int
+    action: str
+    head_sha: str
+    base_sha: str | None = None
+    draft: bool = False
+    wait: bool = True
+
+    def model_post_init(self, _ctx) -> None:
+        import re as _re
+        if not _re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", self.repo) or not _re.fullmatch(r"[0-9a-f]{40}", self.head_sha) \
+                or (self.base_sha and not _re.fullmatch(r"[0-9a-f]{40}", self.base_sha)) or self.pr < 1:
+            raise ValueError("malformed PR event")
+
+
+_TRIGGER: dict = {}
+
+
+def _trigger_service():
+    """One service per server process (a single dispatcher). GitHub writes only if GUARDIAN_GITHUB_TOKEN is set."""
+    if "svc" not in _TRIGGER:
+        import os
+
+        from guardian import universal
+        from guardian.approval import file_sha256
+        from guardian.trigger.github import GitHub
+        from guardian.trigger.service import Service, git_fetch_pr
+        from guardian.validation.runner import load_profile
+        config.load_env()
+        root = ROOT / "guardian-out" / "github"
+        token = os.environ.get("GUARDIAN_GITHUB_TOKEN")
+
+        def parts():
+            import subprocess as sp
+            db = sp.run(["grype", "db", "status"], capture_output=True, text=True).stdout.strip().splitlines()
+            return {"policy_sha256": file_sha256(ROOT / "guardian.yaml"), "profile_sha256": load_profile("uptime-kuma")[1],
+                    "intel": next((x for x in db if "Built" in x), "unknown").strip()}
+        _TRIGGER["svc"] = Service(root, fetch=git_fetch_pr(root), engine=universal.check_any,
+                                  github=GitHub(token) if token else None, identity_parts=parts)
+    return _TRIGGER["svc"]
+
+
+@app.post("/api/github/event")
+def github_event(ev: GitHubEvent):
+    """Called by guardian-submit (GitHub Actions on our runner) or the polling backup: same queue, same engine."""
+    svc = _trigger_service()
+    payload = ev.model_dump()
+    if not ev.wait:
+        threading.Thread(target=svc.handle, args=(payload,), daemon=True).start()
+        return {"status": "accepted"}
+    try:
+        return svc.handle(payload)
+    except Exception as e:
+        raise HTTPException(502, f"{type(e).__name__}: {e}"[:300])
+
+
+@app.get("/api/trigger/current")
+def trigger_current():
+    """Snapshot for dashboard/Buddy on (re)connect: current run per PR + the last event number."""
+    svc = _trigger_service()
+    runs = [r for r in svc.queue.runs.values() if r["status"] in ("queued", "running", "done")]
+    latest: dict = {}
+    for r in sorted(runs, key=lambda r: r["created"]):
+        latest[(r["repo"], r["pr"])] = r
+    evs = svc.events.since(0)
+    return {"runs": list(latest.values()), "last_seq": evs[-1]["seq"] if evs else 0}
+
+
+@app.get("/api/trigger/events")
+def trigger_events(since: int = 0):
+    return _trigger_service().events.since(since)
+
+
+@app.get("/api/trigger/stream")
+async def trigger_stream(since: int = 0, last_event_id: str | None = None):
+    """Server-sent events with ids; a client resumes with Last-Event-ID (or ?since=)."""
+    start = int(last_event_id) if last_event_id and last_event_id.isdigit() else since
+    svc = _trigger_service()
+
+    async def gen():
+        seq = start
+        while True:
+            for e in svc.events.since(seq):
+                seq = e["seq"]
+                yield f"id: {e['seq']}\nevent: {e['kind']}\ndata: {json.dumps(e)}\n\n"
+            yield ": keep-alive\n\n"
+            await asyncio.sleep(1.5)
+    return StreamingResponse(gen(), media_type="text/event-stream", headers={"Cache-Control": "no-cache"})
 
 
 @app.get("/api/day1")
@@ -387,5 +750,7 @@ if DIST.exists():
 
     @app.get("/{path:path}")
     def spa(path: str):
-        f = DIST / path
-        return FileResponse(f if path and f.is_file() else DIST / "index.html")
+        root = DIST.resolve()
+        f = (root / path).resolve()
+        inside = f == root or root in f.parents
+        return FileResponse(f if path and inside and f.is_file() else root / "index.html")

@@ -1,0 +1,27 @@
+# Guardian PR check (GUARDIAN_FINAL_PLAN.md §15.2). Copy to .github/workflows/guardian.yml in the repository.
+# Lock-down: no checkout of PR code; event data only through env vars; fixed script outside the repo;
+# runs on our self-hosted runner (label guardian-demo) with "require approval for outside collaborators" enabled.
+name: guardian
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, edited, closed]
+concurrency:
+  group: guardian-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  guardian-scan:
+    if: github.event.pull_request.draft == false
+    runs-on: [self-hosted, guardian-demo]
+    timeout-minutes: 30
+    steps:
+      - name: Submit the PR to the local Guardian server and wait for the scan decision
+        env:
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          ACTION: ${{ github.event.action }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          DRAFT: ${{ github.event.pull_request.draft }}
+        run: /opt/guardian/bin/guardian-submit

@@ -249,11 +249,22 @@ class RealFacts:
         changed = {(p.name, p.version) for p in self.head_pkgs.values()} - {(p.name, p.version) for p in self.base_pkgs.values()}
         if det == "D3":
             allowed = self.policy["registries"]["allowed_hosts"]
+            base_hosts = {(b.name, b.version): urlparse(b.resolved or "").netloc for b in self.base_pkgs.values() if b.resolved}
             for p in self.head_pkgs.values():
                 host = urlparse(p.resolved or "").netloc
-                if p.resolved and host not in allowed:
-                    out.append({"label": "introduced" if (p.name, p.version) in changed else "pre_existing", "type": "lockfile_tamper", "component": _purl(p.name, p.version),
+                if not p.resolved:
+                    continue
+                before = base_hosts.get((p.name, p.version))
+                # T10: introduced when the version is new OR the same version now downloads from a different host
+                moved = before is not None and before != host
+                introduced = (p.name, p.version) in changed or moved
+                if host not in allowed:
+                    out.append({"label": "introduced" if introduced else "pre_existing", "type": "lockfile_tamper", "component": _purl(p.name, p.version),
                                 "summary": f"resolved from {host}, which is not on the allow-list",
+                                "evidence": self.answer("lockfile_diff", ""), "hard_signal": True, "floor": "critical"})
+                elif moved:
+                    out.append({"label": "introduced", "type": "lockfile_tamper", "component": _purl(p.name, p.version),
+                                "summary": f"download host changed from {before} to {host} for the same version",
                                 "evidence": self.answer("lockfile_diff", ""), "hard_signal": True, "floor": "critical"})
             base_int = {(b.name, b.version): b.integrity for b in self.base_pkgs.values()}
             for p in self.head_pkgs.values():

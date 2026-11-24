@@ -82,27 +82,36 @@ def run_grype(sbom: Path) -> list[dict]:
     return out
 
 
+def _same_eco(a: dict, b: dict) -> bool:
+    """Records join only within one ecosystem (npm `debug` is not PyPI `debug`). Unknown ecosystem = legacy npm-only path."""
+    return not a.get("ecosystem") or not b.get("ecosystem") or a["ecosystem"] == b["ecosystem"]
+
+
 def merge(*lists: list[dict]) -> list[dict]:
     merged: list[dict] = []
     for rec in (r for lst in lists for r in lst):
         hit = next((m for m in merged if m["name"] == rec["name"] and m["version"] == rec["version"]
-                    and set(m["ids"]) & set(rec["ids"])), None)
+                    and _same_eco(m, rec) and set(m["ids"]) & set(rec["ids"])), None)
         if hit is None:
-            merged.append({**rec, "sources": [rec["source"]]})
+            merged.append({**rec, "sources": [rec["source"]], "severity_by_source": {rec["source"]: rec["severity"]}})
             continue
         hit["ids"] = list(dict.fromkeys(hit["ids"] + rec["ids"]))
         hit["severity"] = _max(hit["severity"], rec["severity"])
+        prev = hit["severity_by_source"].get(rec["source"])
+        hit["severity_by_source"][rec["source"]] = _max(prev, rec["severity"]) if prev else rec["severity"]
         hit["fixed"] = sorted(set(hit["fixed"]) | set(rec["fixed"]))
         hit["malicious"] = hit["malicious"] or rec["malicious"]
         hit["summary"] = hit["summary"] or rec["summary"]
         hit["url"] = hit["url"] or rec["url"]
+        hit["ecosystem"] = hit.get("ecosystem") or rec.get("ecosystem")
         if rec["source"] not in hit["sources"]:
             hit["sources"].append(rec["source"])
     for m in merged:
         m.pop("source", None)
         m["id"] = next((i for i in m["ids"] if i.startswith("MAL-")), None) or \
             next((i for i in m["ids"] if i.startswith("GHSA-")), None) or m["ids"][0]
-        m["key"] = f"{m['name']}@{m['version']}#{m['id']}"
+        eco = m.get("ecosystem")
+        m["key"] = f"{eco + ':' if eco and eco != 'npm' else ''}{m['name']}@{m['version']}#{m['id']}"
     return sorted(merged, key=lambda m: (-LEVELS.index(m["severity"]), m["name"]))
 
 
@@ -124,6 +133,7 @@ def scan(lockfile: Path, sbom: Path | None, inventory: list[dict] | None = None)
         for v in vulns:
             p = idx.get((v["name"], v["version"]), {})
             v["direct"], v["runtime"] = bool(p.get("direct")), bool(p.get("runtime"))
+            v["exposure"] = p.get("exposure")
     return {"vulnerabilities": vulns, "errors": errors,
             "counts": {"osv": len(osv), "grype": len(grype), "merged": len(vulns),
                        "both": sum(1 for v in vulns if len(v["sources"]) == 2),

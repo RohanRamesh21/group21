@@ -13,6 +13,8 @@ Four layers:
 from __future__ import annotations
 
 from guardian.scoring import intel
+from guardian.scoring.confidence import confidence
+from guardian.scoring.verdict import decide, incomplete_reasons
 
 # ---------------------------------------------------------------- AHP weights
 CRITERIA = ["exploitation", "impact", "exposure", "introduced", "actionable"]
@@ -72,6 +74,7 @@ FLOORS = {
     "malicious": ("critical", "Act", "Known malicious package (OSV MAL- advisory)"),
     "lockfile_tamper": ("critical", "Act", "Package resolved from a host that is not on the allow-list / integrity changed"),
     "source_change": ("critical", "Act", "Package-manager config redirected (e.g. .npmrc registry)"),
+    "untrusted_source": ("critical", "Act", "Package downloaded from a server that is not on the registry allow-list"),
     "new_install_script": ("high", "Attend", "New package runs code at install time"),
     "typosquat": ("high", "Attend", "Name is a near-copy of a popular package"),
 }
@@ -186,7 +189,9 @@ def score_report(report: dict) -> dict:
         factors = {
             "exploitation": {"value": exp_val, "why": exp_why},
             "impact": {"value": SEV_IMPACT.get(v["severity"], 0.5), "why": f"severity {v['severity']}" + (f" ({m.get('_version')})" if m else "")},
-            "exposure": {"value": EXPOSURE[mis], "why": EXPOSURE_TEXT[mis]},
+            "exposure": {"value": EXPOSURE[mis], "why": EXPOSURE_TEXT[mis] + (
+                "; listed as a devDependency but imported by frontend code, so bundled for users (inferred)"
+                if v.get("exposure") == "shipped_frontend_inferred" else "")},
             "introduced": {"value": 1.0 if v["label"] == "introduced" else 0.3, "why": "added by this PR" if v["label"] == "introduced" else "already present before this PR"},
             "actionable": {"value": 1.0 if v.get("fixed") or v.get("malicious") else 0.4,
                            "why": f"fixed in {', '.join(v['fixed'][:2])}" if v.get("fixed") else ("remove the package" if v.get("malicious") else "no fixed version published")},
@@ -211,11 +216,12 @@ def score_report(report: dict) -> dict:
         findings.append({
             "id": v["key"], "kind": "vulnerability", "title": f"{v['name']}@{v['version']}: {v['id']}", "component": f"{v['name']}@{v['version']}",
             "label": v["label"], "summary": v.get("summary", ""), "decision": decision, "level": level, "score": sc,
-            "ssvc": {"exploitation": expl, "automatable": auto, "technical_impact": impact, "mission": mis, "rule": rule},
+            "severity": v["severity"], "version": v.get("version", ""), "ssvc": {"exploitation": expl, "automatable": auto, "technical_impact": impact, "mission": mis, "rule": rule},
             "floor": floor[2] if floor else None, "contributions": rows, "counterfactuals": cf,
             "evidence": {"advisory": v["id"], "aliases": d.get("aliases", []), "cvss_vector": vector, "cve": cve,
                          "epss": e, "kev": kv.get(cve) if in_kev else None, "url": f"https://osv.dev/vulnerability/{v['id']}",
-                         "lockfile_line": p.get("lockfile_line"), "file": p.get("source_file"), "sources": v.get("sources", [])},
+                         "lockfile_line": p.get("lockfile_line"), "file": p.get("source_file") or v.get("source_file"),
+                         "sources": v.get("sources", []), "severity_by_source": v.get("severity_by_source", {})},
         })
 
     # ---- suspicious supply-chain changes (non-CVE)
@@ -250,7 +256,7 @@ def score_report(report: dict) -> dict:
         findings.append({
             "id": f"{s['type']}:{comp}", "kind": "supply_chain", "title": f"{comp}: {s['type'].replace('_', ' ')}", "component": comp,
             "label": s.get("label", "introduced"), "summary": s["summary"], "decision": decision, "level": level, "score": sc,
-            "ssvc": None, "floor": floor[2] if floor else None, "contributions": rows,
+            "severity": s["severity"], "type": s["type"], "ssvc": None, "floor": floor[2] if floor else None, "contributions": rows,
             "counterfactuals": [{"if": "an agent or factor argued it down", "then": "the floor keeps it at " + floor[0]}] if floor else [],
             "evidence": {"detector": s.get("detector"), "lockfile_line": s.get("line") or p.get("lockfile_line"),
                          "file": s.get("file") or p.get("source_file"), "resolved": p.get("resolved"),
@@ -273,24 +279,28 @@ def score_report(report: dict) -> dict:
         findings.append({"id": f"{c.get('detector')}:{c.get('file')}:{c.get('line')}:{c.get('type')}", "kind": "ci_image",
                          "title": f"{c.get('file')}: {c.get('type')}", "component": c.get("component"), "label": c["label"],
                          "summary": c.get("summary", ""), "decision": decision, "level": LEVEL[decision], "score": sc, "ssvc": None,
+                         "severity": c["severity"],
                          "floor": None, "contributions": rows, "counterfactuals": [],
                          "evidence": {"file": c.get("file"), "line": c.get("line"), "url": c.get("url")}})
 
     findings.sort(key=lambda f: (-ORDER.index(f["level"]), -f["score"]))
-    intro = [f for f in findings if f["label"] == "introduced"]
-    block = [f for f in intro if f["level"] == "critical" or f["decision"] == "Act"]
-    review = [f for f in intro if f not in block and f["level"] == "high"]
-    verdict = "block" if block else ("review" if review else "allow")
-    reasons = ([f"{f['title']} ({f['floor'] or f['ssvc']['rule']})" for f in block] or
-               [f"{f['title']} needs a human decision" for f in review] or ["no high or critical risk introduced by this PR"])
+    incomplete = incomplete_reasons(report)
+    ctx = {"incomplete": incomplete, "intel_errors": [x for x in (ep_err, kev_err) if x]}
+    for f in findings:
+        f["confidence"] = confidence(f, ctx)
+    dec = decide(findings, incomplete)
+    checks = [f"needs human check: {f['title']} (low confidence: {'; '.join(f['confidence']['missing'][:2])})"
+              for f in findings if f["label"] == "introduced" and f["confidence"]["band"] == "low"
+              and (f["level"] in ("high", "critical") or f.get("severity") in ("high", "critical"))]
+    dec["reasons"] = dec["reasons"] + checks
     counts = {lv: {lab: sum(1 for f in findings if f["level"] == lv and f["label"] == lab) for lab in ("introduced", "pre_existing")}
               for lv in ORDER[::-1]}
     return {
-        "verdict": verdict, "reasons": reasons, "counts": counts, "findings": findings,
+        "verdict": dec["verdict"], "reasons": dec["reasons"], "complete": dec["complete"],
+        "incomplete_reasons": dec["incomplete_reasons"], "counts": counts, "findings": findings,
         "method": {"ahp": AHP, "criteria_text": CRITERIA_TEXT, "epss_poc_threshold": EPSS_POC,
                    "floors": {k: {"level": v[0], "decision": v[1], "why": v[2]} for k, v in FLOORS.items()},
-                   "levels": LEVEL, "verdict_rule": "block if this PR introduces a critical finding or an Act decision; "
-                                                    "review if it introduces a high finding; otherwise allow"},
+                   "levels": LEVEL, "verdict_rule": dec["rule"]},
         "data": {"advisories": len(ids), "cves": len(cves), "epss_found": len(ep), "kev_matches": sum(1 for c in cves if c in kv),
                  "kev_catalog_size": len(kv), "errors": [x for x in (ep_err, kev_err) if x]},
     }

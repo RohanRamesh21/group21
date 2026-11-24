@@ -18,7 +18,7 @@ interface Scores {
     criteria_text: Record<string, string>; floors: Record<string, { level: string; decision: string; why: string }>; verdict_rule: string; epss_poc_threshold: number };
   data: { advisories: number; cves: number; epss_found: number; kev_matches: number; kev_catalog_size: number; errors: string[] };
 }
-interface Explanation { headline: string; sentences: { text: string; cites: string[]; status: "verified" | "inferred" }[];
+interface Explanation { headline: string; sentences: { text: string; cites: string[]; cites_checked?: boolean; status: "verified" | "inferred" }[];
   rejected: { text: string; reason: string }[]; model?: string; cached?: boolean; error?: string }
 
 const FACTOR: Record<string, string> = { exploitation: "Being attacked", impact: "Impact", exposure: "Exposure", introduced: "Introduced by PR", actionable: "Fix available" };
@@ -235,7 +235,7 @@ function ScoreCard({ f, project }: { f: Scored; project?: string | null }) {
             <div className="font-medium">{ex.headline}</div>
             {ex.sentences.map((x, i) => (
               <p key={i} className="leading-relaxed">
-                <span className={`mr-1.5 rounded px-1 py-0.5 align-middle text-[10px] font-semibold ${x.status === "verified" ? "bg-ok/15 text-ok" : "bg-med/15 text-med"}`}>{x.status}</span>
+                <span className="mr-1.5 rounded bg-accent/15 px-1 py-0.5 align-middle text-[10px] font-semibold text-accent" title="Written by AI. Citations and numbers were checked against the score card, but the sentence itself is an inference.">🤖 AI{x.cites_checked ? " · cites checked" : ""}</span>
                 {x.text}{" "}<span className="text-[10.5px] text-faint">[{x.cites.join(", ")}]</span>
               </p>))}
             <div className="text-[11px] text-faint">Checked against the score card: every number and ID must appear in it{ex.rejected.length ? ` · ${ex.rejected.length} sentence(s) removed` : " · nothing removed"} · {ex.model}{ex.cached ? " · cached" : ""}. The AI explains the score; it never changes it.</div>

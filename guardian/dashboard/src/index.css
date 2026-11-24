@@ -55,3 +55,12 @@ body::before {
 .react-flow { --xy-background-color: transparent; --xy-edge-stroke: rgb(255 255 255 / 0.18); }
 .react-flow__attribution { display: none; }
 .react-flow__handle { opacity: 0; }
+
+/* Agent pipeline: a dashed connector that flows toward the agent currently working. */
+@keyframes dash-flow { to { stroke-dashoffset: -14; } }
+.dash-flow { animation: dash-flow 0.7s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .dash-flow { animation: none; } }
+html { scroll-behavior: smooth; }
+.react-flow__controls { box-shadow: none; border: 1px solid var(--color-line); border-radius: 8px; overflow: hidden; }
+.react-flow__controls-button { background: var(--color-surface); border-bottom: 1px solid var(--color-line); fill: var(--color-muted); color: var(--color-muted); }
+.react-flow__controls-button:hover { background: var(--color-raised); fill: var(--color-ink); }

@@ -181,6 +181,65 @@ def _run_git(pid: str, url: str, base: str | None, head: str | None):
         _job(pid, status="error", message=f"{type(e).__name__}: {e}"[:400])
 
 
+# ---------------------------------------------------------------- local sandbox (the planted attack scenarios)
+SANDBOX = ROOT / "sandbox"
+REF_RE = __import__("re").compile(r"^[A-Za-z0-9][\w./-]{0,120}$")
+
+
+def list_sandbox() -> list[dict]:
+    """Git repositories inside sandbox/ and their branches (scenario branches first)."""
+    out = []
+    if SANDBOX.exists():
+        for d in sorted(SANDBOX.iterdir()):
+            if (d / ".git").exists():
+                r = subprocess.run(SAFE_GIT + ["for-each-ref", "--format=%(refname:short)", "refs/heads"], cwd=d,
+                                   capture_output=True, text=True, env=GIT_ENV)
+                br = sorted(r.stdout.split(), key=lambda b: (not b.startswith("scenario/"), b))
+                out.append({"name": d.name, "branches": br})
+    return out
+
+
+def _sandbox_repo(name: str) -> Path:
+    repo = (SANDBOX / name).resolve()
+    if repo.parent != SANDBOX.resolve() or not (repo / ".git").exists():
+        raise ValueError(f"no sandbox repository called {name!r}")
+    return repo
+
+
+def start_local(name: str, base: str, head: str) -> str:
+    repo = _sandbox_repo(name)
+    for ref in (base, head):
+        if not REF_RE.match(ref or "") or ".." in ref:
+            raise ValueError(f"invalid ref {ref!r}")
+        if subprocess.run(SAFE_GIT + ["rev-parse", "--verify", "-q", f"{ref}^{{commit}}"], cwd=repo, env=GIT_ENV,
+                          capture_output=True).returncode != 0:
+            raise ValueError(f"ref {ref!r} not found in sandbox/{name}")
+    pid = _new("local", f"sandbox/{name}", {"base": base, "head": head})
+    threading.Thread(target=_run_local, args=(pid, repo, base, head), daemon=True).start()
+    return pid
+
+
+def _run_local(pid: str, repo: Path, base: str, head: str):
+    """The same engine as the terminal `guardian check` (M1: one engine), so results match exactly."""
+    try:
+        from guardian.universal import check_any
+        _step(pid, f"Same engine as `guardian check`: comparing {base} -> {head} (lockfile, SBOM, OSV + Grype, detectors, CI)")
+        out = BASE / pid / "check"
+        rep = check_any(repo, base, head, out, repo.name, log=lambda m: _step(pid, m))
+        latest = json.loads((out / "latest.json").read_text())
+        h = rep["headline"]
+        _job(pid, status="done", message="done", mode="compare", out=str(out),
+             summary={"packages": h["inventory"].get("packages"), "verdict": h.get("verdict"), "reasons": h.get("verdict_reasons", [])[:3],
+                      "head_commit": h["head_commit"], "base_commit": h["base_commit"], "scores": bool(latest.get("scores"))})
+        try:
+            from guardian.scoring.explain import warm
+            warm(json.loads(Path(latest["scores"]).read_text())["findings"], limit=6)
+        except Exception:
+            pass
+    except BaseException as e:  # check() may SystemExit on a missing lockfile
+        _job(pid, status="error", message=f"{type(e).__name__}: {e}"[:400])
+
+
 # ---------------------------------------------------------------- analysis (universal: any ecosystem)
 def _analyse(pid: str, repo: Path, base: str | None, head: str, label: str):
     from guardian.universal import check_any

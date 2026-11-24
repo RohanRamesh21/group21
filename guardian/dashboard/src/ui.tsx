@@ -1,4 +1,4 @@
-import type { Agent, Risk } from "./types";
+import type { Risk } from "./types";
 import { Crosshair, Detective, Robot, Scales, ShieldStar, User, Wrench } from "@phosphor-icons/react";
 
 export const RISK: Record<Risk, { text: string; bg: string; ring: string; label: string; hex: string }> = {

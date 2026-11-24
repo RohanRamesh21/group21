@@ -1,13 +1,13 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState } from "react";
-import { CircleNotch, CheckCircle, FileZip, GitBranch, ShieldCheck, WarningCircle } from "@phosphor-icons/react";
+import { CircleNotch, CheckCircle, FileZip, Flask, GitBranch, ShieldCheck, WarningCircle } from "@phosphor-icons/react";
 import { Day1Report } from "./Day1Report";
 import { DepGraph } from "./DepGraph";
 import { RiskScores } from "./RiskScores";
 import { spring } from "../ui";
 
 interface Job {
-  id: string; kind: "zip" | "git"; label: string; status: "queued" | "running" | "done" | "error"; message: string; created: number;
+  id: string; kind: "zip" | "git" | "local"; label: string; status: "queued" | "running" | "done" | "error"; message: string; created: number;
   steps: { t: number; msg: string }[]; mode?: "single" | "compare"; note?: string | null;
   summary?: { packages: number; verdict: string; reasons: string[]; head_commit: string; base_commit: string };
 }
@@ -22,6 +22,19 @@ export function ProjectScan() {
   const [err, setErr] = useState<string | null>(null);
   const [drag, setDrag] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [boxes, setBoxes] = useState<{ name: string; branches: string[] }[]>([]);
+  const [box, setBox] = useState({ name: "", base: "scenario/base", head: "scenario/s3-s9" });
+  useEffect(() => {
+    fetch("/api/sandbox").then((r) => r.json()).then((b) => { setBoxes(b); if (b[0]) setBox((x) => ({ ...x, name: b[0].name })); }).catch(() => {});
+  }, []);
+  const runLocal = async () => {
+    setErr(null);
+    const r = await fetch("/api/projects/local", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(box) });
+    const d = await r.json();
+    if (!r.ok) return setErr(d.detail);
+    setSel(d.id); refresh();
+  };
+  const branches = boxes.find((b) => b.name === box.name)?.branches ?? [];
 
   const refresh = () => fetch("/api/projects").then((r) => r.json()).then(setJobs).catch(() => {});
   useEffect(() => { refresh(); }, []);
@@ -51,7 +64,7 @@ export function ProjectScan() {
 
   return (
     <div className="flex flex-col gap-4">
-      <section className="grid gap-4 lg:grid-cols-2">
+      <section className="grid gap-4 lg:grid-cols-3">
         <div onDragOver={(e) => { e.preventDefault(); setDrag(true); }} onDragLeave={() => setDrag(false)}
           onDrop={(e) => { e.preventDefault(); setDrag(false); const f = e.dataTransfer.files[0]; if (f) upload(f); }}
           className={`panel flex flex-col gap-3 px-5 py-4 transition-colors ${drag ? "border-accent/60 bg-accent/5" : ""}`}>
@@ -78,6 +91,23 @@ export function ProjectScan() {
             <span className="text-[12px] text-faint">Without base, the latest commit is compared with the one before it.</span>
           </div>
         </div>
+        <div className="panel flex flex-col gap-3 px-5 py-4">
+          <div className="flex items-center gap-2 font-medium"><Flask size={18} className="text-accent" /> Local sandbox (attack scenarios)</div>
+          <p className="text-[12.5px] text-muted">Planted attacks stay on this laptop. Runs exactly the terminal <span className="font-mono">guardian check</span>.</p>
+          <select value={box.name} onChange={(e) => setBox({ ...box, name: e.target.value })}
+            className="rounded-md border border-line bg-raised px-3 py-1.5 font-mono text-[12.5px] outline-none focus:border-accent/60">
+            {boxes.map((b) => <option key={b.name} value={b.name}>sandbox/{b.name}</option>)}</select>
+          <div className="grid grid-cols-2 gap-2">
+            {(["base", "head"] as const).map((k) => (
+              <select key={k} value={box[k]} onChange={(e) => setBox({ ...box, [k]: e.target.value })} title={k}
+                className="rounded-md border border-line bg-raised px-2 py-1.5 font-mono text-[12px] outline-none focus:border-accent/60">
+                {branches.map((b) => <option key={b} value={b}>{k}: {b}</option>)}</select>))}
+          </div>
+          <div className="flex items-center gap-3">
+            <button onClick={runLocal} disabled={!box.name} className="rounded-md bg-accent px-3 py-1.5 text-[13px] font-medium text-white enabled:hover:bg-accent/85 disabled:opacity-40">Scan sandbox</button>
+            <span className="text-[12px] text-faint">base = before, head = the pull request</span>
+          </div>
+        </div>
       </section>
       <div className="flex items-center gap-2 text-[12px] text-muted"><ShieldCheck size={15} className="text-ok" />
         Safe by design: nothing from the project is installed or run · ZIPs are checked for unsafe paths and symlinks · Git clones are read-only (https on GitHub, GitLab or Bitbucket, no hooks, no submodules).</div>
@@ -91,7 +121,7 @@ export function ProjectScan() {
                 {j.status === "done" ? <CheckCircle size={17} className="text-ok" /> : j.status === "error" ? <WarningCircle size={17} className="text-crit" /> :
                   <CircleNotch size={17} className="animate-spin text-accent" />}
                 <span className="font-mono text-[12.5px]">{j.label}</span>
-                <span className="text-[12px] text-muted">{j.kind === "zip" ? "upload" : "git"}{j.mode ? ` · ${j.mode === "compare" ? "PR compare" : "full scan"}` : ""}</span>
+                <span className="text-[12px] text-muted">{j.kind === "zip" ? "upload" : j.kind === "local" ? "sandbox" : "git"}{j.mode ? ` · ${j.mode === "compare" ? "PR compare" : "full scan"}` : ""}</span>
                 <span className="ml-auto truncate text-[12px] text-muted">{j.status === "done" && j.summary ? `${j.summary.packages} packages · verdict ${j.summary.verdict}` : j.message}</span>
               </button>
             </li>))}</ul>

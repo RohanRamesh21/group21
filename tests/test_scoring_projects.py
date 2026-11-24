@@ -63,7 +63,16 @@ def test_explanation_checker_drops_invented_numbers():
         {"text": "It scored 73.9 because of impact.", "cites": ["score", "impact"]},
         {"text": "EPSS is 0.97 so it is urgent.", "cites": ["exploitation"]}]}, card)
     assert [s["text"] for s in res["sentences"]] == ["It scored 73.9 because of impact."]
-    assert res["sentences"][0]["status"] == "verified" and len(res["rejected"]) == 1
+    # T4: AI text is never a verified fact, even when its numbers appear in the evidence
+    assert res["sentences"][0]["status"] == "inferred" and res["sentences"][0]["cites_checked"] is True
+    assert len(res["rejected"]) == 1
+
+
+def test_t4_uncited_ai_sentence_is_inferred_without_checked_cites():
+    card = {"title": "x@1.0.0: GHSA-abcd", "score": 73.9, "contributions": [{"factor": "impact"}], "evidence": {"advisory": "GHSA-abcd"}}
+    res = check_explanation({"headline": "ok", "sentences": [{"text": "It matters.", "cites": ["made_up_field"]}]}, card)
+    s = res["sentences"][0]
+    assert s["status"] == "inferred" and s["cites_checked"] is False and s["cites"] == []
 
 
 def test_zip_path_traversal_rejected(tmp_path):
@@ -83,3 +92,9 @@ def test_git_url_rules(url):
     with pytest.raises(ValueError):
         projects.validate_git_url(url)
     assert projects.validate_git_url("https://github.com/louislam/uptime-kuma")
+
+
+@pytest.mark.parametrize("name,ref", [("../etc", "main"), ("..", "main"), ("uptime-kuma", "--upload-pack=x"), ("uptime-kuma", "a..b")])
+def test_sandbox_scan_rejects_escapes(name, ref):
+    with pytest.raises(ValueError):
+        projects.start_local(name, ref, ref)

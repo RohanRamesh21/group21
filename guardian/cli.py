@@ -56,6 +56,10 @@ def scan(repo: Path, ref: str, out: Path, use_cdxgen: bool = False, make_sbom: b
         row["lockfile_line"] = line_of(lock_text, f'"{p.key}": {{')
         row["evidence_id"] = lock_ev.id
         inventory.append(row)
+    # T11: devDependencies imported by the shipped frontend are bundled into the browser app
+    from guardian.inventory.exposure import frontend_imports, iter_git, mark_shipped
+    shipped = mark_shipped(inventory, [e.model_dump() for e in edges], frontend_imports(iter_git(Path(repo), snap.commit)))
+    summary["shipped_frontend_inferred"] = len(shipped)
 
     sboms: dict[str, str | None] = {}
     if make_sbom:
@@ -98,6 +102,20 @@ def scan(repo: Path, ref: str, out: Path, use_cdxgen: bool = False, make_sbom: b
             "evidence": [lock_ev.id, pkg_ev.id]}
 
 
+EXIT = {"allow": 0, "review": 1, "block": 2}
+INCOMPLETE = 3
+
+
+def exit_code(headline: dict) -> int:
+    """CI-friendly result: 0 allow, 1 review, 2 block, 3 incomplete (a block always wins: it is already certain)."""
+    v = headline.get("verdict")
+    if v == "block":
+        return EXIT["block"]
+    if v not in EXIT or headline.get("complete") is False:
+        return INCOMPLETE
+    return EXIT[v]
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="guardian", description="Software Supply Chain Guardian")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -114,16 +132,76 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("--head", required=True)
     c.add_argument("--out", type=Path, default=Path("guardian-out/check"))
     inv = sub.add_parser("investigate", help="Agentic investigation of a PR (base..head)")
-    inv.add_argument("--backend", choices=["auto", "replay", "gemini", "openrouter", "claude"], default="auto",
+    inv.add_argument("--backend", choices=["auto", "replay", "freemodel", "gemini", "openrouter", "claude"], default="auto",
                      help="auto picks from guardian/.env; replay = recorded agent turns (canned world only)")
     inv.add_argument("--world", choices=["canned", "real"], default="canned",
                      help="real = live tools on sandbox/uptime-kuma scenario/base..scenario/s3-s9")
-    inv.add_argument("--out", type=Path, default=Path("guardian-out/agents"))
+    inv.add_argument("--out", type=Path, default=None, help="run folder (workflow: default guardian-out/check)")
+    inv.add_argument("--deep", action="store_true",
+                     help="old open-ended multi-agent loop (many calls; still limited by the token budget)")
+    fx = sub.add_parser("fix", help="Propose fixes for a finished run: candidates + one combined patch (nothing is applied)")
+    fx.add_argument("--out", type=Path, default=Path("guardian-out/check"), help="run folder (contains latest.json)")
+    fx.add_argument("--include", action="append", default=[], help="also fix this pre-existing finding id (repeatable)")
+    apv = sub.add_parser("approve", help="Approve (or reject) the current fix plan as a named person, with a reason")
+    apv.add_argument("--out", type=Path, default=Path("guardian-out/check"))
+    apv.add_argument("--approver", required=True)
+    apv.add_argument("--reason", required=True)
+    apv.add_argument("--reject", action="store_true")
+    apv.add_argument("--hours", type=float, default=24)
+    val = sub.add_parser("validate", help="Validate the approved fix in the isolated worker (refuses without a matching approval)")
+    val.add_argument("--out", type=Path, default=Path("guardian-out/check"))
+    val.add_argument("--profile", default="uptime-kuma")
+    rp = sub.add_parser("report", help="Write report.json and report.html for a run")
+    rp.add_argument("--out", type=Path, default=Path("guardian-out/check"))
     args = ap.parse_args(argv)
+
+    if args.cmd == "approve":
+        from guardian import approval
+        from guardian.validation.runner import load_profile
+        from guardian.validation.validate import policy_sha256
+        plan = json.loads((args.out / "fix-plan.json").read_text())
+        rec = approval.decide(args.out, plan, "reject" if args.reject else "approve", approver=args.approver, reason=args.reason,
+                              ttl_seconds=int(args.hours * 3600), policy_sha256=policy_sha256(), profile_sha256=load_profile("uptime-kuma")[1])
+        print(json.dumps(rec, indent=1))
+        return 0
+    if args.cmd == "validate":
+        from guardian.validation.validate import validate
+        res = validate(args.out, args.profile)
+        print(json.dumps(res["gate"], indent=1))
+        return 0 if res["gate"]["verified"] else 4
+    if args.cmd == "report":
+        from guardian.report.build import write
+        print(json.dumps(write(args.out), indent=1))
+        return 0
+
+    if args.cmd == "fix":
+        import guardian.remediation.plan as plan_mod
+        latest = json.loads((args.out / "latest.json").read_text())
+        h = json.loads(Path(latest["path"]).read_text())["headline"]
+        plan = plan_mod.propose(Path(h["repo_path"]), h.get("base_sha"), h["head_sha"], args.out, include=args.include)
+        for c in plan["candidates"]:
+            print(f"[{c['type']}] {c.get('package') or c.get('file') or ''} {c.get('from', '')}->{c.get('to', '')} :: {c['rationale']}")
+        print("patch:", plan["patch"]["patch_sha256"], "files:", ", ".join(plan["patch"]["files"]))
+        return 0
+
+    if args.cmd == "investigate" and not args.deep:
+        from guardian.ai import workflow
+        res = workflow.investigate(args.out or Path("guardian-out/check"))
+        for c in res["cases"]:
+            print(f"  {c['case_id']} {c['component']:<28} {c['status']:<16} {c.get('assessment') or '':<13} "
+                  f"claims {len(c['claims'])} kept / {len(c['rejected'])} rejected")
+        v = res["verifier"]
+        print(f"  verifier: {v['status']} · {len(v['challenges'])} challenges · {len(v['missed_risks'])} missed risks · "
+              f"{len(v['rejected'])} rejected")
+        u = res["usage"]["run"]
+        print(f"\n{res['run_id']}: {res['status']} · rules verdict {res['rules_verdict']['verdict']} (unchanged) · "
+              f"{u['calls']} calls + {u['cached_calls']} cached · {u['tokens']} tokens · {res['seconds']} s")
+        return 0 if res["status"] == "done" else 3
 
     if args.cmd == "investigate":
         from guardian.agents.run import run, timeline
 
+        args.out = args.out or Path("guardian-out/agents")
         args.out.mkdir(parents=True, exist_ok=True)
         board = run(args.out, backend=args.backend, world_kind=args.world)
         print(timeline(board))
@@ -132,11 +210,11 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.cmd == "check":
-        from guardian.check import check
-        rep = check(args.repo, args.base, args.head, args.out)
+        from guardian import universal  # M1: one engine for every interface
+        rep = universal.check_any(args.repo, args.base, args.head, args.out, Path(args.repo).name)
         print(json.dumps(rep["headline"], indent=2))
         print("report:", rep["path"])
-        return 0
+        return exit_code(rep["headline"])
 
     if args.cmd == "scan":
         result = scan(args.repo, args.ref, args.out, args.cdxgen, not args.no_sbom, not args.no_vulns)

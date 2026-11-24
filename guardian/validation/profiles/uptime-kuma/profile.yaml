@@ -1,0 +1,57 @@
+# Validation profile for Uptime Kuma (GUARDIAN_FINAL_PLAN.md §13.3). Versioned and hashed: the hash is bound into
+# every approval, so changing this file invalidates existing approvals.
+name: uptime-kuma
+version: 1
+image: node:20-bookworm          # resolved to a digest at run time and recorded
+workdir: /work
+user: "1000:1000"                # the image's unprivileged "node" user
+resources: {cpus: "2", memory: "4g", pids: 1024}
+network: guardian-validate       # internal Docker network: only the local Verdaccio proxy is reachable
+registry: http://verdaccio:4873/
+env:
+  UPTIME_KUMA_DB_TYPE: sqlite    # skip the interactive database-choice page; use a disposable SQLite file
+  npm_config_nodedir: /usr/local # node headers ship in the image: native builds need no download
+  npm_config_audit: "false"
+  npm_config_fund: "false"
+  npm_config_update_notifier: "false"
+stages:
+  - id: install
+    required: true
+    timeout: 900
+    cmd: npm ci --ignore-scripts
+  - id: hooks                     # only these lifecycle scripts may run, bound to name + version + lockfile integrity
+    required: true
+    timeout: 900
+    allow:
+      - name: "@louislam/sqlite3"
+        version: "15.1.6"
+        integrity: "sha512-cVf7hcMrfywYnycatLvorngTFpL3BSWvEy7/NrEfcTyQX8xxj9fdeD553oCTv5fIAk85fluo6mzPq89V3YzrVA=="
+        cmd: npm rebuild @louislam/sqlite3 --build-from-source --foreground-scripts
+  - id: build
+    required: true
+    timeout: 900
+    cmd: npm run build
+  - id: target_test               # security regression test for the jsonata sandbox; must pass on the candidate
+    required: true
+    security: true
+    timeout: 300
+    cmd: node --test test/backend-test/test-jsonata-sandbox.js
+  - id: unit
+    required: true
+    timeout: 600
+    cmd: >-
+      node --test --test-name-pattern="SQLite|^(?!.*(MariaDB|MySQL))"
+      test/backend-test/test-util.js test/backend-test/test-uptime-calculator.js
+      test/backend-test/test-monitor-response.js test/backend-test/test-response-cache.js
+      test/backend-test/test-status-page.js test/backend-test/test-migration.js
+  - id: integration
+    required: true
+    timeout: 240
+    script: integration.cjs       # starts the server on a disposable data dir, sets up admin, logs in, adds a monitor, waits for a heartbeat
+excluded:
+  - tests: "test/backend-test/test-migration.js (MariaDB/MySQL cases)"
+    reason: "start database containers via testcontainers, which needs a Docker socket; the worker deliberately has none"
+  - tests: "test-domain, test-globalping, test-docker, test-snmp, test-ntp, test-radius, test-system-service, test-pm2, monitors/*, notification-providers/*"
+    reason: "need outside network or services; the worker can only reach the local registry"
+  - tests: "test/e2e (Playwright)"
+    reason: "needs browsers; not part of this profile"

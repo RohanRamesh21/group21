@@ -72,6 +72,32 @@ def check_resolution(board: Board, case_id: str, risk: str, verdict: str) -> Non
         raise ConstitutionError("C2: a case with a hard signal cannot be resolved as benign.")
 
 
+def check_citations(board: Board, store, case_ids: list[str], evidence_ids: list[str]) -> None:
+    """T7 Gatekeeper: a verdict may only cite cases on this board and evidence that exists in this run's store,
+    still matches its SHA-256, and belongs to one of the cited cases (its findings or its resolution)."""
+    unknown_cases = [c for c in case_ids if c not in board.cases]
+    if unknown_cases:
+        raise ConstitutionError(f"T7: unknown case IDs {unknown_cases}")
+    if not evidence_ids:
+        raise ConstitutionError("T7: a verdict must cite at least one evidence ID")
+    missing = [e for e in evidence_ids if not store.exists(e)]
+    if missing:
+        raise ConstitutionError(f"T7: evidence IDs not found in this run {missing}")
+    tampered = [e for e in evidence_ids if not store.verify(e)]
+    if tampered:
+        raise ConstitutionError(f"T7: evidence no longer matches its fingerprint {tampered}")
+    relevant: set[str] = set()
+    for cid in case_ids:
+        case = board.cases[cid]
+        relevant.update(getattr(case, "evidence_ids", []) or [])
+        for fid in case.finding_ids:
+            if fid in board.findings:
+                relevant.update(board.findings[fid].evidence_ids)
+    unrelated = [e for e in evidence_ids if e not in relevant]
+    if unrelated:
+        raise ConstitutionError(f"T7: evidence {unrelated} is not linked to the cited cases {case_ids}")
+
+
 def check_verdict(board: Board, decision: str) -> None:
     """C3 coverage before verdict, plus C2 on the overall decision."""
     gaps = board.coverage_gaps()

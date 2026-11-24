@@ -132,7 +132,9 @@ class OpenRouterBackend:
             time.sleep(2 * (attempt + 1))
         else:
             raise RuntimeError(f"OpenRouter error after retries: {last_err}")
-        data = r.json()
+        return self._parse_openai(r.json())
+
+    def _parse_openai(self, data: dict) -> "Turn":
         u = data.get("usage") or {}
         self.usage["calls"] += 1
         self.usage["prompt_tokens"] += u.get("prompt_tokens", 0)
@@ -153,6 +155,62 @@ class OpenRouterBackend:
                 **({"extra_content": extra[c.id]} if extra.get(c.id) else {})} for c in calls]
         stop = "tool_use" if calls else ("refusal" if choice.get("finish_reason") == "content_filter" else "end_turn")
         return Turn(text=text, tool_calls=calls, stop_reason=stop, raw_content=raw or [{"type": "text", "text": ""}])
+
+
+class FreeModelBackend(OpenRouterBackend):
+    """DeepSeek V4 Flash through FreeModel's OpenAI-compatible endpoint (freemodel.in), reasoning_effort per agent."""
+
+    URL = "https://freemodel.in/v1/chat/completions"
+    MODEL = "deepseek-v4-flash-0731"
+
+    def __init__(self, model: str | None = None, timeout: int = 240):
+        import os
+
+        import requests
+
+        from guardian import config
+        config.load_env()
+        self.session = requests.Session()
+        self.key = os.environ["FM_API_KEY"]
+        self.model = model or os.environ.get("GUARDIAN_MODEL", self.MODEL)
+        self.timeout = timeout
+        self.usage = {"calls": 0, "prompt_tokens": 0, "completion_tokens": 0}
+        self.effort = os.environ.get("GUARDIAN_EFFORT")
+        self.run_id = f"deep-{int(__import__('time').time())}"
+
+    def step(self, agent, system, messages, tools, effort):
+        import json as _json
+
+        from guardian import llm_budget
+        body = {"model": self.model, "messages": self._to_openai(system, messages), "tools": self._tools(tools),
+                "tool_choice": "auto", "max_tokens": 8000, "reasoning_effort": self.effort or effort}
+        est = llm_budget.estimate(_json.dumps(body["messages"]) + _json.dumps(body["tools"]), body["max_tokens"])
+        llm_budget.reserve(self.run_id, est)  # deep mode is budgeted like everything else
+        try:
+            return self._send(agent, body)
+        finally:
+            llm_budget.release(self.run_id, est)
+
+    def _send(self, agent, body):
+        import time
+
+        from guardian import llm_budget
+        last, t0 = None, time.time()
+        for attempt in range(4):
+            r = self.session.post(self.URL, json=body, timeout=self.timeout,
+                                  headers={"Authorization": f"Bearer {self.key}", "Content-Type": "application/json"})
+            if r.status_code == 200:
+                break
+            last = f"HTTP {r.status_code}: {r.text[:200]}"
+            if r.status_code not in (429, 500, 502, 503, 504):
+                raise RuntimeError(f"FreeModel error {last}")
+            time.sleep(3 * (attempt + 1))
+        else:
+            raise RuntimeError(f"FreeModel error after retries: {last}")
+        data = r.json()
+        llm_budget.record(run_id=self.run_id, purpose=f"deep:{agent}", model=self.model, usage=data.get("usage"),
+                          cached=False, seconds=time.time() - t0)
+        return self._parse_openai(data)
 
 
 class GeminiBackend(OpenRouterBackend):

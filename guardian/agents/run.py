@@ -12,7 +12,7 @@ from pathlib import Path
 from guardian import config
 from guardian.agents import fakeworld
 from guardian.agents.board import Board
-from guardian.agents.llm import ClaudeBackend, GeminiBackend, OpenRouterBackend, ScriptedBackend, load_script, make_resolver
+from guardian.agents.llm import ClaudeBackend, FreeModelBackend, GeminiBackend, OpenRouterBackend, ScriptedBackend, load_script, make_resolver
 from guardian.agents.orchestrator import Orchestrator
 from guardian.agents.tools import ToolRegistry
 from guardian.store.evidence import EvidenceStore
@@ -56,6 +56,8 @@ def run(out: Path, backend: str = "auto", replay: Path = DEFAULT_REPLAY, run_id:
         model = ScriptedBackend(load_script(str(replay)), make_resolver(board, world, store))
     elif backend == "openrouter":
         model = OpenRouterBackend()
+    elif backend == "freemodel":
+        model = FreeModelBackend()
     elif backend == "gemini":
         model = GeminiBackend()
     elif backend == "claude":

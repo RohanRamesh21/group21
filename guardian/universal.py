@@ -570,10 +570,16 @@ def package_signals(inventory: list[dict], policy: dict) -> list[dict]:
         res = p.get("resolved") or ""
         if eco == "npm" and res and p.get("origin") not in ("vendored copy",) and not p["key"].startswith("cdn:"):
             host = urlparse(res).netloc
-            if res.startswith(("git+", "git:", "github:", "file:")) or (host and host not in allowed):
-                out.append({"detector": "D3", "type": "untrusted_source", "severity": "medium", "hard_signal": False,
+            if res.startswith(("git+", "git:", "github:", "file:")):
+                # code from a repository or local path: unreviewed by any registry, but a common, visible choice
+                out.append({"detector": "D3", "type": "non_registry_source", "severity": "medium", "hard_signal": False,
                             "component": comp, "file": p.get("source_file"), "line": p.get("lockfile_line"),
-                            "summary": f"resolved from {host or res[:60]} instead of an approved registry"})
+                            "summary": f"installed from {res[:60]} instead of an approved registry"})
+            elif host and host not in allowed:
+                # a registry tarball from a server outside the allow-list: how registry hijacks and redirects arrive
+                out.append({"detector": "D3", "type": "untrusted_source", "severity": "critical", "hard_signal": True,
+                            "component": comp, "file": p.get("source_file"), "line": p.get("lockfile_line"),
+                            "summary": f"downloaded from {host}, which is not on the registry allow-list"})
     return out
 
 
@@ -681,7 +687,9 @@ def grype_all(sbom: Path) -> tuple[list[dict], str | None]:
     for m in json.loads(r.stdout or "{}").get("matches", []):
         v, a = m["vulnerability"], m["artifact"]
         ids = [v["id"]] + [x["id"] for x in m.get("relatedVulnerabilities", [])]
+        purl = a.get("purl") or ""
         out.append({"name": a["name"], "version": a["version"], "ids": list(dict.fromkeys(ids)),
+                    "ecosystem": purl[4:].split("/", 1)[0] if purl.startswith("pkg:") else None,
                     "summary": (v.get("description") or "")[:200],
                     "severity": GHSA_WORDS.get(str(v.get("severity", "")).upper(), "medium"),
                     "fixed": (v.get("fix") or {}).get("versions", []), "malicious": False, "url": v.get("dataSource"), "source": "grype"})
@@ -696,20 +704,26 @@ def vulnerabilities(inventory: list[dict], sbom: Path, src: Path) -> dict:
         errors["osv_api"] = err
         for lock in {p["source_file"] for p in inventory if p.get("source_file", "").endswith("package-lock.json")}:
             try:  # offline fallback (npm only)
-                osv += run_osv(src / lock)
+                osv += [{**r, "ecosystem": "npm"} for r in run_osv(src / lock)]
             except Exception as e:
                 errors["osv_offline"] = str(e)[:200]
     grype, gerr = grype_all(sbom)
     if gerr:
         errors["grype"] = gerr
     vulns = merge(osv, grype)
-    idx = {}
+    idx, by_nv = {}, {}
     for p in inventory:
-        idx.setdefault((p["name"], p["version"]), p)
+        idx.setdefault((p.get("ecosystem"), p["name"], p["version"]), p)
+        by_nv.setdefault((p["name"], p["version"]), []).append(p)
     for v in vulns:
-        p = idx.get((v["name"], v["version"]), {})
+        p = idx.get((v.get("ecosystem"), v["name"], v["version"]))
+        if p is None:  # ecosystem unknown (e.g. a Grype match without purl): only join when unambiguous
+            cands = by_nv.get((v["name"], v["version"]), [])
+            p = cands[0] if len(cands) == 1 else {}
         v["direct"], v["runtime"] = bool(p.get("direct")), bool(p.get("runtime"))
-        v["ecosystem"], v["source_file"], v["component_key"] = p.get("ecosystem"), p.get("source_file"), p.get("key")
+        v["exposure"] = p.get("exposure")
+        v["ecosystem"] = v.get("ecosystem") or p.get("ecosystem")
+        v["source_file"], v["component_key"] = p.get("source_file"), p.get("key")
     return {"vulnerabilities": vulns, "errors": errors,
             "counts": {"osv": len(osv), "grype": len(grype), "merged": len(vulns),
                        "both": sum(1 for v in vulns if len(v["sources"]) == 2),
@@ -795,6 +809,11 @@ def scan_tree(src: Path, out: Path, app: str, commit: str, log=lambda m: None, w
     paths = paths_to(edges, app)
     for p in inv:
         p.setdefault("runtime", not p.get("dev"))
+    from guardian.inventory.exposure import frontend_imports, iter_tree, mark_shipped
+    shipped = mark_shipped(inv, edges, frontend_imports(iter_tree(src)))  # T11: bundled devDependencies
+    if shipped:
+        log(f"{len(shipped)} dev-listed packages are imported by frontend code and treated as shipped (inferred)")
+    for p in inv:
         p["path"] = [x for x in paths.get(p["key"], [app, p["key"]])]
         p["depth"] = len(p["path"]) - 1
     sbom = write_sbom(inv, edges, app, commit, out)
@@ -858,7 +877,7 @@ def _commit(repo: Path, ref: str) -> str:
 
 
 def _key(f: dict) -> tuple:
-    return (f["type"], re.sub(r"@[^@#]*$", "", f["component"]) if f["type"] in ("install_script", "untrusted_source") else f["component"])
+    return (f["type"], re.sub(r"@[^@#]*$", "", f["component"]) if f["type"] in ("install_script", "untrusted_source", "non_registry_source") else f["component"])
 
 
 def change_signals(base: dict, head: dict, files: list[str], policy: dict) -> list[dict]:
@@ -941,6 +960,7 @@ def _pkg_diff(b_inv: list[dict], h_inv: list[dict]) -> dict:
 
 def check_any(repo: Path, base: str | None, head: str, out: Path, app: str, log=lambda m: None) -> dict:
     """Full Day 1 report for any git repository. base=None -> full scan of head (nothing is labelled 'introduced')."""
+    repo, out = Path(repo).resolve(), Path(out).resolve()  # git -C <repo> would resolve relative output paths inside the repo
     out.mkdir(parents=True, exist_ok=True)
     policy = _policy()
     hc = _commit(repo, head)
@@ -975,6 +995,7 @@ def check_any(repo: Path, base: str | None, head: str, out: Path, app: str, log=
     intro_c = [c for c in ci if c["label"] == "introduced"]
     headline = {
         "base": base or head, "head": head, "app": app, "base_commit": bc[:12], "head_commit": hc[:12], "mode": "universal",
+        "repo_path": str(Path(repo).resolve()), "base_sha": bc if base else None, "head_sha": hc,
         "inventory": {**H["summary"], "workflows": H["summary"]["workflows"]},
         "sbom_agreement_pct": H["sbom_agreement"],
         "changes": {"files": files, **{k: len(v) for k, v in pkgs.items()}},
@@ -986,9 +1007,6 @@ def check_any(repo: Path, base: str | None, head: str, out: Path, app: str, log=
                      "errors": H["ci"]["errors"]},
         "suspicious_changes": [f"[{x['severity']}] {x['type']}: {x['component']} - {x['summary']}" for x in sus],
         "suspicious_error": None, "syft_error": H["syft_error"],
-        "blocking": bool([x for x in sus if x["label"] == "introduced" and (x["hard_signal"] or x["severity"] in ("high", "critical"))] or
-                         [v for v in intro_v if v["severity"] in ("high", "critical")] or
-                         [c for c in intro_c if c["severity"] in ("high", "critical")]),
     }
     report = {"headline": headline, "package_changes": pkgs, "suspicious_changes": sus, "vulnerabilities": vulns, "ci_image": ci,
               "inventory": H["inventory"], "actions": H["actions"], "images": H["images"], "manifests": H["manifests"],
@@ -999,14 +1017,23 @@ def check_any(repo: Path, base: str | None, head: str, out: Path, app: str, log=
     pointer = {"path": str(path)}
     try:
         from guardian.scoring.score import score_report
+        from guardian.scoring.states import stages
         scores = score_report(report)
         spath = out / f"scores-{bc[:8]}-{hc[:8]}.json"
         spath.write_text(json.dumps(scores, indent=1))
         pointer["scores"] = str(spath)
         report["headline"]["verdict"] = scores["verdict"]
         report["headline"]["verdict_reasons"] = scores["reasons"]
+        report["headline"]["complete"] = scores["complete"]
+        report["headline"]["incomplete_reasons"] = scores["incomplete_reasons"]
+        report["headline"]["blocking"] = scores["verdict"] == "block"
+        report["headline"]["stages"] = stages(report["headline"], compared=B is not H, scored=True)
         path.write_text(json.dumps(report, indent=1))
     except Exception as e:
         pointer["scores_error"] = f"{type(e).__name__}: {e}"[:300]
+        report["headline"].update(verdict=None, complete=False, blocking=None,
+                                  incomplete_reasons=[f"scoring: {pointer['scores_error']}"])
+        report["headline"]["stages"] = stages(report["headline"], compared=B is not H, scored=False)
+        path.write_text(json.dumps(report, indent=1))
     (out / "latest.json").write_text(json.dumps(pointer))
     return {**report, "path": str(path)}
