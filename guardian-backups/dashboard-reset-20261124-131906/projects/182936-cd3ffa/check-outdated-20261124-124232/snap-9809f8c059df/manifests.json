@@ -1,7 +1,0 @@
-[
- {
-  "path": "linkedin extention/manifest.json",
-  "ecosystem": "browser-extension",
-  "role": "extension"
- }
-]

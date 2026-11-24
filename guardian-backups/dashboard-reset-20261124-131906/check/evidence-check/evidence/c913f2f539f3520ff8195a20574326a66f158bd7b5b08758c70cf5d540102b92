@@ -1,7 +1,0 @@
-{
-  "lifecycle_scripts": {
-    "postinstall": "node setup.js"
-  },
-  "lockfile_hasInstallScript": true,
-  "package": "axois@1.0.0"
-}

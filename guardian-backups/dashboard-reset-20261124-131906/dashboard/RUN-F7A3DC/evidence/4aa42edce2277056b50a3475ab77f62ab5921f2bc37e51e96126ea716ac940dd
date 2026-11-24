@@ -1,4 +1,0 @@
-{
-  "package": "axois@1.0.0",
-  "postinstall": "node setup.js"
-}

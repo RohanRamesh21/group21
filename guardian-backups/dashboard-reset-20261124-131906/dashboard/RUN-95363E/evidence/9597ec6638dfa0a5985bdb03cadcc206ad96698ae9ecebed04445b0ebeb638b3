@@ -1,2 +1,0 @@
-Q: Is a private npm registry at 10.0.0.5:4873 expected for this repository?
-A: (no reply in 120s, policy answer used) No. This repository should only use registry.npmjs.org.
