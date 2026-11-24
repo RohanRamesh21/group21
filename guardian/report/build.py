@@ -36,6 +36,21 @@ def _tools() -> list[dict]:
     return rows
 
 
+
+def _checks(stage: dict) -> str:
+    """How many tests a stage ran, read from node --test's summary lines, or the integration steps."""
+    import re
+    out = stage.get("output") or ""
+    n = {k: sum(int(x) for x in re.findall(rf"^# {k} (\d+)", out, re.M)) for k in ("tests", "pass", "fail")}
+    if n["tests"]:
+        return f"{n['pass']}/{n['tests']} passed" + (f", {n['fail']} failed" if n["fail"] else "")
+    steps = (stage.get("integration") or {}).get("steps") or []
+    if steps:
+        return f"{sum(1 for x in steps if x.get('ok'))}/{len(steps)} steps: " + " → ".join(x["step"] for x in steps)
+    if stage.get("hooks"):
+        return "; ".join(f"{h['name']}: {'reused verified build' if h.get('cache') == 'hit' else h.get('reason')}" for h in stage["hooks"])
+    return ""
+
 def _capability(h: dict, plan: dict | None, validation: dict | None) -> str:
     if validation and validation.get("executed") and validation["gate"]["validation"] == "passed":
         return "L4"
@@ -94,9 +109,9 @@ def build(out: Path) -> dict:
         sections["remediation"] = {"status": "not_started", "reason": "no fix plan has been requested for this run"}
     if validation:
         sections["validation"] = {"status": "executed" if validation.get("executed") else "refused", **{
-            k: validation.get(k) for k in ("gate", "profile", "baseline", "candidate", "approval_id")}}
+            k: validation.get(k) for k in ("gate", "profile", "baseline", "candidate", "approval_id", "started", "finished", "timings")}}
         sections["before_after"] = {"rescan": validation.get("rescan"), "sbom_diff": (validation.get("gate") or {}).get("sbom_diff"),
-                                    "delta": validation.get("delta")}
+                                    "delta": validation.get("delta"), "verdict_change": validation.get("verdict_change")}
     else:
         sections["validation"] = {"status": "not_started", "reason": "no validation has run for this run"}
         sections["before_after"] = {"status": "not_started"}
@@ -159,10 +174,24 @@ def _section_html(key: str, s: dict) -> str:
         g = s["gate"]
         rows.append(f"<p>Target: <b>{_e(g['target'])}</b> · validation: <b>{_e(g['validation'])}</b> · verified: <b>{_e(g['verified'])}</b></p>"
                     "<ul>" + "".join(f"<li>{_e(r)}</li>" for r in g["reasons"]) + "</ul>")
+        names = {"baseline": "Baseline (target branch before this PR)", "candidate": "Fixed version (PR + approved patch)"}
         for side in ("baseline", "candidate"):
             if s.get(side):
-                rows.append(f"<h4>{side}</h4><table><tr><th>Stage</th><th>Status</th><th>Seconds</th></tr>" + "".join(
-                    f"<tr><td>{_e(x['id'])}</td><td>{_e(x['status'])}</td><td>{_e(x.get('seconds'))}</td></tr>" for x in s[side]["stages"]) + "</table>")
+                rows.append(f"<h4>{names[side]}</h4><table><tr><th>Stage</th><th>Status</th><th>Seconds</th><th>Tests / checks</th></tr>" + "".join(
+                    f"<tr><td>{_e(x['id'])}</td><td>{_e(x['status'])}</td><td>{_e(x.get('seconds'))}</td><td>{_e(_checks(x))}</td></tr>"
+                    for x in s[side]["stages"]) + "</table>")
+        if s.get("timings"):
+            t = s["timings"]
+            rows.append(f"<p>Took {_e(t.get('total'))} s (baseline, fixed version and rescan in parallel; SBOMs {_e(t.get('sbom'))} s).</p>")
+    elif key == "before_after" and (s.get("verdict_change") or {}).get("before"):
+        b, a = s["verdict_change"]["before"], s["verdict_change"]["after"]
+        groups = [("vulnerabilities", "Known vulnerabilities (CVE / GHSA)"), ("malware_suspicious", "Malware & suspicious packages"),
+                  ("config_ci", "Config & CI changes"), ("other", "Dependency version changes (low, info)")]
+        rows.append(f"<p>Decision: <b>{_e(str(b['verdict']).upper())}</b> as submitted → <b>{_e(str(a['verdict']).upper())}</b> with the approved fix (same engine, same advisory snapshot).</p>"
+                    "<table><tr><th>Introduced by this PR</th><th>Before</th><th>After the fix</th></tr>" + "".join(
+                        f"<tr><td>{_e(lbl)}</td><td>{_e(b['introduced'][k])}</td><td>{_e(a['introduced'][k])}</td></tr>" for k, lbl in groups)
+                    + f"<tr><td>High / critical (level or advisory severity)</td><td>{_e(b['high_or_critical'])}</td><td>{_e(a['high_or_critical'])}</td></tr></table>"
+                    f"<p>{_e(a['pre_existing'])} older findings were already in the project before this PR; they are unchanged and listed separately.</p>")
     elif key == "remaining_risk":
         rows.append("<h4>Accepted</h4><ul>" + "".join(f"<li>{_e(r['finding_id'])}: {_e(r['reason'])} (owner {_e(r['owner'])})</li>"
                                                        for r in s["accepted"]) + "</ul>")

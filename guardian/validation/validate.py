@@ -8,6 +8,7 @@ import json
 import shutil
 import subprocess
 import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from guardian import approval as ap
@@ -15,6 +16,49 @@ from guardian.validation import runner as vr
 
 ROOT = Path(__file__).resolve().parents[2]
 SEVERE = ("high", "critical")
+# Introduced findings, grouped the way a reviewer asks: known vulnerabilities, malware / suspicious packages,
+# configuration and CI changes. A vulnerability record whose ID is MAL-… is a malware report, not an ordinary CVE.
+MALWARE_KINDS = {"typosquat", "untrusted_source", "lockfile_tamper", "new_install_script", "install_script", "malware",
+                 "non_registry_source"}
+
+
+def _group(f: dict) -> str:
+    if f.get("kind") == "vulnerability":
+        return "malware_suspicious" if "MAL-" in f"{f.get('id', '')} {f.get('title', '')}" else "vulnerabilities"
+    det = f.get("type") or f.get("kind") or ""  # supply-chain findings: kind "supply_chain", detector name in "type"
+    if det in MALWARE_KINDS:
+        return "malware_suspicious"
+    if det in ("new_dependency", "suspicious_update"):  # a package added or its version changed (low, informational)
+        return "other"
+    return "config_ci"
+
+
+def progress_update(progress: dict, msg: str) -> dict:
+    """Fold one progress message into a per-lane view (both sandboxes and the rescan run at the same time, so the
+    latest single message is not enough for the dashboard)."""
+    p = dict(progress)
+    if msg.startswith("[") and "] " in msg:
+        lane, rest = msg[1:].split("] ", 1)
+        p[lane] = rest
+    elif msg.startswith("validation: source rescan"):
+        p["rescan"] = "running"
+    elif msg.startswith("validation: rescan finished"):
+        p["rescan"] = "done"
+    elif msg.startswith("validation: artifact SBOMs"):
+        p["sbom"] = "running"
+    return p
+
+
+def verdict_summary(scores: dict | None) -> dict:
+    """Verdict + what this change introduces, by group; pre-existing findings counted separately (never hidden)."""
+    findings = (scores or {}).get("findings") or []
+    intro = [f for f in findings if f.get("label") == "introduced"]
+    groups = {"vulnerabilities": 0, "malware_suspicious": 0, "config_ci": 0, "other": 0}
+    for f in intro:
+        groups[_group(f)] += 1
+    return {"verdict": (scores or {}).get("verdict"), "introduced": {**groups, "total": len(intro)},
+            "high_or_critical": sum(1 for f in intro if f.get("level") in SEVERE or f.get("severity") in SEVERE),
+            "pre_existing": sum(1 for f in findings if f.get("label") == "pre_existing")}
 
 
 def policy_sha256() -> str:
@@ -94,20 +138,43 @@ def validate(out: Path, profile: str = "uptime-kuma", log=print) -> dict:
     repo, patch = Path(plan["repo"]), Path(plan["patch"]["patch_path"])
     db_before = _grype_db()
     work = out / "validation"
+    t0 = time.time()
+    timings: dict[str, float] = {}
     base_tree = vr.prepare_tree(repo, plan["base_sha"] or plan["head_sha"], work / "baseline")
     cand_tree = vr.prepare_tree(repo, plan["head_sha"], work / "candidate", patch, plan["patch"]["patch_sha256"])
-    log("validation: baseline run")
-    result["baseline"] = vr.run_profile(base_tree, prof, folder, "baseline", log)
-    log("validation: candidate run")
-    result["candidate"] = vr.run_profile(cand_tree, prof, folder, "candidate", log)
+    timings["prepare"] = round(time.time() - t0, 1)
 
-    log("validation: artifact SBOMs (installed dependencies + build output)")
-    b_art, b_err = _artifact_components(base_tree, work / "baseline-artifact")
-    c_art, c_err = _artifact_components(cand_tree, work / "candidate-artifact")
+    def timed(key, fn, *a):
+        s = time.time()
+        try:
+            return fn(*a)
+        finally:
+            timings[key] = round(time.time() - s, 1)
+
+    def rescan():
+        log("validation: source rescan of the candidate (same engine, same advisory snapshot)")
+        r = _source_rescan(repo, plan.get("base_sha"), plan["head_sha"], patch, work, repo.name)
+        log("validation: rescan finished")
+        return r
+
+    # Independent work runs at the same time: two separate locked containers and the source-only rescan
+    # (the rescan reads files, runs no project code). Nothing is shared between the sandboxes.
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        f_base = pool.submit(timed, "baseline", vr.run_profile, base_tree, prof, folder, "baseline", log)
+        f_cand = pool.submit(timed, "candidate", vr.run_profile, cand_tree, prof, folder, "candidate", log)
+        f_rescan = pool.submit(timed, "rescan", rescan)
+        result["baseline"], result["candidate"] = f_base.result(), f_cand.result()
+        log("validation: artifact SBOMs (installed dependencies + build output)")
+        s = time.time()
+        f_b = pool.submit(_artifact_components, base_tree, work / "baseline-artifact")
+        f_c = pool.submit(_artifact_components, cand_tree, work / "candidate-artifact")
+        (b_art, b_err), (c_art, c_err) = f_b.result(), f_c.result()
+        timings["sbom"] = round(time.time() - s, 1)
+        rs = f_rescan.result()
     sbom_diff = {"added": sorted(c_art - b_art), "removed": sorted(b_art - c_art), "errors": [x for x in (b_err, c_err) if x]}
 
-    log("validation: source rescan of the candidate (same engine, same advisory snapshot)")
-    rs = _source_rescan(repo, plan.get("base_sha"), plan["head_sha"], patch, work, repo.name)
+    timings["total"] = round(time.time() - t0, 1)
+    result["timings"] = timings
     # still introduced by the fixed PR (versus base) = not corrected; pre-existing findings are not targets of this PR
     after_ids = {f["id"] for f in rs["scores"]["findings"] if f["label"] == "introduced"}
     targets = sorted({fid for c in plan["candidates"] if c["type"] != "escalate" for fid in c["finding_ids"]})
@@ -122,6 +189,11 @@ def validate(out: Path, profile: str = "uptime-kuma", log=print) -> dict:
         result["delta"] = delta.before_after(orig, rs["scores"], [t for t in targets if t in known], bt)
     except Exception as e:
         result["delta"] = {"error": f"before/after delta not computed ({type(e).__name__}: {e})"[:200]}
+    try:  # the PR as submitted vs the PR with the approved fix (same engine, same advisory snapshot)
+        orig_scores = json.loads(Path(json.loads((out / "latest.json").read_text())["scores"]).read_text())
+        result["verdict_change"] = {"before": verdict_summary(orig_scores), "after": verdict_summary(rs["scores"])}
+    except Exception as e:
+        result["verdict_change"] = {"error": f"before/after verdict not computed ({type(e).__name__}: {e})"[:200]}
     db_after = _grype_db()
     result["rescan"] = {"verdict": rs["scores"].get("verdict"), "complete": rs["complete"],
                         "resolved": sorted(t for t in targets if t not in after_ids),

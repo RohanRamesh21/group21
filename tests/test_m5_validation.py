@@ -26,7 +26,9 @@ def _lock(integrity="sha512-GOOD", version="15.1.6"):
 
 def test_hook_runs_only_when_name_version_and_integrity_match():
     plan = vr.hook_plan(ALLOW, _lock())
-    assert plan == [{"name": "@louislam/sqlite3", "run": True, "cmd": "npm rebuild @louislam/sqlite3", "reason": "matches profile exception"}]
+    # version + integrity travel with the plan: they key the reuse of a verified native build (runner.run_hooks)
+    assert plan == [{"name": "@louislam/sqlite3", "run": True, "cmd": "npm rebuild @louislam/sqlite3", "reason": "matches profile exception",
+                     "version": "15.1.6", "integrity": "sha512-GOOD", "outputs": []}]
 
 
 @pytest.mark.parametrize("lock,why", [(_lock(integrity="sha512-SWAPPED"), "integrity"), (_lock(version="15.1.7"), "version"),

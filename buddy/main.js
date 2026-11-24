@@ -82,11 +82,32 @@ function openDashboard(project, view = "summary", tour = true) {
     x: from.x, y: from.y, width: from.width, height: from.height, show: false, title: "Guardian",
     backgroundColor: "#0a0b0e", webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
-  dash.webContents.setWindowOpenHandler(({ url: u }) => { shell.openExternal(u); return { action: "deny" }; });
+  // Guardian's own pages (the HTML/JSON report) open in a Guardian window in front of the dashboard; sending them to
+  // the default browser made them appear somewhere else, so "Open HTML report" looked like it did nothing.
+  dash.webContents.setWindowOpenHandler(({ url: u }) => {
+    if (u.startsWith(SERVER)) openGuardianPage(u); else shell.openExternal(u);
+    return { action: "deny" };
+  });
   dash.webContents.on("will-navigate", (e, u) => { if (!u.startsWith(SERVER)) { e.preventDefault(); shell.openExternal(u); } });
+  dash.webContents.session.on("will-download", (_e, item) => console.log(`[buddy] download ${item.getFilename()}`));
   dash.loadURL(url);
   dash.once("ready-to-show", () => { dash.show(); dash.setBounds(target, true); dash.focus(); });
   dash.on("closed", () => { dash = null; });
+}
+
+function openGuardianPage(u) {
+  const wa = screen.getPrimaryDisplay().workArea;
+  const w = Math.min(1180, wa.width - 120), h = Math.min(900, wa.height - 80);
+  const win = new BrowserWindow({
+    x: wa.x + Math.round((wa.width - w) / 2) + 30, y: wa.y + Math.round((wa.height - h) / 2) + 20, width: w, height: h,
+    title: /fmt=json/.test(u) ? "Guardian report (JSON)" : "Guardian report", backgroundColor: "#ffffff",
+    webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
+  });
+  win.webContents.setWindowOpenHandler(({ url: x }) => { shell.openExternal(x); return { action: "deny" }; });
+  win.webContents.on("will-navigate", (e, x) => { if (!x.startsWith(SERVER)) { e.preventDefault(); shell.openExternal(x); } });
+  win.webContents.on("did-fail-load", (_e, code, desc) => console.log(`[buddy] report window failed: ${code} ${desc}`));
+  console.log(`[buddy] opening ${u}`);
+  win.loadURL(u);
 }
 
 // ------------------------------------------------------------------ state

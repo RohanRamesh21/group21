@@ -93,3 +93,14 @@ def test_run_endpoint_serves_the_report_model(run, monkeypatch):
     monkeypatch.setattr(server, "_check_dir", lambda project: run)
     r = TestClient(server.app).get("/api/run").json()
     assert list(r["sections"])[0] == "run" and r["sections"]["run"]["stages"]
+
+
+def test_report_shows_how_many_tests_each_stage_ran():
+    from guardian.report.build import _checks
+    out = "# tests 12\n# pass 12\n# fail 0\n...\n# tests 8\n# pass 8\n# fail 0\n"
+    assert _checks({"id": "unit", "output": out}) == "20/20 passed"
+    assert _checks({"id": "unit", "output": "# tests 3\n# pass 2\n# fail 1\n"}) == "2/3 passed, 1 failed"
+    integ = {"id": "integration", "integration": {"steps": [{"step": "server_started", "ok": True}, {"step": "login", "ok": True}]}}
+    assert _checks(integ) == "2/2 steps: server_started → login"
+    hooks = {"id": "hooks", "hooks": [{"name": "@louislam/sqlite3", "cache": "hit"}]}
+    assert _checks(hooks) == "@louislam/sqlite3: reused verified build"

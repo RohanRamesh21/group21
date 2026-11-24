@@ -38,6 +38,9 @@ export function Summary({ s, steps, onPick }: { s: Sections; steps: Step[]; onPi
                 <span className="mt-2 size-1 shrink-0 rounded-full bg-crit" />{r}</motion.li>))}
           </ul>
           {remedySummary(s) && <p className="mt-3 text-[12.5px] text-muted"><span className="text-ink">Remedy</span> (rules): {remedySummary(s)} · {s.remediation?.status === "approved" ? "approved" : "waiting for your approval"}</p>}
+          {s.before_after?.verdict_change?.after?.verdict && (
+            <p className="mt-2 text-[12.5px] text-muted"><span className="text-ink">After the approved fix</span> (rescan): <b className={s.before_after.verdict_change.after.verdict === "allow" ? "text-ok" : "text-crit"}>{String(s.before_after.verdict_change.after.verdict).toUpperCase()}</b>
+              {" "}· {s.before_after.verdict_change.after.introduced.total} risk(s) introduced · {s.validation?.gate?.verified ? "verified" : "not verified yet"}</p>)}
           {!s.run.complete && (s.run.incomplete_reasons ?? []).length > 0 && <p className="mt-3 text-[12px] text-high">Incomplete: {s.run.incomplete_reasons.join("; ")}</p>}
         </div>
         <dl className="grid grid-cols-[130px_minmax(0,1fr)] content-start gap-x-4 gap-y-2 rounded-xl bg-canvas/50 p-4 text-[12.5px] ring-1 ring-line">

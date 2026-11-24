@@ -1,5 +1,6 @@
 import { motion } from "motion/react";
-import { ArrowFatLineUp, ArrowsClockwise, Eraser, Handshake, PushPin, Trash, type Icon } from "@phosphor-icons/react";
+import { useState } from "react";
+import { ArrowFatLineUp, ArrowsClockwise, ClockCounterClockwise, Eraser, FolderSimple, Handshake, PushPin, Trash, type Icon } from "@phosphor-icons/react";
 import { spring } from "../../ui";
 import type { Finding, Fix, Sections } from "../shared";
 
@@ -12,6 +13,8 @@ export const REMEDY: Record<string, { label: string; short: string; Icon: Icon; 
     what: "Force a safe version of an indirect dependency through an npm override, without changing the package that pulls it in." },
   remove_package: { label: "Remove the package", short: "Remove", Icon: Trash, tone: "text-crit bg-crit/10",
     what: "The PR added a package with hard supply-chain signals (malware, look-alike name, untrusted source): take it out entirely." },
+  restore_lock_entry: { label: "Restore the lockfile entry", short: "Restore", Icon: ClockCounterClockwise, tone: "text-high bg-high/10",
+    what: "Same package and version as before, but the PR re-pointed where it downloads from and its checksum: put back the base commit's entry." },
   revert_change: { label: "Revert the change", short: "Revert", Icon: Eraser, tone: "text-high bg-high/10",
     what: "Restore a sensitive file (e.g. .npmrc, a workflow) to its content in the base commit." },
   pin_action_sha: { label: "Pin the action to a commit SHA", short: "Pin SHA", Icon: PushPin, tone: "text-accent bg-accent/10",
@@ -43,27 +46,97 @@ export function RemedyChip({ r }: { r: Remedy | null }) {
     </span>);
 }
 
-/** Fix & approve: which remedies this plan uses, explained in plain words. */
+const BAR: Record<string, string> = { upgrade_to_fixed: "bg-ok", override_transitive: "bg-ok/55", remove_package: "bg-crit", restore_lock_entry: "bg-high/70", revert_change: "bg-high",
+  pin_action_sha: "bg-accent", pin_image_digest: "bg-accent/60", escalate: "bg-med" };
+
+/** Size of a version change by npm semver rules (0.x minor bumps count as breaking). */
+export function semverJump(from?: string | null, to?: string | null): "major" | "minor" | "patch" | null {
+  const p = (v?: string | null) => (v ?? "").replace(/^[^\d]*/, "").split(/[.+-]/).slice(0, 3).map(Number);
+  const a = p(from), b = p(to);
+  if (a.length < 3 || b.length < 3 || [...a, ...b].some(Number.isNaN)) return null;
+  if (a[0] !== b[0] || (a[0] === 0 && a[1] !== b[1])) return "major";
+  return a[1] !== b[1] ? "minor" : a[2] !== b[2] ? "patch" : null;
+}
+
+const JUMP_TONE = { major: "text-crit bg-crit/10", minor: "text-high bg-high/10", patch: "text-ok bg-ok/10" } as const;
+const SHOW = 5;
+
+/** Rows for one remedy: version changes as package rows; restored files grouped by folder. */
+type Row = { key: string; name: string; from: string | null; to: string | null; files: string[] | null };
+function rowsFor(type: string, cs: any[]): Row[] {
+  if (type !== "revert_change") return cs.map((c): Row => ({ key: String(c.id), name: c.package ?? c.file, from: c.from ?? null, to: c.to ?? null, files: null }));
+  const by = new Map<string, string[]>();
+  for (const c of cs) {
+    const f: string = c.file ?? c.package ?? "";
+    const dir = f.includes("/") ? f.slice(0, f.lastIndexOf("/") + 1) : "";
+    by.set(dir, [...(by.get(dir) ?? []), f]);
+  }
+  return [...by.entries()].flatMap(([dir, files]): Row[] => (dir && files.length > 2
+    ? [{ key: dir, name: dir, from: null, to: null, files }]
+    : files.map((f) => ({ key: f, name: f, from: null, to: null, files: null }))));
+}
+
+function RemedyCard({ type, cs, i }: { type: string; cs: any[]; i: number }) {
+  const [open, setOpen] = useState(false);
+  const [dirOpen, setDirOpen] = useState<string | null>(null);
+  const m = REMEDY[type] ?? REMEDY.escalate;
+  const rows = rowsFor(type, cs);
+  const jumps = cs.map((c) => semverJump(c.from, c.to)).filter(Boolean) as ("major" | "minor" | "patch")[];
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring, delay: i * 0.06 }} className="flex flex-col rounded-lg bg-raised p-3">
+      <div className="flex items-center gap-2"><span className={`grid size-7 place-items-center rounded-md ${m.tone}`}><m.Icon size={15} weight="bold" /></span>
+        <span className="text-[12.5px] font-semibold">{m.label}</span><span className="ml-auto font-mono text-[12px] text-faint">×{cs.length}</span></div>
+      <p className="mt-2 text-[11.5px] leading-snug text-muted">{m.what}</p>
+      {jumps.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1 text-[10.5px]">{(["major", "minor", "patch"] as const).map((j) => {
+          const n = jumps.filter((x) => x === j).length;
+          return n ? <span key={j} className={`rounded px-1.5 py-0.5 font-medium ${JUMP_TONE[j]}`} title={j === "major" ? "may break the app: validation decides" : ""}>{n} {j}</span> : null;
+        })}</div>)}
+      <ul className="mt-2 space-y-0.5 font-mono text-[11px]">{(open ? rows : rows.slice(0, SHOW)).map((r) => (
+        <li key={r.key}>
+          {r.files ? (
+            <button onClick={() => setDirOpen(dirOpen === r.key ? null : r.key)} className="flex w-full items-center gap-1.5 text-left hover:text-ink">
+              <FolderSimple size={12} className="shrink-0 text-faint" /><span className="truncate">{r.name}</span><span className="ml-auto shrink-0 font-sans text-faint">{r.files.length} files {dirOpen === r.key ? "▴" : "▾"}</span></button>
+          ) : (
+            <div className="flex items-center gap-1.5"><span className="truncate">{r.name}</span>
+              {r.to ? <span className="ml-auto shrink-0 text-ok">{r.from} → {r.to}</span> : null}
+              {r.to && semverJump(r.from, r.to) === "major" ? <span className="shrink-0 rounded bg-crit/10 px-1 font-sans text-[9.5px] text-crit">major</span> : null}</div>)}
+          {r.files && dirOpen === r.key && <ul className="ml-4 mt-0.5 space-y-0.5 text-faint">{r.files.map((f) => <li key={f} className="truncate">{f.split("/").pop()}</li>)}</ul>}
+        </li>))}</ul>
+      {rows.length > SHOW && <button onClick={() => setOpen((x) => !x)} className="mt-2 self-start text-[11.5px] text-accent hover:underline">{open ? "Show fewer" : `Show all ${rows.length}`}</button>}
+    </motion.div>);
+}
+
+/** Fix & approve: which remedies this plan uses, the factors that matter for review, then compact cards. */
 export function RemediesUsed({ s }: { s: Sections }) {
   const plan = (s.remediation?.candidates ?? []) as any[];
   if (!plan.length) return null;
   const groups: Record<string, any[]> = {};
   for (const c of plan) (groups[c.type] ??= []).push(c);
+  const entries = Object.entries(groups).sort((a, b) => b[1].length - a[1].length);
+  const jumps = plan.map((c) => semverJump(c.from, c.to)).filter(Boolean);
+  const pkgs = plan.filter((c) => ["upgrade_to_fixed", "override_transitive", "restore_lock_entry"].includes(c.type)).length;
+  const files = (groups.revert_change ?? []).length;
+  const factors: [string, number | string, string][] = [
+    ["changes in one patch", plan.length, ""], ["packages moved to a safe version", pkgs, ""], ["files restored to base", files, files > 10 ? "text-high" : ""],
+    ["packages removed", (groups.remove_package ?? []).length, (groups.remove_package ?? []).length ? "text-crit" : ""],
+    ["major version jumps", jumps.filter((j) => j === "major").length, jumps.some((j) => j === "major") ? "text-crit" : ""],
+    ["escalated to a person", (groups.escalate ?? []).length, ""],
+  ];
   return (
     <section className="panel p-4" aria-labelledby="remedies-h">
       <h2 id="remedies-h" className="text-[13px] font-semibold">Remedies used in this fix <span className="font-normal text-faint">· chosen by rules, no AI</span></h2>
+      <div className="mt-3 flex h-2.5 overflow-hidden rounded-full bg-white/5" role="img" aria-label="share of each remedy">
+        {entries.map(([t, cs]) => <motion.div key={t} title={`${(REMEDY[t] ?? REMEDY.escalate).label}: ${cs.length}`} className={BAR[t] ?? "bg-med"}
+          initial={{ width: 0 }} animate={{ width: `${(cs.length / plan.length) * 100}%` }} transition={spring} />)}
+      </div>
+      <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-muted">{entries.map(([t, cs]) => (
+        <span key={t} className="flex items-center gap-1"><span className={`size-2 rounded-sm ${BAR[t] ?? "bg-med"}`} />{cs.length} {(REMEDY[t] ?? REMEDY.escalate).short.toLowerCase()}</span>))}</div>
+      <dl className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">{factors.map(([k, v, tone]) => (
+        <div key={k} className="rounded-lg bg-canvas/50 px-3 py-2 ring-1 ring-line"><dd className={`font-mono text-[18px] tabular-nums ${tone}`}>{v}</dd><dt className="text-[10.5px] leading-tight text-faint">{k}</dt></div>))}</dl>
+      {files > 10 && <p className="mt-2 text-[11.5px] text-high">Many files are restored to the base version. This usually means the pull request's base branch is far behind (the comparison includes unrelated commits). Check the PR's base before approving.</p>}
       <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {Object.entries(groups).map(([type, cs], i) => {
-          const m = REMEDY[type] ?? REMEDY.escalate;
-          return (
-            <motion.div key={type} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring, delay: i * 0.06 }} className="rounded-lg bg-raised p-3">
-              <div className="flex items-center gap-2"><span className={`grid size-7 place-items-center rounded-md ${m.tone}`}><m.Icon size={15} weight="bold" /></span>
-                <span className="text-[12.5px] font-semibold">{m.label}</span><span className="ml-auto font-mono text-[12px] text-faint">×{cs.length}</span></div>
-              <p className="mt-2 text-[11.5px] text-muted">{m.what}</p>
-              <ul className="mt-2 space-y-0.5 font-mono text-[11px]">{cs.map((c) => (
-                <li key={c.id} className="truncate">{c.package ?? c.file}{c.to ? <span className="text-ok"> {c.from} → {c.to}</span> : null}</li>))}</ul>
-            </motion.div>);
-        })}
+        {entries.map(([type, cs], i) => <RemedyCard key={type} type={type} cs={cs} i={i} />)}
       </div>
     </section>);
 }

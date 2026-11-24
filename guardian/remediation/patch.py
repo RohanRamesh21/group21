@@ -19,7 +19,7 @@ import tarfile
 from pathlib import Path
 
 PUBLIC_REGISTRY = "https://registry.npmjs.org/"
-APPLY_ORDER = {"revert_change": 0, "remove_package": 1, "upgrade_to_fixed": 2, "override_transitive": 3}
+APPLY_ORDER = {"revert_change": 0, "restore_lock_entry": 1, "remove_package": 2, "upgrade_to_fixed": 3, "override_transitive": 4}
 
 
 def _git(repo: Path, *args: str, check: bool = True, **kw) -> subprocess.CompletedProcess:
@@ -70,6 +70,8 @@ def _apply(work: Path, repo: Path, base: str, c: dict) -> dict:
         if target.exists():
             target.unlink()
         return {"status": "applied", "detail": f"{rel} did not exist in base: removed"}
+    if t == "restore_lock_entry":
+        return _restore_lock_entry(work, repo, base, c)
     pj = work / "package.json"
     if not pj.exists():
         return {"status": "failed", "detail": "no root package.json"}
@@ -88,6 +90,34 @@ def _apply(work: Path, repo: Path, base: str, c: dict) -> dict:
     write_json_like(pj, data)
     r = _npm(work, "install")
     return {"status": "applied" if r.returncode == 0 else "failed", "detail": (r.stderr or r.stdout)[-400:]}
+
+
+def _restore_lock_entry(work: Path, repo: Path, base: str, c: dict) -> dict:
+    """Put back the base commit's resolved URL and integrity for every lockfile entry of this package at this version.
+    Refused (nothing changed) when the base has no entry with the same version: then it is not a pure source swap."""
+    r = _git(repo, "show", f"{base}:package-lock.json", check=False)
+    lock = work / "package-lock.json"
+    if r.returncode != 0 or not lock.exists():
+        return {"status": "failed", "detail": "no package-lock.json in the base commit or the change"}
+    old_pk = json.loads(r.stdout).get("packages") or {}
+    data = json.loads(lock.read_text())
+    pk = data.get("packages") or {}
+    name, ver = c["package"], c["version"]
+    keys = [k for k, e in pk.items() if (k == f"node_modules/{name}" or k.endswith(f"/node_modules/{name}")) and e.get("version") == ver]
+    restored = []
+    for k in keys:
+        b = old_pk.get(k)
+        if b and b.get("version") == ver:
+            for field in ("resolved", "integrity"):
+                if field in b:
+                    pk[k][field] = b[field]
+                else:
+                    pk[k].pop(field, None)
+            restored.append(k)
+    if not restored:
+        return {"status": "failed", "detail": f"the base commit has no {name}@{ver} entry to restore; a person must decide"}
+    write_json_like(lock, data)
+    return {"status": "applied", "detail": f"restored resolved + integrity from base for {', '.join(restored)}"}
 
 
 def lock_entry_changes(old_text: str, new_text: str) -> dict:

@@ -43,7 +43,9 @@ export function Report({ s, project }: { s: Sections; project: string | null }) 
     <div className="flex flex-col gap-4">
       <SectionHead n={6} title="Guardian report" sub="One evidence pack built from this run's files: the same model this dashboard shows. Every section says what was checked and what could not be checked."
         right={<><a href={`/api/report${q(project)}${sep}fmt=html`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-lg bg-accent px-3 py-1.5 text-[12.5px] font-medium text-white hover:brightness-110"><FileArrowDown /> Open HTML report</a>
-          <a href={`/api/report${q(project)}${sep}fmt=json`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] text-muted ring-1 ring-line hover:text-ink"><FileCode /> JSON</a></>} />
+          <a href={`/api/report${q(project)}${sep}fmt=json`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] text-muted ring-1 ring-line hover:text-ink"><FileCode /> JSON</a>
+          <a href={`/api/report${q(project)}${sep}fmt=html`} download={`guardian-report-${project ?? "run"}.html`} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] text-muted ring-1 ring-line hover:text-ink"><FileArrowDown /> Download HTML</a>
+          <a href={`/api/report${q(project)}${sep}fmt=json`} download={`guardian-report-${project ?? "run"}.json`} className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] text-muted ring-1 ring-line hover:text-ink"><FileArrowDown /> Download JSON</a></>} />
       <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-5">
         {Object.keys(s).map((k, i) => {
           const v = s[k] ?? {};

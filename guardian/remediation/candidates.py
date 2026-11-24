@@ -16,6 +16,7 @@ from guardian.remediation.versions import jump, smallest_safe
 
 ROOT = Path(__file__).resolve().parents[2]
 REG_CACHE = ROOT / ".cache" / "registry"
+SOURCE_TAMPER_TYPES = {"untrusted_source", "lockfile_tamper"}  # where it comes from / its hash, not what it is
 HARD_TYPES = {"typosquat", "untrusted_source", "lockfile_tamper", "new_install_script", "install_script", "malicious",
               "unresolvable_dependency"}  # new_dependency is informational, not hard
 CONFIG_TYPES = {"source_change", "sensitive_file_change", "extra_index_url", "modified_lockfile"}
@@ -103,6 +104,14 @@ def _package_candidate(name: str, ver: str, group: list[dict], report: dict, src
                                    + (" and a known-malware record" if malicious else "") + "; remove it",
                          compatibility={"note": "nothing in the base revision depends on it" if added else "check usages before removing"},
                          rollback="git revert the fix commit (restores package.json and package-lock.json)")
+        if types <= SOURCE_TAMPER_TYPES:
+            # same package and version as before, only its download source / integrity hash changed: put back the
+            # lockfile entry the base commit had (the reviewed state). No new version, nothing guessed.
+            return _base("restore_lock_entry", group, package=name, version=ver,
+                         rationale=f"{name}@{ver} existed before this change; the change only re-pointed where it is "
+                                   "downloaded from and its integrity hash, so restore its lockfile entry from the base commit",
+                         compatibility={"note": "same version as before: no code change"},
+                         rollback="git revert the fix commit (restores the PR's package-lock.json entry)", lock_changes=1, rollback_ease=1)
         return _base("escalate", group, package=name, version=ver,
                      rationale="an existing package shows hard supply-chain signals; a human must choose between pinning and removal",
                      rollback="none needed (no change applied)")

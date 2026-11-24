@@ -1,7 +1,7 @@
 # Validation profile for Uptime Kuma (GUARDIAN_FINAL_PLAN.md §13.3). Versioned and hashed: the hash is bound into
 # every approval, so changing this file invalidates existing approvals.
 name: uptime-kuma
-version: 4
+version: 5   # v5: baseline + candidate in parallel, verified reuse of the native sqlite3 build
 repos: [kirankishoreV-07/uptime-kuma]   # the demo fork (default branch guardian-demo = upstream 2.5.12)
 image: node:20-bookworm          # resolved to a digest at run time and recorded
 workdir: /work
@@ -31,6 +31,8 @@ stages:
         version: "15.1.6"
         integrity: "sha512-cVf7hcMrfywYnycatLvorngTFpL3BSWvEy7/NrEfcTyQX8xxj9fdeD553oCTv5fIAk85fluo6mzPq89V3YzrVA=="
         cmd: npm rebuild @louislam/sqlite3 --build-from-source --foreground-scripts
+        # the compiled module; reused when version, integrity, image digest and command are identical (runner.run_hooks)
+        outputs: [lib/binding]
   - id: build
     required: true
     timeout: 900

@@ -27,6 +27,14 @@ HUMAN_TIMEOUT = 120  # seconds; after that the policy answer is used and the aud
 
 app = FastAPI(title="Supply Chain Guardian")
 
+
+@app.on_event("startup")
+def _clean_orphaned_sandboxes() -> None:
+    """A fresh server process runs no validation yet: any guardian-val-* container is left over from a stopped one."""
+    import threading
+    from guardian.validation.runner import remove_orphans
+    threading.Thread(target=remove_orphans, daemon=True).start()
+
 from guardian.scoring.ahp_api import router as ahp_router  # noqa: E402  AI-advised AHP: propose -> referee -> human approves
 
 app.include_router(ahp_router)
@@ -386,7 +394,7 @@ def fix_plan_review(req: FixReq):
         raise HTTPException(404, "no fix plan yet")
     plan = json.loads(f.read_text())
     plan["review"] = review(plan)
-    if plan["review"]["status"] == "done":
+    if plan["review"]["status"] in ("done", "partial"):
         plan["pending"] = [p for p in plan.get("pending", []) if "explanations" not in p]
     f.write_text(json.dumps(plan, indent=1))
     return plan["review"]
@@ -494,6 +502,8 @@ class ValidateReq(BaseModel):
 
 
 _VALIDATING: dict[str, str] = {}
+_VAL_PROGRESS: dict[str, dict] = {}  # per-lane progress of a running validation
+_VAL_LOCK = __import__("threading").Lock()
 stop_session_flags: dict[str, bool] = {}  # run folder -> Stop pressed (agents and validation check it between steps)
 
 
@@ -517,10 +527,15 @@ def validate_start(req: ValidateReq):
     profile = _profile_of(req.project, req.profile)
     _gh_event(req.project, "validation_started", {"profile": profile})
 
+    from guardian.validation.validate import progress_update
+    _VAL_PROGRESS[key] = {}
+
     def log(m):
         if stop_session_flags.get(key):
             raise SessionStopped()  # Stop pressed: leave at the next step (containers are removed by run_profile)
-        _VALIDATING[key + ":msg"] = m
+        with _VAL_LOCK:  # called from the parallel sandbox / rescan threads
+            _VALIDATING[key + ":msg"] = m
+            _VAL_PROGRESS[key] = progress_update(_VAL_PROGRESS.get(key, {}), m)
 
     def work():
         try:
@@ -547,7 +562,10 @@ def validation_get(project: str | None = None):
     state = _VALIDATING.get(str(out))
     if not f.exists():
         if state:
-            return {"status": state, "message": _VALIDATING.get(str(out) + ":msg")}
+            return {"status": state, "message": _VALIDATING.get(str(out) + ":msg"), "progress": _VAL_PROGRESS.get(str(out), {})}
+        if (out / "validation").exists():  # work started by an earlier server process, which was stopped mid-run
+            return {"status": "interrupted",
+                    "message": "Validation stopped before finishing: the Guardian server restarted. Run it again."}
         raise HTTPException(404, "no validation yet")
     return {**json.loads(f.read_text()), "status": state or "done"}
 
@@ -610,7 +628,7 @@ def _fixer(out: Path, emit) -> None:
             plan_mod.propose(Path(h["repo_path"]), h.get("base_sha"), h["head_sha"], out, include=[])
         plan = json.loads(f.read_text())
         plan["review"] = rv.review(plan)
-        if plan["review"]["status"] == "done":
+        if plan["review"]["status"] in ("done", "partial"):
             plan["pending"] = [p for p in plan.get("pending", []) if "explanations" not in p]
         f.write_text(json.dumps(plan, indent=1))
         emit({"agent": "fixer", "state": plan["review"]["status"], "candidates": len(plan.get("candidates", [])),

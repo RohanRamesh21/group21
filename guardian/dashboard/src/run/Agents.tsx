@@ -51,6 +51,32 @@ function Connector({ flow, done }: { flow: boolean; done: boolean }) {
     </div>);
 }
 
+const CASE_DOT: Record<string, string> = { done: "bg-ok", running: "bg-accent", partial: "bg-high", waiting: "bg-high", failed: "bg-crit", idle: "bg-white/25", queued: "bg-white/25" };
+const CASE_WORD: Record<string, string> = { done: "done", running: "working", partial: "partial", waiting: "waiting", failed: "failed", idle: "not investigated", queued: "queued" };
+const CASE_RANK: Record<string, number> = { running: 0, failed: 1, partial: 2, waiting: 2, queued: 3, idle: 3, done: 4 };
+const shortName = (x: string) => (x.includes("/") ? `…/${x.split("/").pop()}` : x);
+
+/* Many cases (a large PR) must not turn the card into a wall of names: a status bar with counts, the cases that
+   need attention first, and a "+N more" that opens the full list below. */
+function CaseSummary({ cases }: { cases: { id: string; component: string; state: State }[] }) {
+  if (!cases.length) return null;
+  const counts = cases.reduce((m: Record<string, number>, c) => ({ ...m, [c.state]: (m[c.state] ?? 0) + 1 }), {});
+  const top = [...cases].sort((a, b) => (CASE_RANK[a.state] ?? 5) - (CASE_RANK[b.state] ?? 5)).slice(0, 4);
+  return (
+    <div className="mt-2.5">
+      <div className="flex h-1.5 overflow-hidden rounded-full bg-white/5">{Object.entries(counts).map(([k, n]) => (
+        <motion.span key={k} className={CASE_DOT[k] ?? "bg-white/25"} initial={{ width: 0 }} animate={{ width: `${(n / cases.length) * 100}%` }} transition={spring} />))}</div>
+      <div className="mt-1.5 flex flex-wrap gap-x-2.5 gap-y-0.5 text-[10.5px] text-faint tabular-nums">{Object.entries(counts).map(([k, n]) => (
+        <span key={k} className="flex items-center gap-1"><span className={`size-1.5 rounded-full ${CASE_DOT[k] ?? "bg-white/25"}`} />{n} {CASE_WORD[k] ?? k}</span>))}</div>
+      <ul className="mt-2 space-y-1">{top.map((c) => (
+        <li key={c.id} className="flex items-center gap-1.5 text-[10.5px]" title={c.component}>
+          <span className="relative size-1.5 shrink-0">{c.state === "running" && <span className="ping-soft absolute inset-0 rounded-full bg-accent" />}
+            <span className={`absolute inset-0 rounded-full ${CASE_DOT[c.state] ?? "bg-white/25"}`} /></span>
+          <span className="truncate font-mono text-muted">{shortName(c.component)}</span></li>))}</ul>
+      {cases.length > top.length && <p className="mt-1.5 text-[10.5px] text-accent">+{cases.length - top.length} more · details below</p>}
+    </div>);
+}
+
 function AgentNode({ id, state, metric, metricLabel, children, selected, onClick, i }: {
   id: AgentId; state: State; metric?: number | string; metricLabel?: string; children?: React.ReactNode; selected: boolean; onClick: () => void; i: number;
 }) {
@@ -96,21 +122,40 @@ function Detail({ id, s, inv, findings, onPick }: { id: AgentId; s: Sections; in
   const byId = new Map(findings.map((f) => [f.id, f]));
   const empty = <p className="text-[12.5px] text-muted">This agent hasn't run for this change yet. Press <b className="text-ink">Run the 4 agents</b>.</p>;
   const m = META[id];
+  const [all, setAll] = useState(false);
+  const LIMIT = 6;
+  const cases: any[] = inv?.cases ?? [];
+  const sevRank = (c: any) => { const lv = c.finding_ids.map((x: string) => byId.get(x)?.level); return ["critical", "high", "medium", "low", "info"].findIndex((r) => lv.includes(r)) + 1 || 9; };
+  const AR: Record<string, number> = { malicious: 0, vulnerable: 1, risky_config: 2, unclear: 3, benign: 4 };
+  const shown = (list: any[]) => (all ? list : list.slice(0, LIMIT));
+  const more = (n: number) => n > LIMIT && (
+    <button onClick={() => setAll((x) => !x)} className="mt-3 rounded-md px-2.5 py-1 text-[12px] text-accent ring-1 ring-accent/40 transition hover:bg-accent/10">
+      {all ? "Show fewer" : `Show all ${n} cases`}</button>);
+  const tally = (pairs: [string, number][]) => (
+    <div className="mt-3 flex flex-wrap gap-1.5 text-[11.5px]">{pairs.filter(([, n]) => n > 0).map(([k, n]) => (
+      <span key={k} className="rounded-md bg-raised px-2 py-0.5 text-muted ring-1 ring-line"><b className="font-mono text-ink">{n}</b> {k}</span>))}</div>);
   const body = (() => {
     if (id === "lead") return !inv?.cases ? empty : (
       <div>
         <p className="text-[12.5px] text-muted">The Lead is rule-based (no AI, no tokens). It took the {inv.cases.reduce((n: number, c: any) => n + c.finding_ids.length, 0)} findings this PR introduced and grouped them by component into {inv.cases.length} case(s), assigning one Investigator to each, in parallel. Older findings are reported but not investigated.</p>
-        <ul className="mt-3 grid gap-2 md:grid-cols-2">{inv.cases.map((c: any) => {
+        {tally((["critical", "high", "medium", "low", "info"] as Risk[]).map((r) => [`${r}`, cases.filter((c) => ["critical", "high", "medium", "low", "info"][sevRank(c) - 1] === r).length]))}
+        <ul className="mt-3 grid gap-2 md:grid-cols-2">{shown([...cases].sort((a, b) => sevRank(a) - sevRank(b))).map((c: any) => {
           const lv = (c.finding_ids.map((x: string) => byId.get(x)?.level).filter(Boolean) as Risk[]);
           const top = (["critical", "high", "medium", "low", "info"] as Risk[]).find((r) => lv.includes(r)) ?? "info";
           return (<li key={c.case_id} className="rounded-lg bg-raised p-3 text-[12px]">
             <div className="flex items-center gap-2"><RiskTag risk={top} /><span className="font-mono text-[12.5px]">{c.component}</span><span className="ml-auto font-mono text-[10.5px] text-faint">{c.case_id}</span></div>
-            <ul className="mt-2 space-y-0.5 font-mono text-[11px] text-muted">{c.finding_ids.map((x: string) => <li key={x} className="truncate">· {x}</li>)}</ul>
+            <ul className="mt-2 space-y-0.5 font-mono text-[11px] text-muted">{c.finding_ids.slice(0, 3).map((x: string) => <li key={x} className="truncate">· {x}</li>)}</ul>
+            {c.finding_ids.length > 3 && <p className="mt-0.5 text-[11px] text-faint">+{c.finding_ids.length - 3} more finding(s)</p>}
           </li>);
         })}</ul>
+        {more(cases.length)}
       </div>);
     if (id === "investigator") return !inv?.cases ? empty : (
-      <ul className="grid gap-3 lg:grid-cols-2">{inv.cases.map((c: any, i: number) => (
+      <div>
+      {tally([["malicious", cases.filter((c) => c.assessment === "malicious").length], ["vulnerable", cases.filter((c) => c.assessment === "vulnerable").length],
+        ["risky config", cases.filter((c) => c.assessment === "risky_config").length], ["unclear", cases.filter((c) => c.assessment === "unclear").length],
+        ["benign", cases.filter((c) => c.assessment === "benign").length], ["not investigated (budget / limit)", cases.filter((c) => c.status !== "done").length]])}
+      <ul className="mt-3 grid gap-3 lg:grid-cols-2">{shown([...cases].sort((a, b) => (AR[a.assessment] ?? 5) - (AR[b.assessment] ?? 5) || sevRank(a) - sevRank(b))).map((c: any, i: number) => (
         <motion.li key={c.case_id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring, delay: i * 0.06 }} className="rounded-xl bg-raised p-3.5">
           <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
             <span className="font-mono">{c.component}</span>
@@ -124,7 +169,9 @@ function Detail({ id, s, inv, findings, onPick }: { id: AgentId; s: Sections; in
           {c.innocent_explanation && <p className="mt-2 text-[11.5px] text-faint"><b className="font-medium text-muted">Innocent explanation weighed:</b> {c.innocent_explanation}</p>}
           {c.open_questions?.length > 0 && <ul className="mt-2 space-y-0.5 text-[11.5px]">{c.open_questions.map((oq: string, k: number) => <li key={k} className="flex gap-1.5 text-info"><Question className="mt-0.5 shrink-0" />{oq}</li>)}</ul>}
           {c.error && c.status !== "done" && <p className="mt-1 text-[11px] text-faint">{c.error}</p>}
-        </motion.li>))}</ul>);
+        </motion.li>))}</ul>
+      {more(cases.length)}
+      </div>);
     if (id === "verifier") return !inv?.verifier || inv.verifier.status === "skipped" ? empty : (
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <ul className="space-y-2">{inv.verifier.challenges.map((x: any, k: number) => (
@@ -140,23 +187,46 @@ function Detail({ id, s, inv, findings, onPick }: { id: AgentId; s: Sections; in
             {inv.verifier.missed_risks.length === 0 && <li>None reported.</li>}</ul>
         </div>
       </div>);
-    if (id === "fixer") return rem.status === "not_started" ? empty : (
-      <div className="grid gap-3 lg:grid-cols-2">
-        <div>
-          <h4 className="flex items-center gap-2 text-[12px] font-semibold">Computed fix <Badge kind="rules" /></h4>
-          <ul className="mt-2 space-y-2">{(rem.candidates ?? []).map((c: any) => (
-            <li key={c.id} className="rounded-lg bg-raised p-3 text-[12px]"><span className="rounded bg-accent/12 px-1.5 py-0.5 font-mono text-[10.5px] text-accent">{c.type}</span>
-              <span className="ml-2 font-mono">{c.package ?? c.file}{c.to ? ` ${c.from} → ${c.to}` : ""}</span><p className="mt-1 text-muted">{c.rationale}</p></li>))}</ul>
-        </div>
-        <div>
-          <h4 className="flex items-center gap-2 text-[12px] font-semibold">Fixer's explanation and Verifier's concerns <Badge kind="ai" /></h4>
-          {review?.status === "done" ? (<ul className="mt-2 space-y-2 text-[12px]">
-            {review.explanations.map((x: any, k: number) => <li key={"e" + k} className="rounded-lg bg-raised p-3 text-muted">{x.text}</li>)}
-            {review.challenges.map((x: any, k: number) => <li key={"c" + k} className="rounded-lg bg-high/6 p-3 text-muted ring-1 ring-high/20">⚑ {x.concern}</li>)}
-          </ul>) : <p className="mt-2 text-[12px] text-muted">Not reviewed yet.</p>}
-          <button onClick={() => onPick("fix")} className="mt-3 inline-flex items-center gap-1 text-[12px] text-accent hover:underline">Review the patch and decide <ArrowRight /></button>
-        </div>
-      </div>);
+    if (id === "fixer") {
+      if (rem.status === "not_started") return empty;
+      const all_c: any[] = rem.candidates ?? [];
+      const act = all_c.filter((c) => c.type !== "escalate");
+      const nameOf: Record<string, string> = Object.fromEntries(all_c.map((c) => [c.id, c.package ?? c.file ?? c.id]));
+      const byType = all_c.reduce((m: Record<string, number>, c) => ({ ...m, [c.type]: (m[c.type] ?? 0) + 1 }), {});
+      const cov = review?.coverage;
+      const ok = review?.status === "done" || review?.status === "partial";
+      return (
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div>
+            <h4 className="flex items-center gap-2 text-[12px] font-semibold">Computed fix <Badge kind="rules" /></h4>
+            {tally(Object.entries(byType).map(([t, n]) => [t.replace(/_/g, " "), n as number]))}
+            <ul className="mt-2 space-y-1.5">{shown(act).map((c: any) => (
+              <li key={c.id} className="rounded-lg bg-raised px-3 py-2 text-[12px]">
+                <span className="rounded bg-accent/12 px-1.5 py-0.5 font-mono text-[10.5px] text-accent">{c.type.replace(/_/g, " ")}</span>
+                <span className="ml-2 font-mono">{c.package ?? c.file}{c.to ? ` ${c.from} → ${c.to}` : ""}</span></li>))}</ul>
+            {act.length > LIMIT && <button onClick={() => setAll((x) => !x)} className="mt-2 text-[11.5px] text-accent hover:underline">{all ? "Show fewer" : `Show all ${act.length} fixes`}</button>}
+            {all_c.length > act.length && <p className="mt-2 text-[11.5px] text-faint">{all_c.length - act.length} item(s) have no safe automatic fix: escalated to a person (listed in Fix & approve).</p>}
+          </div>
+          <div>
+            <h4 className="flex items-center gap-2 text-[12px] font-semibold">Fixer's explanation and Verifier's concerns <Badge kind="ai" /></h4>
+            {cov && (
+              <div className="mt-2 flex flex-wrap gap-1.5 text-[11.5px]">
+                <span className="rounded-md bg-ok/10 px-2 py-0.5 text-ok"><b className="font-mono">{cov.reviewed}</b> of {cov.actionable} fixes AI-reviewed</span>
+                {cov.not_reviewed?.length > 0 && <span className="rounded-md bg-high/10 px-2 py-0.5 text-high"><b className="font-mono">{cov.not_reviewed.length}</b> not reviewed: rule rationale shown</span>}
+                {cov.needs_person > 0 && <span className="rounded-md bg-raised px-2 py-0.5 text-muted ring-1 ring-line"><b className="font-mono">{cov.needs_person}</b> need a person</span>}
+                {cov.retries > 0 && <span className="rounded-md bg-raised px-2 py-0.5 text-muted ring-1 ring-line" title="a refused batch was split into smaller ones and retried">{cov.retries} re-planned batch(es)</span>}
+              </div>)}
+            {ok ? (<ul className="mt-2 space-y-1.5 text-[12px]">
+              {shown(review.explanations).map((x: any, k: number) => <li key={"e" + k} className="rounded-lg bg-raised px-3 py-2 text-muted"><span className="font-mono text-ink">{nameOf[x.candidate_id] ?? x.candidate_id}:</span> {x.text}</li>)}
+              {review.challenges.slice(0, all ? undefined : 4).map((x: any, k: number) => <li key={"c" + k} className="rounded-lg bg-high/6 px-3 py-2 text-muted ring-1 ring-high/20">⚑ <span className="font-mono">{nameOf[x.candidate_id] ?? x.candidate_id}:</span> {x.concern}</li>)}
+              {cov?.not_reviewed?.length > 0 && <li className="text-[11px] text-faint">Not reviewed: {cov.not_reviewed.slice(0, 3).map((x: any) => `${nameOf[x.candidate_id] ?? x.candidate_id} (${x.reason})`).join("; ")}{cov.not_reviewed.length > 3 ? ` +${cov.not_reviewed.length - 3} more` : ""}</li>}
+            </ul>) : review?.status === "unavailable"
+              ? <p className="mt-2 text-[12px] text-high">The model could not be reached for any batch: {review.error}. The computed fix and its rule rationale are unaffected; run the review again from Fix & approve.</p>
+              : <p className="mt-2 text-[12px] text-muted">Not reviewed yet.</p>}
+            <button onClick={() => onPick("fix")} className="mt-3 inline-flex items-center gap-1 text-[12px] text-accent hover:underline">Review the patch and decide <ArrowRight /></button>
+          </div>
+        </div>);
+    }
     if (id === "gatekeeper") {
       if (!inv?.cases) return empty;
       const rej = [...inv.cases.flatMap((c: any) => c.rejected.map((r: any) => ({ ...r, who: `Investigator · ${c.component}` }))),
@@ -274,12 +344,7 @@ export function Agents({ s, project, refresh, onPick }: { s: Sections; project: 
           {ORDER.map((id, i) => (
             <div key={id} className="flex flex-1 items-stretch xl:min-w-0">
               <AgentNode id={id} state={st[id]} metric={metric[id][0]} metricLabel={metric[id][1]} selected={sel === id} onClick={() => setSel(id)} i={i}>
-                {id === "investigator" && caseStates.length > 0 && (
-                  <ul className="mt-2 space-y-1">{caseStates.map((c) => (
-                    <li key={c.id} className="flex items-center gap-1.5 text-[10.5px]">
-                      <span className="relative size-1.5 shrink-0">{c.state === "running" && <span className="ping-soft absolute inset-0 rounded-full bg-accent" />}
-                        <span className={`absolute inset-0 rounded-full ${c.state === "done" ? "bg-ok" : c.state === "running" ? "bg-accent" : c.state === "failed" ? "bg-crit" : "bg-high"}`} /></span>
-                      <span className="truncate font-mono text-muted">{c.component}</span></li>))}</ul>)}
+                {id === "investigator" && <CaseSummary cases={caseStates} />}
               </AgentNode>
               {i < ORDER.length - 1 && <Connector flow={st[ORDER[i + 1]] === "running"} done={st[id] === "done" && st[ORDER[i + 1]] !== "idle"} />}
             </div>))}

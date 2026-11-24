@@ -102,7 +102,9 @@ def test_fix_review_is_tagged_in_the_ledger(monkeypatch):
     seen = {}
     monkeypatch.setattr(rv.llm_client, "chat_json", lambda prompt, **k: (seen.update(k) or {"explanations": [], "challenges": []},
                                                                           {"model": "m", "usage": {}}))
-    rv.review({"candidates": [], "patch": {"patch_sha256": "abc123"}})
+    # one fix that changes something (an empty plan no longer calls the model at all: nothing to explain)
+    rv.review({"candidates": [{"id": "c1", "type": "upgrade_to_fixed", "package": "p", "from": "1.0.0", "to": "1.0.1"}],
+               "patch": {"patch_sha256": "abc123"}})
     assert seen["purpose"] == "fix_review" and seen["run_id"] == "fix-abc123"
 
 

@@ -27,9 +27,18 @@ def status_for(h: dict, context: str = "guardian/scan") -> dict:
 def validation_status(v: dict) -> dict:
     """Result of validating an approved fix, as the separate guardian/validation status."""
     g = v.get("gate") or {}
-    if v.get("status") != "executed":
-        return {"state": "error", "context": "guardian/validation", "description": f"Validation not run: {v.get('reason') or v.get('status')}"[:140]}
+    # validate() records "executed": True; the report view uses "status": "executed". Accept both.
+    if not (v.get("executed") or v.get("status") == "executed"):
+        why = v.get("reason") or next(iter(g.get("reasons") or []), None) or v.get("status") or "not executed"
+        return {"state": "error", "context": "guardian/validation", "description": f"Validation not run: {why}"[:140]}
     if g.get("verified"):
+        vc = v.get("verdict_change") or {}
+        b, a = vc.get("before") or {}, vc.get("after") or {}
+        if b.get("verdict") and a.get("verdict"):
+            ai = a.get("introduced") or {}
+            desc = (f"Fix verified: {b['verdict'].upper()} → {a['verdict'].upper()}. Fixed PR adds "
+                    f"{ai.get('vulnerabilities', 0)} vulnerabilities, {ai.get('malware_suspicious', 0)} malware; built, tested, rescanned")
+            return {"state": "success", "context": "guardian/validation", "description": desc[:140]}
         return {"state": "success", "context": "guardian/validation", "description": "Fix verified: built, tested and rescanned in isolation"}
     return {"state": "failure", "context": "guardian/validation", "description": f"Fix not verified ({g.get('validation', 'failed')})"[:140]}
 
