@@ -1,4 +1,4 @@
-"""AI-advised AHP (Day 2, W4): an AI PROPOSES the pairwise matrix for a repository's context; code and a human decide.
+"""AI-advised AHP: an AI PROPOSES the pairwise matrix for a repository's context; code and a human decide.
 
     AI proposes, deterministic math disposes, a human approves.
 
@@ -25,7 +25,7 @@ from pathlib import Path
 
 from guardian.scoring.score import AHP, AHP_MATRIX, CRITERIA, ORDER, W, ahp
 
-MAX_DRIFT = 0.10  # max |weight - baseline weight| (absolute, i.e. 10 percentage points); team decision D3
+MAX_DRIFT = 0.10  # max |weight - baseline weight| (absolute, i.e. 10 percentage points); 
 SAATY = sorted({float(k) for k in range(1, 10)} | {1 / k for k in range(2, 10)})
 CELLS = [(CRITERIA[i], CRITERIA[j]) for i in range(len(CRITERIA)) for j in range(i + 1, len(CRITERIA))]
 DEPLOYMENTS = ["saas", "on_prem", "embedded", "library", "internal_tool", "unknown"]
@@ -47,7 +47,7 @@ class MatrixError(ValueError):
 def now() -> str:
     return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
-
+# Taking ground truth data from the repositories 
 # ----------------------------------------------------------------------------- profile
 def repo_facts(src: Path | None) -> list[dict]:
     """Deterministic facts from the project tree (read-only). Each fact names the file it came from."""
@@ -115,39 +115,47 @@ def matrix_from_cells(cells: list[dict]) -> list[list[float]]:
         m[i][j], m[j][i] = float(c["value"]), 1.0 / float(c["value"])
     return m
 
-
+# The safety Firewall which checks whether the proposed changesacceptable based on the facts and previous baseline are 
 def check_matrix(cells: list[dict], profile: dict, max_drift: float = MAX_DRIFT) -> dict:
     """Validate a proposal. Returns {matrix, ahp, weights, drift}; raises MatrixError with the reason otherwise."""
+    # Reject explicilty if the ai sends us only 9 cells or 11 cells 
     if not isinstance(cells, list) or len(cells) != len(CELLS):
         raise MatrixError(f"submit exactly {len(CELLS)} cells (every pair above the diagonal), got {len(cells) if isinstance(cells, list) else 'none'}.")
     seen = set()
     cited = json.dumps(profile, sort_keys=True).lower()
     for c in cells:
+        # Check for no duplicate or invalid cells
         key = (c.get("row"), c.get("col"))
         if key not in CELLS:
             raise MatrixError(f"cell {key} is not above the diagonal in the order {CRITERIA}; use (row, col) with row before col.")
         if key in seen:
             raise MatrixError(f"cell {key} appears twice.")
         seen.add(key)
+        # checks for strict evaluations whether the value given by ai is strictly based on satty's table 
         v = c.get("value")
         if not isinstance(v, (int, float)) or isinstance(v, bool) or not any(abs(v - s) < 1e-3 for s in SAATY):
             raise MatrixError(f"cell {key}: value {v!r} is not on Saaty's scale (1..9 or 1/2..1/9).")
         c["value"] = next(s for s in SAATY if abs(v - s) < 1e-3)
+        # To prevent anti halucination and prompt injection shield  we use this which will be used to write exp from 1 to 300 char 
         reason = str(c.get("reason") or "").strip()
         if not reason or len(reason) > 300:
             raise MatrixError(f"cell {key}: a reason of 1-300 characters is required.")
         if "<untrusted-data" in reason.lower():
             raise MatrixError(f"cell {key}: do not paste untrusted content into a reason (C5).")
+        
+        # Can cite only real repo fact 
         for name, ver in NAME_VERSION.findall(reason.lower()):
             if f"{name}@{ver.rstrip('.-+')}" not in cited:
                 raise MatrixError(f"cell {key}: '{name}@{ver}' does not appear in the profile (C1: reasons may cite only profile facts).")
         for adv in ADVISORY_ID.findall(reason):
             raise MatrixError(f"cell {key}: advisory ids do not belong in a weighting reason ({adv}).")
         c["reason"] = reason
+    # This part does the mathematical calculation 
     m = matrix_from_cells(cells)
     a = ahp(m, CRITERIA)
     if not a["consistent"]:
         raise MatrixError(f"the matrix is inconsistent: consistency ratio {a['consistency_ratio']} must be below 0.10. Make the judgements agree with each other (A>B and B>C implies A>C).")
+    # Drift boundary conditions 
     drift = {k: round(a["weights"][k] - W[k], 4) for k in CRITERIA}
     worst = max(drift, key=lambda k: abs(drift[k]))
     if abs(drift[worst]) > max_drift + 1e-9:
@@ -164,9 +172,11 @@ def rescore(scores: dict, weights: dict, info: dict | None = None) -> dict:
     """The stored scores recomputed with other AHP weights: score = 100 * sum(w_k * v_k) from the stored factor values.
 
     Equivalent to score_report(..., weights=weights). Levels, decisions, floors and the verdict are untouched (asserted)."""
+    #Taking the copy before we change the weight 
     out = copy.deepcopy(scores)
     snap = [(f["id"], f["level"], f["decision"], f["floor"]) for f in out["findings"]]
     verdict = out["verdict"]
+    # iterates and find the baseline values to update them and sort it 
     for f in out["findings"]:
         rows = []
         for r in f["contributions"]:
@@ -174,6 +184,7 @@ def rescore(scores: dict, weights: dict, info: dict | None = None) -> dict:
         f["contributions"] = rows
         f["score"] = round(sum(r["points"] for r in rows), 1)
     out["findings"].sort(key=_sort_key)
+    #Montecarlo checking for stabiRank Stability in order to stop adviosr from exploting the
     if any("rank_stability" in f for f in out["findings"]):
         from guardian.scoring.contextual import sensitivity
         rs = sensitivity.rank_stability(out["findings"], weights=weights)
@@ -428,6 +439,7 @@ def propose(store: AhpStore, scores: dict, src: Path | None, confirmed: dict | N
             raise AdvisorError(f"unknown replay preset {key}")
         script = {"scoring_advisor": [[["get_profile", {}], ["get_baseline", {}]], [["submit_matrix", {"cells": REPLAY_PRESETS[key]}]], []]}
         be, source = ScriptedBackend(script, lambda o: o), f"scripted replay ({key}): no LLM was called"
+    # Here only the agent is involked when we click the ui 
     elif mode == "agent":
         be, source = backend or make_backend(config.provider()), "scoring_advisor agent"
     else:
