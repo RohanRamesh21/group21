@@ -41,11 +41,12 @@ export function CaseBoard({ state, onEvidence }: { state: RunState | null; onEvi
       ))}
 
       <LayoutGroup>
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 md:grid-cols-4">
+        <div className="flex flex-wrap gap-3">
           {COLS.map((col) => {
             const fs = findings.filter(([, f]) => col.match.includes(f.status));
+            if (!fs.length) return null;
             return (
-              <div key={col.key} className="flex min-h-24 flex-col gap-2 rounded-lg bg-canvas/40 p-2">
+              <div key={col.key} className="flex min-w-0 flex-[1_1_250px] flex-col gap-2 rounded-lg bg-canvas/40 p-2">
                 <div className={`flex items-center justify-between px-1 text-[12px] ${col.tone}`}>
                   <span>{col.title}</span><span className="font-mono">{fs.length}</span>
                 </div>
@@ -69,6 +70,7 @@ export function CaseBoard({ state, onEvidence }: { state: RunState | null; onEvi
             );
           })}
         </div>
+        {!findings.length && <p className="text-sm text-muted">Investigation findings appear here when available.</p>}
       </LayoutGroup>
     </section>
   );

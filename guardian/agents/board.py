@@ -25,6 +25,9 @@ class Board:
     messages: list[AgentMessage] = field(default_factory=list)
     coverage_required: set[str] = field(default_factory=set)  # surfaces that must be examined (C3)
     coverage_done: set[str] = field(default_factory=set)
+    scan_evidence: dict[str, str] = field(default_factory=dict)
+    review_questions: dict[str, dict] = field(default_factory=dict)
+    focused: bool = False
     required_checks: dict[str, str] = field(default_factory=dict)
     audit: list[dict] = field(default_factory=list)  # every tool call, rejection and floor intervention
     feed: list[dict] = field(default_factory=list)  # audit events and messages in one ordered stream (dashboard)
@@ -127,6 +130,9 @@ class Board:
             "findings": {k: f.model_dump(include={"type", "component", "summary", "hard_signal", "floor", "risk", "label", "status", "evidence_ids"}) for k, f in self.findings.items()},
             "cases": {k: c.model_dump(include={"title", "finding_ids", "verdict", "risk", "resolved"}) for k, c in self.cases.items()},
             "coverage_gaps": self.coverage_gaps(),
+            "focused": self.focused,
+            "scan_evidence": self.scan_evidence.copy(),
+            "review_questions": self.review_questions.copy(),
             "required_checks": self.required_checks.copy(),
             "verdict": self.verdict,
         }

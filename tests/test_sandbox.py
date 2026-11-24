@@ -68,7 +68,7 @@ def test_scan_records_tool_error_when_sandbox_is_missing(monkeypatch, tmp_path):
     from guardian import universal as u
     monkeypatch.setenv("GUARDIAN_SANDBOX", "podman")
     monkeypatch.setattr(sandbox.shutil, "which", lambda b: None)
-    monkeypatch.setattr(u, "osv_api", lambda inv: ([], None))
+    monkeypatch.setattr(u, "osv_api", lambda inv, **_: ([], None))
     (tmp_path / "src").mkdir()
     (tmp_path / "src" / "requirements.txt").write_text("flask==2.0.0\n")
     res = u.scan_tree(tmp_path / "src", tmp_path / "out", "app", "c" * 40)
@@ -83,7 +83,7 @@ def test_tool_errors_are_reported_as_not_checked_never_scored(monkeypatch, tmp_p
     from guardian.scoring import intel
     monkeypatch.setenv("GUARDIAN_SANDBOX", "podman")
     monkeypatch.setattr(sandbox.shutil, "which", lambda b: None)
-    monkeypatch.setattr(u, "osv_api", lambda inv: ([], None))
+    monkeypatch.setattr(u, "osv_api", lambda inv, **_: ([], None))
     monkeypatch.setattr(intel, "epss", lambda cves: ({}, None))
     monkeypatch.setattr(intel, "kev", lambda: ({}, None))
     from guardian import policy, registry_intel

@@ -19,7 +19,7 @@ EXPECTED = {k: v for k, v in json.loads((APPS / "expected.json").read_text()).it
 @pytest.fixture
 def offline(monkeypatch):
     monkeypatch.setattr(u, "run_syft", lambda src, out: ({}, None))
-    monkeypatch.setattr(u, "osv_api", lambda inv: ([], None))
+    monkeypatch.setattr(u, "osv_api", lambda inv, **_: ([], None))
     monkeypatch.setattr(u, "grype_all", lambda sbom: ([], None))
     from guardian.scoring import intel
     monkeypatch.setattr(intel, "epss", lambda cves: ({}, None))

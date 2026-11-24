@@ -36,12 +36,20 @@ Facts recomputed on 2026-11-24 with `guardian check … --base 5aa5dec4 --head s
 | `scenario/s8` | ci: add AI issue triage | workflow feeding issue text to an unpinned third-party AI action | review |
 | `scenario/s9` | fix typo | `.npmrc` redirects the npm registry | block |
 
-The agent Investigation tab still expects older branches `scenario/base` and `scenario/s3-s9` (see HANDOFF).
+To investigate a Uptime Kuma scenario, select its base and head and choose **Scan & investigate**.
 
 ## Flagship apps per language
 
 Used like Uptime Kuma: a popular, containerised application with committed lockfiles and CI, checked **previous release → latest
 release** (`testbed/corpus.yaml`). Facts and results: `docs/TESTING.md` §6; UI test guide: §7.
+
+On the dashboard, open **Demo repositories** and select **Run workflow** next to the release pair. The dashboard shows the
+scan, focused investigation and human review on one page. Open **Risk priority & human approval** to review findings, or
+**Remediation** to review and validate proposed fixes. The picker verifies ancestry using a bounded history fetch when
+the cached copy is shallow.
+
+From the CLI, run `guardian check <repo> --base <ref> --head <ref> --investigate`. Use
+`guardian investigate --report-dir <scan-output>` to investigate a completed scan.
 
 | App | Language | Base (commit) | Head (commit) |
 |---|---|---|---|

@@ -743,7 +743,7 @@ def _osv_get(vid: str) -> dict | None:
     return None
 
 
-def osv_api(inventory: list[dict]) -> tuple[list[dict], str | None]:
+def osv_api(inventory: list[dict], *, checked: list[dict] | None = None) -> tuple[list[dict], str | None]:
     import requests
     comps = {}
     for p in inventory:
@@ -753,18 +753,32 @@ def osv_api(inventory: list[dict]) -> tuple[list[dict], str | None]:
         return [], None
     keys = list(comps)
     hits: dict[tuple, list[str]] = {}
+    error = None
     try:
         for i in range(0, len(keys), 500):
             chunk = keys[i:i + 500]
             body = {"queries": [{"package": {"name": n, "ecosystem": PURL_ECO[e]}, "version": v} for e, n, v in chunk]}
             r = requests.post(OSV_BATCH, json=body, timeout=60)
             r.raise_for_status()
-            for k, res in zip(chunk, r.json().get("results", [])):
-                ids = [v["id"] for v in res.get("vulns", []) or []]
+            results = r.json().get("results")
+            if not isinstance(results, list) or len(results) != len(chunk):
+                raise ValueError("incomplete OSV batch")
+            verified = []
+            batch_hits = {}
+            for (eco, name, version), res in zip(chunk, results):
+                if not isinstance(res, dict) or set(res) - {"vulns"} or not isinstance(res.get("vulns", []), list):
+                    raise ValueError("invalid OSV result")
+                ids = [v["id"] for v in res.get("vulns", [])]
+                if not all(isinstance(vid, str) and vid for vid in ids):
+                    raise ValueError("invalid OSV advisory identifier")
+                verified.append({"ecosystem": eco, "name": name, "version": version, "advisories": ids})
                 if ids:
-                    hits[k] = ids
+                    batch_hits[(eco, name, version)] = ids
+            hits.update(batch_hits)
+            if checked is not None:
+                checked.extend(verified)
     except Exception as e:
-        return [], f"OSV API unreachable: {type(e).__name__}: {str(e)[:160]}"
+        error = f"OSV API lookup incomplete: {type(e).__name__}: {str(e)[:160]}"
     all_ids = sorted({i for ids in hits.values() for i in ids})
     with cf.ThreadPoolExecutor(8) as ex:
         details = dict(zip(all_ids, ex.map(_osv_get, all_ids)))
@@ -786,7 +800,7 @@ def osv_api(inventory: list[dict]) -> tuple[list[dict], str | None]:
                         "severity": "critical" if mal else (level or "medium"), "severity_known": bool(level or mal),
                         "fixed": sorted(set(fixed)), "malicious": mal, "url": f"https://osv.dev/vulnerability/{vid}",
                         "source": "osv", "ecosystem": eco})
-    return out, None
+    return out, error
 
 
 def grype_all(sbom: Path) -> tuple[list[dict], str | None]:
@@ -817,7 +831,9 @@ def grype_all(sbom: Path) -> tuple[list[dict], str | None]:
 def vulnerabilities(inventory: list[dict], sbom: Path, src: Path) -> dict:
     from guardian.vuln.scan import merge, run_osv
     errors = {}
-    osv, err = osv_api(inventory)
+    checked = []
+    queried_at = int(time.time())
+    osv, err = osv_api(inventory, checked=checked)
     if err:
         errors["osv_api"] = err
         for lock in {p["source_file"] for p in inventory if p.get("source_file", "").endswith("package-lock.json")}:
@@ -836,7 +852,7 @@ def vulnerabilities(inventory: list[dict], sbom: Path, src: Path) -> dict:
         p = idx.get((v["name"], v["version"]), {})
         v["direct"], v["runtime"] = bool(p.get("direct")), bool(p.get("runtime"))
         v["ecosystem"], v["source_file"], v["component_key"] = p.get("ecosystem"), p.get("source_file"), p.get("key")
-    return {"vulnerabilities": vulns, "errors": errors,
+    return {"vulnerabilities": vulns, "errors": errors, "osv_queries": checked, "osv_queried_at": queried_at,
             "counts": {"osv": len(osv), "grype": len(grype), "merged": len(vulns),
                        "both": sum(1 for v in vulns if len(v["sources"]) == 2),
                        "packages": len({(v["name"], v["version"]) for v in vulns}),
@@ -1243,7 +1259,12 @@ def check_any(repo: Path, base: str | None, head: str, out: Path, app: str, log=
     report = {"headline": headline, "package_changes": pkgs, "suspicious_changes": sus, "vulnerabilities": vulns, "ci_image": ci,
               "inventory": H["inventory"], "actions": H["actions"], "images": H["images"], "manifests": H["manifests"],
               "sbom": H["sbom"], "runs": {"base": B["dir"], "head": H["dir"]}, "sandbox_runs": H["sandbox"]["runs"],
-              "repo": str(Path(repo).resolve()), "provenance": prov}
+              "repo": str(Path(repo).resolve()), "provenance": prov,
+              "advisory_evidence": {"schema": 1, "source": "osv.dev/querybatch", "head": hc,
+                                    "queried_at": H["vulns"].get("osv_queried_at"),
+                                    "queries": H["vulns"].get("osv_queries", [])}}
+    from guardian.agents.scan_packages import package_changes
+    report["package_changes_qualified"] = package_changes(B["inventory"], H["inventory"]) if B is not H else []
     shutil.rmtree(out / "trees", ignore_errors=True)
     path = out / f"report-{bc[:8]}-{hc[:8]}.json"
     path.write_text(json.dumps(report, indent=1))

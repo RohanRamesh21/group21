@@ -77,6 +77,10 @@ def check_resolution(board: Board, case_id: str, risk: str, verdict: str) -> Non
 
 def check_verdict(board: Board, decision: str) -> None:
     """C3 coverage before verdict, plus C2 on the overall decision."""
+    if decision == "inconclusive":
+        if introduced_hard_signals(board):
+            raise ConstitutionError("C2: a blocking hard signal is already established.")
+        return
     gaps = board.coverage_gaps()
     if gaps:
         board.log(event="coverage_gap", gaps=gaps)

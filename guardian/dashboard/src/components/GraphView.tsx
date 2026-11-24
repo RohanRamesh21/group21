@@ -1,4 +1,4 @@
-import { Background, Handle, MarkerType, Position, ReactFlow, ReactFlowProvider, useNodesInitialized, useReactFlow, type Edge, type Node, type NodeProps } from "@xyflow/react";
+import { Background, Controls, Handle, MarkerType, Position, ReactFlow, ReactFlowProvider, useNodesInitialized, useReactFlow, type Edge, type Node, type NodeProps } from "@xyflow/react";
 import { motion } from "motion/react";
 import { useEffect, useMemo } from "react";
 import { Cube, FileText, Globe, Package, Warning } from "@phosphor-icons/react";
@@ -32,6 +32,7 @@ function GNode({ data }: NodeProps<Node<NData>>) {
   );
 }
 const nodeTypes = { g: GNode };
+const GRAPH_LIMIT = 6;
 
 const HOST = /\b(?:\d{1,3}(?:\.\d{1,3}){3}|localhost):\d{2,5}\b/;
 
@@ -41,16 +42,17 @@ export function buildGraph(findings: Record<string, Finding>, app = "application
   const nodes: Node<NData>[] = [{ id: "app", type: "g", position: { x: 0, y: 0 }, data: { label: app, sub: "application", kind: "app" } }];
   const edges: Edge[] = [];
   const hosts = new Map<string, Risk>();
-  const pkgs = [...comps.keys()].filter((c) => !c.startsWith("E-"));
-  const pkgWithMost = pkgs.filter((c) => c.startsWith("pkg:")).sort((a, b) => (comps.get(b)!.length - comps.get(a)!.length))[0];
-
   const top = (fs: Finding[]) => fs.filter((f) => f.status !== "cleared").reduce<Risk>((m, f) => (ORDER.indexOf(f.risk) > ORDER.indexOf(m) ? f.risk : m), "info");
+  const components = [...comps.keys()].filter((c) => !c.startsWith("E-"))
+    .sort((a, b) => ORDER.indexOf(top(comps.get(b)!)) - ORDER.indexOf(top(comps.get(a)!)));
+  const pkgs = components.slice(0, GRAPH_LIMIT);
+  const pkgWithMost = pkgs.filter((c) => c.startsWith("pkg:")).sort((a, b) => (comps.get(b)!.length - comps.get(a)!.length))[0];
   pkgs.forEach((c, i) => {
     const fs = comps.get(c)!;
     const cleared = fs.every((f) => f.status === "cleared");
     const risk = top(fs);
     const kind = c.startsWith("pkg:") ? "pkg" : "file";
-    const y = (i - (pkgs.length - 1) / 2) * 92;
+    const y = (i - (pkgs.length - 1) / 2) * 65;
     nodes.push({ id: c, type: "g", position: { x: 230, y }, data: { label: kind === "pkg" ? shortPurl(c) : c, kind, risk, cleared,
       sub: `${fs.length} finding${fs.length > 1 ? "s" : ""} | ${RISK[risk].label}` } });
     const hot = !cleared && ORDER.indexOf(risk) >= 3;
@@ -70,14 +72,14 @@ export function buildGraph(findings: Record<string, Finding>, app = "application
   });
   [...hosts.entries()].forEach(([h, risk], i) => nodes.push({ id: `host:${h}`, type: "g", position: { x: 470, y: i * 92 - (hosts.size - 1) * 46 },
     data: { label: h, sub: "registry not on allow-list", kind: "host", risk } }));
-  const texts = [...comps.keys()].filter((c) => c.startsWith("E-"));
+  const texts = [...comps.keys()].filter((c) => c.startsWith("E-")).slice(0, GRAPH_LIMIT);
   texts.forEach((c, i) => {
     const fs = comps.get(c)!;
     nodes.push({ id: c, type: "g", position: { x: 470, y: (hosts.size + i) * 92 - (hosts.size - 1) * 46 + 20 },
       data: { label: "README text", sub: fs[0].type.replace("_", " "), kind: "text", risk: top(fs) } });
     if (pkgWithMost) edges.push({ id: `${pkgWithMost}-${c}`, source: pkgWithMost, target: c, label: "ships", style: { stroke: RISK.high.hex, strokeDasharray: "4 4" } });
   });
-  return { nodes, edges };
+  return { nodes, edges, total: comps.size, shown: pkgs.length + texts.length };
 }
 
 function FitOnChange({ count }: { count: number }) {
@@ -93,23 +95,25 @@ function FitOnChange({ count }: { count: number }) {
 }
 
 export function GraphView({ state, app }: { state: RunState | null; app?: string }) {
-  const { nodes, edges } = useMemo(() => buildGraph(state?.findings ?? {}, app), [state?.findings, app]);
+  const { nodes, edges, total, shown } = useMemo(() => buildGraph(state?.findings ?? {}, app), [state?.findings, app]);
   return (
-    <section className="panel flex min-h-[340px] flex-col overflow-hidden">
-      <div className="flex items-center justify-between px-4 pt-3 text-sm">
-        <span className="font-medium">Supply-chain view</span>
-        <span className="text-xs text-muted">what changed and where it comes from</span>
+    <section className="panel flex min-w-0 flex-col overflow-hidden">
+      <div className="flex items-center justify-between gap-3 px-4 py-3 text-sm">
+        <span className="font-medium">Finding graph</span>
+        {total > 0 && <span className="text-xs text-muted">{shown} of {total} components · see all in Findings</span>}
       </div>
-      <div className="min-h-0 flex-1">
+      {total === 0 ? <p className="px-4 pb-4 text-sm text-muted">The graph shows components with investigation findings.</p> :
+      <div className="h-[320px] min-w-0">
         <ReactFlowProvider>
         <ReactFlow nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView fitViewOptions={{ padding: 0.2, maxZoom: 1.1 }}
-          proOptions={{ hideAttribution: true }} nodesDraggable={false} nodesConnectable={false} panOnScroll={false} zoomOnScroll={false}
+          proOptions={{ hideAttribution: true }} minZoom={0.1} nodesDraggable={false} nodesConnectable={false} panOnScroll={false} zoomOnScroll={false}
           defaultEdgeOptions={{ labelStyle: { fill: "#8a909c", fontSize: 10 }, labelBgStyle: { fill: "#111318" } }}>
           <Background gap={22} size={1} color="rgb(255 255 255 / 0.05)" />
+          <Controls showInteractive={false} />
           <FitOnChange count={nodes.length + edges.length} />
         </ReactFlow>
         </ReactFlowProvider>
-      </div>
+      </div>}
     </section>
   );
 }

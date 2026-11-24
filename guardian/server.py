@@ -14,7 +14,7 @@ import uuid
 from pathlib import Path
 from typing import Literal
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -76,11 +76,12 @@ class Run:
 
 
 RUNS: dict[str, Run] = {}
+PROJECT_RUNS: dict[str, str] = {}
+_RUN_LOCK = threading.Lock()
 
 
 def _target(project: str | None, report: dict | None = None) -> dict:
-    """What a live investigation looks at: the repository, base and head commits of a finished scan.
-    The agents re-read the repository themselves (git + lockfile); the scan only tells them where to look."""
+    """Resolve the local repository and exact commits associated with the agent evidence."""
     rep = report if report is not None else _latest(project)[0]
     h = rep["headline"]
     repo = Path(rep.get("repo") or "")
@@ -109,35 +110,77 @@ def meta():
     import os
     from guardian.agents.run import DEFAULT_REPLAY
     prov = config.provider()
+    if prov == "deepseek":
+        from guardian.agents.llm import DeepSeekBackend
+        model = os.environ.get("GUARDIAN_DEEPSEEK_MODEL") or DeepSeekBackend.MODEL
+    else:
+        model = os.environ.get("GUARDIAN_MODEL") or prov
     return {"provider": prov, "live_available": prov != "replay", "replay_available": DEFAULT_REPLAY.exists(),
-            "model": os.environ.get("GUARDIAN_MODEL") or prov,
+            "model": model,
             "effort": os.environ.get("GUARDIAN_EFFORT")}
 
 
 @app.post("/api/runs")
 def start(req: StartReq):
+    return _start_run(req)
+
+
+def _start_run(req: StartReq, *, wait_for_scan: bool = False, backend: str | None = None):
     from guardian.agents.run import run as run_agents
 
     if req.mode == "replay" and req.world != "canned":
         raise HTTPException(400, "replay runs on the canned world; use live for real facts")
-    backend = "replay" if req.mode == "replay" else config.provider()
+    backend = backend or ("replay" if req.mode == "replay" else config.provider())
     if req.mode == "live" and backend == "replay":
         raise HTTPException(400, "no LLM key configured in .env: live agents need one")
     # live agents always work on real facts from the chosen scan; the recorded replay is a fixed example
     world = "real" if req.mode == "live" else "canned"
-    report = _latest(req.project)[0] if world == "real" else None
-    target = _target(req.project, report) if world == "real" else {"project": None, "app": "recorded example", "recorded": True}
+    report = _latest(req.project)[0] if world == "real" and not wait_for_scan else None
+    if wait_for_scan:
+        target = {"project": req.project}
+    elif world == "real":
+        target = _target(req.project, report)
+    else:
+        target = {"project": None, "app": "recorded example", "recorded": True}
     run_id = f"RUN-{uuid.uuid4().hex[:16].upper()}"
     r = Run(run_id, req.mode, world)
     r.target = target
-    RUNS[run_id] = r
+    if wait_for_scan:
+        r.status = "scanning"
+    with _RUN_LOCK:
+        if req.project and world == "real":
+            previous = RUNS.get(PROJECT_RUNS.get(req.project, ""))
+            if previous and previous.status not in {"done", "error"}:
+                raise HTTPException(409, "An investigation is already running for this scan.")
+            PROJECT_RUNS[req.project] = run_id
+        RUNS[run_id] = r
 
     def attach(board, store):
         r.board, r.store, r.status = board, store, "running"
 
     def work():
         try:
-            where = {"repo": Path(target["repo"]), "base": target["base"], "head": target["head"], "scan_report": report} if world == "real" else {}
+            scan = report
+            if wait_for_scan:
+                from guardian import projects
+
+                deadline = time.monotonic() + 3600
+                while time.monotonic() < deadline:
+                    job = projects.get(req.project)
+                    if job is None or job["status"] == "error":
+                        r.error, r.status = "The scan failed. Open the scan details to see what happened.", "error"
+                        return
+                    if job["status"] == "done":
+                        scan = _latest(req.project)[0]
+                        r.target = _target(req.project, scan)
+                        r.status = "starting"
+                        break
+                    time.sleep(0.5)
+                else:
+                    r.error, r.status = "Timed out waiting for the scan.", "error"
+                    return
+            where = ({"repo": Path(r.target["repo"]), "base": r.target["base"], "head": r.target["head"], "scan_report": scan}
+                     if world == "real" else {})
             run_agents(OUT / run_id, backend=backend, run_id=run_id, world_kind=world,
                        pace=req.pace if req.mode == "replay" else 0.0, human_override=r.human, on_board=attach, **where)
             r.status = "done"
@@ -325,12 +368,54 @@ class GitReq(BaseModel):
     url: str
     base: str | None = None
     head: str | None = None
+    investigate: bool = False
 
 
 class PathReq(BaseModel):
     path: str = Field(max_length=1024)
     base: str | None = Field(default=None, max_length=200)
     head: str | None = Field(default=None, max_length=200)
+    working_tree: bool = False
+    baseline_project: str | None = Field(default=None, max_length=64)
+    investigate: bool = False
+
+
+class ExampleReq(BaseModel):
+    name: str = Field(max_length=64)
+    investigate: bool = False
+
+
+def _project_backend(investigate: bool) -> str | None:
+    if not investigate:
+        return None
+    backend = config.provider()
+    if backend == "replay":
+        raise HTTPException(400, "Configure an LLM provider for Scan & investigate, or choose Scan only.")
+    return backend
+
+
+def _project_result(pid: str, backend: str | None) -> dict:
+    result = {"id": pid}
+    if backend:
+        result.update(_start_run(StartReq(mode="live", project=pid), wait_for_scan=True, backend=backend))
+    return result
+
+
+@app.get("/api/examples")
+def examples():
+    from guardian import projects
+    return [{"name": app["name"], "repo": app["repo"], "base": app["base"]["ref"], "head": app["ref"],
+             "language": app["demo_language"]} for app in projects.examples()]
+
+
+@app.post("/api/projects/example")
+def project_example(req: ExampleReq):
+    from guardian import projects
+    backend = _project_backend(req.investigate)
+    try:
+        return _project_result(projects.start_example(req.name), backend)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
 
 
 @app.get("/api/projects")
@@ -345,14 +430,15 @@ def get_project(pid: str):
     j = projects.get(pid)
     if not j:
         raise HTTPException(404, "unknown project")
-    return j
+    return {**j, "investigation_run": PROJECT_RUNS.get(pid)}
 
 
 @app.post("/api/projects/git")
 def project_git(req: GitReq):
     from guardian import projects
+    backend = _project_backend(req.investigate)
     try:
-        return {"id": projects.start_git(req.url, (req.base or "").strip() or None, (req.head or "").strip() or None)}
+        return _project_result(projects.start_git(req.url, (req.base or "").strip() or None, (req.head or "").strip() or None), backend)
     except ValueError as e:
         raise HTTPException(400, str(e))
 
@@ -361,8 +447,10 @@ def project_git(req: GitReq):
 def project_path(req: PathReq):
     """Scan a folder on this machine. A Git repository is cloned (never modified); any other folder is copied."""
     from guardian import projects
+    backend = _project_backend(req.investigate)
     try:
-        return {"id": projects.start_path(req.path, (req.base or "").strip() or None, (req.head or "").strip() or None)}
+        return _project_result(projects.start_path(req.path, (req.base or "").strip() or None, (req.head or "").strip() or None,
+                                                   working_tree=req.working_tree, baseline=req.baseline_project), backend)
     except ValueError as e:
         raise HTTPException(400, str(e))
 
@@ -371,13 +459,18 @@ def project_path(req: PathReq):
 def sources():
     """Hints for the source form: which folders a local-path scan may read."""
     from guardian import projects
+    baselines = [j for j in projects.list_jobs() if j.get("status") == "done"
+                 and (j["kind"] == "zip" or j["kind"] == "path" and not j.get("git"))][:30]
     return {"path_roots": [str(r) for r in projects.path_roots()], "git_hosts": sorted(projects.GIT_HOSTS),
-            "max_zip_mb": projects.MAX_ZIP_BYTES // (1024 * 1024)}
+            "max_zip_mb": projects.MAX_ZIP_BYTES // (1024 * 1024),
+            "baselines": [{k: j[k] for k in ("id", "label", "created")} for j in baselines]}
 
 
 @app.post("/api/projects/zip")
-async def project_zip(file: UploadFile = File(...)):
+async def project_zip(file: UploadFile = File(...), baseline_project: str | None = Form(default=None, max_length=64),
+                      investigate: bool = Form(default=False)):
     from guardian import projects
+    backend = _project_backend(investigate)
     if not (file.filename or "").lower().endswith(".zip"):
         raise HTTPException(400, "please upload a .zip file")
     projects.BASE.mkdir(parents=True, exist_ok=True)
@@ -391,7 +484,11 @@ async def project_zip(file: UploadFile = File(...)):
                 tmp.unlink(missing_ok=True)
                 raise HTTPException(413, "zip is larger than 200 MB")
             out.write(chunk)
-    return {"id": projects.start_zip(tmp, file.filename)}
+    try:
+        return _project_result(projects.start_zip(tmp, file.filename, baseline_project), backend)
+    except ValueError as exc:
+        tmp.unlink(missing_ok=True)
+        raise HTTPException(400, str(exc)) from exc
 
 
 def _latest(project: str | None) -> tuple[dict, dict | None]:
@@ -503,11 +600,26 @@ def context(project: str | None = None):
                      key=lambda s: (not s.get("hard_signal"), order.index(s.get("severity", "info"))))
     vul = h.get("vulnerabilities") or {}
     ci = h.get("ci_image") or {}
+    from guardian import projects
+    job = (projects.get(project) or {}) if project else {}
+    source_mode = "commits"
+    base_label, head_label = h.get("base"), h.get("head")
+    if job.get("snapshot_source") == "working_tree":
+        source_mode, head_label = "working_tree", "Working tree"
+    elif job.get("kind") == "zip" or job.get("kind") == "path" and not job.get("git"):
+        source_mode = "snapshot"
+        if baseline := job.get("baseline_project"):
+            source_mode = "snapshot_comparison"
+            base_label = (projects.get(baseline) or {}).get("label", "Previous snapshot")
+        head_label = job["label"]
     sb = Path(rep.get("runs", {}).get("head") or "")
     sb = sb if sb.is_absolute() else ROOT / sb
-    return {"project": project, "app": h.get("app") or h.get("head"), "base": h.get("base"), "head": h.get("head"),
+    return {"project": project, "app": h.get("app") or h.get("head"), "base": base_label, "head": head_label,
             "base_commit": h.get("base_commit"), "head_commit": h.get("head_commit"),
             "compare": h.get("base_commit") != h.get("head_commit"), "verdict": h.get("verdict"),
+            "source_mode": source_mode,
+            "agent_package_scope": {"components": len(rep.get("inventory", [])), "ecosystems": len(inv.get("ecosystems") or {}),
+                                    "package_changes": "package_changes_qualified" in rep},
             "reasons": (h.get("verdict_reasons") or [])[:6], "policy": h.get("policy_decision"),
             "packages": inv.get("packages"),
             "inventory": {k: inv.get(k) for k in ("packages", "unique_name_versions", "direct", "transitive", "runtime", "dev_only",

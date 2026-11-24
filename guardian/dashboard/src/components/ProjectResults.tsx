@@ -45,6 +45,8 @@ export function ProjectResults({ id, job, view, go }: { id: string; job: Job | n
             <div className="flex flex-wrap items-center gap-2.5">
               <h1 className="truncate text-xl font-semibold tracking-tight">{ctx?.app ?? job?.label ?? "…"}</h1>
               <VerdictChip verdict={ctx?.verdict} />
+              {ctx?.source_mode === "working_tree" && <span className="text-[11px] text-muted">Working-tree comparison</span>}
+              {ctx?.source_mode === "snapshot_comparison" && <span className="text-[11px] text-muted">Snapshot comparison</span>}
             </div>
             <div className="mt-0.5 flex flex-wrap items-center gap-x-2 font-mono text-[11.5px] text-muted">
               <span className="truncate">{source}</span>

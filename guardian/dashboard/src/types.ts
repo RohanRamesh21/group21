@@ -24,11 +24,14 @@ export interface Case {
 export interface RunTarget { project: string | null; app: string; base?: string; head?: string; base_ref?: string; head_ref?: string;
   compare?: boolean; verdict?: string; recorded?: boolean }
 export interface RunState {
-  run_id: string; status: "starting" | "running" | "done" | "error"; error?: string; mode: string; world: string; target?: RunTarget;
+  run_id: string; status: "scanning" | "starting" | "running" | "done" | "error"; error?: string; mode: string; world: string; target?: RunTarget;
   pending_human?: { id: string; question: string; options: string[]; timeout: number } | null; elapsed: number;
   plan?: string[]; tasks?: Record<string, { assignee: string; goal: string; scope: string[]; status: string }>;
   findings?: Record<string, Finding>; cases?: Record<string, Case>;
   coverage?: { required: string[]; done: string[] }; coverage_gaps?: string[];
+  focused?: boolean;
+  scan_evidence?: Record<string, string>;
+  review_questions?: Record<string, { title: string; component: string; reason: string; role: Agent; severity: Risk; evidence_id: string; observations: number }>;
   verdict?: { decision: "block" | "safe_to_merge" | "inconclusive"; rationale: string; case_ids: string[]; evidence_ids: string[] } | null;
 }
 export interface Evidence { id: string; kind: string; source: string; path?: string; untrusted: boolean; content: string }

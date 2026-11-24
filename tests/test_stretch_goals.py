@@ -177,7 +177,7 @@ def test_monitor_reports_new_advisories(tmp_path, monkeypatch):
     rep["headline"]["verdict"] = "allow"
     (tmp_path / "report.json").write_text(json.dumps(rep))
     (tmp_path / "latest.json").write_text(json.dumps({"path": str(tmp_path / "report.json")}))
-    monkeypatch.setattr(universal, "osv_api", lambda inv: ([{"name": "lib", "version": "1.0.0", "ids": ["GHSA-old"], "severity": "medium", "fixed": []},
+    monkeypatch.setattr(universal, "osv_api", lambda inv, **_: ([{"name": "lib", "version": "1.0.0", "ids": ["GHSA-old"], "severity": "medium", "fixed": []},
                                                             {"name": "lib", "version": "1.0.0", "ids": ["GHSA-new", "CVE-2099-1"], "severity": "critical",
                                                              "fixed": ["1.0.1"], "malicious": False}], None))
     monkeypatch.setattr(intel, "osv_details", lambda ids: {i: {"aliases": [], "cvss_v3": None, "cvss_v4": None, "severity_label": None} for i in ids})
@@ -219,7 +219,7 @@ def test_validate_and_approve_a_pin_fix(tmp_path, monkeypatch):
     monkeypatch.setenv("GUARDIAN_SANDBOX", "podman")
     adv = {"name": "flask", "version": "2.0.0", "ids": ["GHSA-test"], "severity": "high", "fixed": ["2.2.5"], "summary": "", "malicious": False,
            "url": "", "source": "osv", "ecosystem": "pypi"}
-    monkeypatch.setattr(universal, "osv_api", lambda inv: ([adv] if any(p["name"] == "flask" and p["version"] == "2.0.0" for p in inv) else [], None))
+    monkeypatch.setattr(universal, "osv_api", lambda inv, **_: ([adv] if any(p["name"] == "flask" and p["version"] == "2.0.0" for p in inv) else [], None))
     monkeypatch.setattr(universal, "grype_all", lambda sbom: ([], None))
     monkeypatch.setattr(intel, "epss", lambda c: ({}, None))
     monkeypatch.setattr(intel, "kev", lambda max_age=0: ({}, None))

@@ -7,6 +7,8 @@ export interface Job {
   id: string; kind: "zip" | "git" | "path"; label: string; status: "queued" | "running" | "done" | "error"; message: string;
   created: number; updated?: number; steps: JobStep[]; stage?: string | null; mode?: "single" | "compare";
   url?: string; path?: string; git?: boolean; base?: string | null; head?: string | null; base_default?: boolean;
+  snapshot_source?: "working_tree" | "commits" | "folder"; baseline_project?: string | null; example?: string;
+  investigation_run?: string | null;
   summary?: { packages: number; verdict: Verdict; reasons: string[]; head_commit: string; base_commit: string; ecosystems?: Record<string, number> };
 }
 
@@ -24,17 +26,20 @@ export interface Context {
   signals: { type: string; severity: Level; component: string; summary: string; hard_signal: boolean; file?: string | null; line?: number | null }[];
   signal_counts: { introduced: number; pre_existing: number; not_checked: number };
   sandbox: { mode?: string; engine?: string; all_isolated?: boolean; tools?: string[] };
+  source_mode?: "commits" | "working_tree" | "snapshot" | "snapshot_comparison";
+  agent_package_scope?: { components: number; ecosystems: number; package_changes: boolean };
   provenance?: { scope?: string; checked?: number; signed?: number; attested?: number; errors?: string[] } | null;
   sbom_agreement_pct?: number | null; sboms: string[];
 }
 
 export interface Meta { provider: string; live_available: boolean; replay_available: boolean; model?: string; effort?: string | null }
-export interface Sources { path_roots: string[]; git_hosts: string[]; max_zip_mb: number }
+export interface Sources { path_roots: string[]; git_hosts: string[]; max_zip_mb: number; baselines?: Pick<Job, "id" | "label" | "created">[] }
+export interface ExampleApp { name: string; repo: string; base: string; head: string; language: string }
 
 export type Source =
   | { kind: "git"; url: string; base?: string; head?: string }
-  | { kind: "zip"; file: File }
-  | { kind: "path"; path: string; base?: string; head?: string };
+  | { kind: "zip"; file: File; baseline_project?: string }
+  | { kind: "path"; path: string; base?: string; head?: string; working_tree?: boolean; baseline_project?: string };
 
 /** Query string for report endpoints: no parameter = the CLI report. */
 export const q = (project?: string | null) => (project && project !== "main" ? `?project=${encodeURIComponent(project)}` : "");
@@ -54,18 +59,27 @@ export async function postJSON<T>(url: string, data: unknown): Promise<T> {
   return body as T;
 }
 
+export interface StartedRun { run_id: string; review_token: string }
+export type StartedProject = { id: string } & Partial<StartedRun>;
+
+export function rememberReviewToken(run: Partial<StartedRun>) {
+  if (run.run_id && run.review_token) sessionStorage.setItem(`guardian-review-${run.run_id}`, run.review_token);
+}
+
 /** Start a scan of any source; resolves to the new project id. */
-export async function startScan(src: Source): Promise<string> {
+export async function startScan(src: Source, investigate: boolean): Promise<StartedProject> {
   if (src.kind === "zip") {
     const fd = new FormData();
     fd.append("file", src.file);
+    fd.append("investigate", String(investigate));
+    if (src.baseline_project) fd.append("baseline_project", src.baseline_project);
     const r = await fetch("/api/projects/zip", { method: "POST", body: fd });
     const body = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(body.detail ?? "upload failed");
-    return body.id;
+    return body;
   }
   const { kind, ...rest } = src;
-  return (await postJSON<{ id: string }>(`/api/projects/${kind}`, rest)).id;
+  return postJSON<StartedProject>(`/api/projects/${kind}`, { ...rest, investigate });
 }
 
 export function ago(ts: number) {

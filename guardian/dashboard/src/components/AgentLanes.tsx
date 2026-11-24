@@ -18,7 +18,7 @@ const KIND_TONE: Record<string, string> = {
   missed_risk: "text-high bg-high/10", task_result: "text-ink bg-white/5", handoff: "text-ink bg-white/5",
 };
 
-export function AgentLanes({ feed, onEvidence }: { feed: FeedItem[]; onEvidence: (id: string) => void }) {
+export function AgentLanes({ feed, finished, onEvidence }: { feed: FeedItem[]; finished: boolean; onEvidence: (id: string) => void }) {
   const lanes = useMemo(() => {
     const now = feed.length ? feed[feed.length - 1].ts : 0;
     return LANES.map((a) => {
@@ -26,15 +26,15 @@ export function AgentLanes({ feed, onEvidence }: { feed: FeedItem[]; onEvidence:
       const last = mine[mine.length - 1];
       const tools = mine.filter((f) => f.type === "audit" && f.event === "tool_call") as FeedAudit[];
       const lastTool = tools[tools.length - 1];
-      return { a, active: !!last && now - last.ts < 1.8, tools: tools.length,
+      return { a, active: !finished && !!last && now - last.ts < 1.8, tools: tools.length,
         msgs: mine.filter((f) => f.type === "message").length, lastTool: lastTool?.tool };
     });
-  }, [feed]);
+  }, [feed, finished]);
 
   const items = useMemo(() => feed.filter((f) => !(f.type === "audit" && (f.event === "run_start" || (f.event === "tool_call" && HIDDEN_TOOLS.has(String(f.tool)))))).slice(-60).reverse(), [feed]);
 
   return (
-    <section className="panel flex min-h-0 flex-col">
+    <section className="panel flex min-h-0 min-w-0 flex-col">
       <div className="grid grid-cols-2 gap-2 border-b border-line p-3 md:grid-cols-4">
         {lanes.map(({ a, active, tools, msgs, lastTool }) => {
           const ag = agentOf(a);
@@ -46,7 +46,7 @@ export function AgentLanes({ feed, onEvidence }: { feed: FeedItem[]; onEvidence:
                 <ag.Icon size={18} weight="duotone" style={{ color: ag.hex }} />
               </div>
               <div className="min-w-0">
-                <div className="truncate text-[13px] font-medium">{ag.name}</div>
+                <div className="break-words text-[12px] font-medium leading-tight">{ag.name}</div>
                 <div className="truncate font-mono text-[11px] text-muted">
                   {active && lastTool ? lastTool : `${tools} tools | ${msgs} msgs`}
                 </div>
@@ -56,7 +56,7 @@ export function AgentLanes({ feed, onEvidence }: { feed: FeedItem[]; onEvidence:
         })}
       </div>
 
-      <div className="scroll-thin min-h-0 flex-1 overflow-y-auto p-3">
+      <div className="scroll-thin min-h-0 max-h-[570px] flex-1 overflow-y-auto p-3">
         {!items.length && <Empty />}
         <ul className="flex flex-col gap-1.5">
           <AnimatePresence initial={false}>
@@ -205,7 +205,7 @@ function AuditRow({ e, onEvidence }: { e: FeedAudit; onEvidence: (id: string) =>
       <motion.div initial={{ scale: 0.96 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 16 }}
         className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-[13px] ${e.decision === "block" ? "border-crit/40 bg-crit/10" : e.decision === "safe_to_merge" ? "border-ok/40 bg-ok/10" : "border-high/40 bg-high/10"}`}>
         <Gavel size={16} className={e.decision === "block" ? "text-crit" : e.decision === "safe_to_merge" ? "text-ok" : "text-high"} weight="bold" />
-        <span className="font-medium">Verdict submitted: {String(e.decision).replace(/_/g, " ")}</span>
+        <span className="font-medium">{e.source === "fallback" ? "Run ended" : "Agent recommendation"} · {String(e.decision).replace(/_/g, " ")}</span>
       </motion.div>
     );
   }

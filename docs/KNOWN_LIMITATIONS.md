@@ -39,21 +39,26 @@ An honest list of what does not work, or is simulated. Update it whenever a limi
 
 ## Agent investigation security
 
-The live investigation has mandatory npm checks. Changed workflows and Dockerfiles prevent a safe recommendation
-until their deterministic checks are integrated. The local reviewer token is a run-scoped capability. Shared
+The live investigation has mandatory npm checks and uses the selected scan for broader evidence. Changed workflows and Dockerfiles
+require a completed CI/image scan for a safe recommendation. The local reviewer token is a run-scoped capability. Shared
 deployment requires reviewer authentication and per-project authorization. Marker detection and secret redaction
 are heuristic. See [Guardian self-protection](GUARDIAN_SELF_PROTECTION.md) for the remaining integration limits.
 
-## Dashboard sources and investigations (24 Nov 2026)
-- **Agents read only the root `package-lock.json`.** On any scan the agents' package tools (registry, OSV, install hooks,
-  typosquat) see npm packages from the repository root lockfile only. Other ecosystems, nested npm projects and lockfiles that
-  the scan resolved in the sandbox are not visible to them; they still examine commits, changed files and sensitive paths, and
-  the run says so. The scan results cover every ecosystem.
-- **Single-commit investigations review the saved scan.** Agents can read deterministic findings across ecosystems. The
-  commit-comparison tools have no changed files in this mode.
-- **Local Git repositories: committed code only.** Uncommitted changes in a local repository are not scanned (the clone has no
-  working tree). Copy the folder without `.git`, or commit, to include them.
-- **Live agents need a working LLM key** for the provider named in `.env`. FreeModel uses `FM_API_KEY`. Provider and model
+## Dashboard sources and investigations
+- **Focused investigations reuse fresh evidence.** Reports from **Scan & investigate** carry exact OSV results for the
+  pinned head commit. Changed root npm versions can reuse successful lookups for 24 hours. Older reports need a rescan
+  for focused review. The dashboard lists unresolved questions and any outstanding exact-version checks. Clean scans can
+  finish without a model call. A dashboard refresh resumes the live stream while the server is running.
+- **Package evidence follows the scan.** Agents can query saved inventory, advisories and version changes across ecosystems,
+  including nested npm projects and lockfiles resolved by the scanner. The direct npm registry, install-hook and tarball tools
+  still use the root `package-lock.json`. Older reports need a fresh scan for version changes by ecosystem.
+- **ZIPs and plain folders can use a saved baseline.** Scan the previous copy, then choose it as **Previous snapshot** when
+  submitting the current copy. Without a baseline, the agents review one snapshot and the UI shows that scope.
+- **Local Git has an opt-in working-tree mode.** Select **Include uncommitted changes** to copy the saved working files,
+  including tracked deletions and non-ignored new files, and compare them against `HEAD` or a chosen commit. Unsaved editor
+  buffers, symlinks, submodules and sparse checkouts are outside this mode. Guardian leaves the source checkout untouched.
+- **Live agents need a working LLM key** for the provider named in `.env`. Native DeepSeek Flash uses `DEEPSEEK_API_KEY`
+  with `GUARDIAN_LLM_PROVIDER=deepseek`. FreeModel uses `FM_API_KEY`. Provider and model
   failures are surfaced in the run, and the deterministic checks still run. The recorded example replays a fixed scenario.
 - **Local-folder scans run as the dashboard's user.** Anyone who can reach the dashboard can scan folders inside
   `GUARDIAN_PATH_ROOTS`. The server binds to 127.0.0.1 by default; a shared deployment needs authentication first.

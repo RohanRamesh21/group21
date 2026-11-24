@@ -15,7 +15,9 @@ from guardian import config
 from guardian.agents import fakeworld
 from guardian.agents.board import Board
 from guardian.agents.constitution import introduced_hard_signals
-from guardian.agents.llm import ClaudeBackend, FreeModelBackend, GeminiBackend, OpenRouterBackend, ScriptedBackend, load_script, make_resolver
+from guardian.agents.llm import (
+    ClaudeBackend, DeepSeekBackend, FreeModelBackend, GeminiBackend, OpenRouterBackend, ScriptedBackend, load_script, make_resolver,
+)
 from guardian.agents.orchestrator import Orchestrator
 from guardian.agents.tools import ToolRegistry
 from guardian.store.evidence import EvidenceStore
@@ -44,13 +46,21 @@ def run(out: Path, backend: str = "auto", replay: Path = DEFAULT_REPLAY, run_id:
             headline = scan_report["headline"]
             if (headline.get("base_commit_full"), headline.get("head_commit_full")) == (facts.base, facts.head):
                 world["scan_report"] = scan_report
-                board.coverage_required.add("scan:summary")
+                receipt = scan_report.get("advisory_evidence")
+                if (isinstance(receipt, dict) and receipt.get("schema") == 1
+                        and receipt.get("head") == facts.head
+                        and scan_report.get("repo") and Path(scan_report["repo"]).resolve() == facts.repo.resolve()):
+                    from guardian.agents.focus import prepare
+                    world["scan_summary_id"] = prepare(board, store, scan_report, facts)
+                else:
+                    board.coverage_required.update(("scan:summary", "scan:packages"))
         if facts.base == facts.head and "scan_report" not in world:
             board.required_checks["single_commit_scope"] = "unsupported"
         human = facts.human
         if facts.missing_lockfile:
-            board.log(event="note", text="No package-lock.json at the repository root, so the npm package tools have nothing "
-                                         "to examine. Commits, changed files and sensitive paths are still investigated.")
+            board.log(event="note", text="Root npm lockfile tools have no inputs. Use the saved scan's package tools for nested "
+                                         "npm projects and other ecosystems." if "scan_report" in world else
+                                         "Root npm lockfile tools have no inputs. Attach a saved scan for package evidence across ecosystems.")
     else:
         world = fakeworld.build(store)
         board = Board(run_id=run_id, base="2.5.12", head="scenario/s3-s9")
@@ -80,6 +90,8 @@ def run(out: Path, backend: str = "auto", replay: Path = DEFAULT_REPLAY, run_id:
         model = GeminiBackend()
     elif backend == "freemodel":
         model = FreeModelBackend()
+    elif backend == "deepseek":
+        model = DeepSeekBackend()
     elif backend == "claude":
         model = ClaudeBackend()
     else:
@@ -100,7 +112,7 @@ def run(out: Path, backend: str = "auto", replay: Path = DEFAULT_REPLAY, run_id:
             "case_ids": [],
             "evidence_ids": list(dict.fromkeys(eid for fid in blockers for eid in board.findings[fid].evidence_ids)),
         }
-        board.log(event="verdict", **board.verdict)
+        board.log(event="verdict", source="fallback", **board.verdict)
     (out / f"{run_id}.board.json").write_text(json.dumps({
         "board": board.snapshot(),
         "evidence_dir": store.root.name,

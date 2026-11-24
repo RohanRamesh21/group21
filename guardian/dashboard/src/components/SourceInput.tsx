@@ -1,15 +1,16 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowRight, CaretDown, CircleNotch, FileZip, FolderOpen, GitBranch, GithubLogo, UploadSimple, X } from "@phosphor-icons/react";
-import { getJSON, startScan, type Source, type Sources } from "../api";
+import { ago, getJSON, rememberReviewToken, startScan, type Source, type Sources } from "../api";
 import { Segmented } from "../ui";
 
 type Kind = Source["kind"];
 const field = "w-full rounded-lg border border-line bg-canvas/70 px-3.5 py-2.5 font-mono text-[13px] text-ink outline-none transition placeholder:text-faint focus:border-accent/60 focus:ring-4 focus:ring-accent/10";
 
 /** One form for every source Guardian can scan: a public Git URL, a ZIP upload or a folder on this machine. */
-export function SourceInput({ onStarted, submitLabel = "Run scan", id = "src", autoFocus = false }: {
-  onStarted: (projectId: string) => void; submitLabel?: string; id?: string; autoFocus?: boolean;
+export function SourceInput({ onStarted, investigate = false, allowScanOnly = false, id = "src", autoFocus = false }: {
+  onStarted: (projectId: string, investigation: boolean) => void;
+  investigate?: boolean; allowScanOnly?: boolean; id?: string; autoFocus?: boolean;
 }) {
   const [kind, setKind] = useState<Kind>("git");
   const [url, setUrl] = useState("");
@@ -18,6 +19,8 @@ export function SourceInput({ onStarted, submitLabel = "Run scan", id = "src", a
   const [base, setBase] = useState("");
   const [head, setHead] = useState("");
   const [compare, setCompare] = useState(false);
+  const [workingTree, setWorkingTree] = useState(false);
+  const [baseline, setBaseline] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [shake, setShake] = useState(0);
@@ -28,15 +31,21 @@ export function SourceInput({ onStarted, submitLabel = "Run scan", id = "src", a
   useEffect(() => setErr(null), [kind]);
 
   const ready = kind === "git" ? url.trim().length > 0 : kind === "zip" ? !!file : path.trim().length > 0;
-  const refs = compare ? { base: base.trim() || undefined, head: head.trim() || undefined } : {};
+  const useWorkingTree = kind === "path" && workingTree;
+  const savedBaseline = kind !== "git" && !compare && !useWorkingTree ? baseline || undefined : undefined;
+  const refs = compare || useWorkingTree
+    ? { base: base.trim() || undefined, head: useWorkingTree ? undefined : head.trim() || undefined } : {};
 
-  const submit = async (e?: FormEvent) => {
-    e?.preventDefault();
+  const submit = async (withInvestigation: boolean) => {
     if (!ready || busy) return;
     setBusy(true); setErr(null);
     try {
-      const src: Source = kind === "git" ? { kind, url: url.trim(), ...refs } : kind === "zip" ? { kind, file: file! } : { kind, path: path.trim(), ...refs };
-      onStarted(await startScan(src));
+      const src: Source = kind === "git" ? { kind, url: url.trim(), ...refs }
+        : kind === "zip" ? { kind, file: file!, baseline_project: baseline || undefined }
+        : { kind, path: path.trim(), ...refs, working_tree: useWorkingTree, baseline_project: savedBaseline };
+      const result = await startScan(src, withInvestigation);
+      rememberReviewToken(result);
+      onStarted(result.id, !!result.run_id);
     } catch (x) {
       setErr(x instanceof Error ? x.message : String(x));
       setShake((n) => n + 1);
@@ -48,7 +57,7 @@ export function SourceInput({ onStarted, submitLabel = "Run scan", id = "src", a
   const pick = (f?: File | null) => { if (f) { setFile(f); setErr(null); } };
 
   return (
-    <form onSubmit={submit} className="flex flex-col gap-4">
+    <form onSubmit={(e: FormEvent) => { e.preventDefault(); void submit(investigate); }} className="flex flex-col gap-4">
       <Segmented id={`${id}-kind`} value={kind} onChange={setKind} options={[
         { value: "git", label: <><GithubLogo size={15} weight="duotone" />Git URL</> },
         { value: "zip", label: <><FileZip size={15} weight="duotone" />ZIP upload</> },
@@ -68,7 +77,7 @@ export function SourceInput({ onStarted, submitLabel = "Run scan", id = "src", a
             <label className="block">
               <span className="sr-only">Folder on this machine</span>
               <input autoFocus={autoFocus} value={path} onChange={(e) => setPath(e.target.value)} placeholder={`${hints?.path_roots[0] ?? "/home/you"}/projects/my-app`} className={field} spellCheck={false} />
-              <span className="mt-1.5 block text-[11.5px] text-faint">A Git repository is cloned (the original is never changed) and its committed code is scanned; any other folder is copied as it is.
+              <span className="mt-1.5 block text-[11.5px] text-faint">Git repositories use commits by default. Plain folders are captured as snapshots.
                 {hints && <> Allowed under {hints.path_roots.join(", ")}.</>}</span>
             </label>
           )}
@@ -97,7 +106,21 @@ export function SourceInput({ onStarted, submitLabel = "Run scan", id = "src", a
         </motion.div>
       </AnimatePresence>
 
-      {kind !== "zip" && (
+      {kind === "path" && (
+        <label className="flex items-start gap-2 text-[12.5px]">
+          <input type="checkbox" checked={workingTree} onChange={(e) => setWorkingTree(e.target.checked)} className="mt-0.5 accent-accent" />
+          <span>Include uncommitted changes
+            <span className="mt-0.5 block text-[11.5px] text-faint">For a local Git checkout. Reads saved edits and new, non-ignored files into a private snapshot.</span>
+          </span>
+        </label>
+      )}
+      {useWorkingTree && (
+        <label className="block text-[12.5px]">
+          <span className="mb-1 block text-muted">Base commit for working-tree comparison</span>
+          <input value={base} onChange={(e) => setBase(e.target.value)} placeholder="HEAD (current commit)" className={field} spellCheck={false} />
+        </label>
+      )}
+      {kind !== "zip" && !useWorkingTree && (
         <div>
           <button type="button" onClick={() => setCompare((c) => !c)} aria-expanded={compare} className="flex items-center gap-1.5 whitespace-nowrap text-[12.5px] text-muted transition-colors hover:text-ink">
             <GitBranch size={14} className="shrink-0" /> Compare two versions (base → head)
@@ -118,14 +141,26 @@ export function SourceInput({ onStarted, submitLabel = "Run scan", id = "src", a
           </AnimatePresence>
         </div>
       )}
+      {(kind === "zip" || kind === "path" && !useWorkingTree && !compare) && (
+        <label className="block text-[12.5px]">
+          <span className="mb-1 block text-muted">Previous snapshot</span>
+          <select className={field} value={baseline} onChange={(e) => setBaseline(e.target.value)}>
+            <option value="">None · review this snapshot</option>
+            {hints?.baselines?.map((snapshot) => <option value={snapshot.id} key={snapshot.id}>{snapshot.label} · {ago(snapshot.created)}</option>)}
+          </select>
+          <span className="mt-1 block text-[11.5px] text-faint">For ZIPs and plain folders. Scan an earlier copy first, then select it here to see changes.</span>
+        </label>
+      )}
 
       <div className="flex flex-wrap items-center gap-3">
         <motion.button type="submit" disabled={!ready || busy} whileTap={{ scale: 0.97 }}
           className="group inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-medium text-white shadow-[inset_0_1px_0_rgb(255_255_255/0.25),0_8px_24px_-10px_rgb(77_141_255/0.8)] transition enabled:hover:brightness-110 disabled:opacity-40 disabled:shadow-none">
           {busy ? <CircleNotch size={16} className="animate-spin" /> : null}
-          {busy ? "Starting…" : submitLabel}
+          {busy ? "Starting…" : investigate ? "Scan & investigate" : "Run scan"}
           {!busy && <ArrowRight size={15} weight="bold" className="transition-transform group-enabled:group-hover:translate-x-0.5" />}
         </motion.button>
+        {investigate && allowScanOnly && <button type="button" disabled={!ready || busy} onClick={() => void submit(false)}
+          className="rounded-lg border border-line px-4 py-2.5 text-sm text-muted enabled:hover:text-ink disabled:opacity-40">Scan only</button>}
         <AnimatePresence>
           {err && (
             <motion.div key={shake} role="alert" initial={{ opacity: 0, x: 0 }} animate={{ opacity: 1, x: [0, -6, 6, -3, 3, 0] }} exit={{ opacity: 0 }} transition={{ duration: 0.4 }}

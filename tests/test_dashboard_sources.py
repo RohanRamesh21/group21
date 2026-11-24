@@ -119,6 +119,49 @@ def test_plain_folder_is_copied_and_scanned_once(intake):
     assert [s["stage"] for s in projects.JOBS[pid]["steps"]] == ["fetch", "fetch"]
 
 
+def test_working_tree_snapshot_captures_saved_edits_without_mutating_source(intake):
+    home, calls = intake
+    repo = _repo(home / "app")
+    (repo / ".gitignore").write_text("ignored.txt\n")
+    (repo / "ignored.txt").write_text("local data")
+    (repo / "notes.txt").write_text("new file")
+    (repo / "app.js").unlink()
+    (repo / "link.txt").symlink_to(home / "outside.txt")
+    before = _git(repo, "status", "--porcelain")
+    pid = projects._new("path", "app", {})
+    projects._run_path(pid, repo, True, None, None, working_tree=True)
+    assert projects.JOBS[pid]["status"] != "error", projects.JOBS[pid]["message"]
+    _, clone, base, head, _ = calls[0]
+    assert base == "HEAD"
+    assert _git(clone, "rev-parse", f"{head}^") == _git(repo, "rev-parse", "HEAD")
+    assert set(_git(clone, "ls-tree", "--name-only", head).splitlines()) == {".gitignore", "notes.txt"}
+    assert _git(repo, "status", "--porcelain") == before
+
+
+def test_folder_snapshot_compares_against_saved_files(intake):
+    home, calls = intake
+    path = home / "site"
+    path.mkdir()
+    (path / "versions.txt").write_text("old\n")
+    old = projects._new("path", "site", {"git": False})
+    projects._run_path(old, path, False, None, None)
+    _, old_repo, _, _, _ = calls[0]
+    out = projects.BASE / old / "check"
+    out.mkdir()
+    report = out / "report.json"
+    report.write_text(json.dumps({"repo": str(old_repo), "headline": {"head_commit_full": _git(old_repo, "rev-parse", "HEAD")}}))
+    (out / "latest.json").write_text(json.dumps({"path": str(report)}))
+    projects._job(old, status="done")
+    (path / "versions.txt").write_text("new\n")
+    new = projects._new("path", "site", {"git": False})
+    projects._run_path(new, path, False, None, None, baseline=old)
+    assert projects.JOBS[new]["status"] != "error", projects.JOBS[new]["message"]
+    _, repo, base, head, _ = calls[1]
+    assert _git(repo, "show", f"{base}:versions.txt") == "old"
+    assert _git(repo, "show", f"{head}:versions.txt") == "new"
+    assert _git(repo, "rev-parse", f"{head}^") == _git(repo, "rev-parse", base)
+
+
 @pytest.fixture
 def api(tmp_path, monkeypatch):
     directory = tmp_path / "check"

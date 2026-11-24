@@ -155,6 +155,44 @@ class OpenRouterBackend:
         return Turn(text=text, tool_calls=calls, stop_reason=stop, raw_content=raw or [{"type": "text", "text": ""}])
 
 
+class DeepSeekBackend(OpenRouterBackend):
+    """Native DeepSeek Chat Completions with Guardian's function tools."""
+
+    URL = "https://api.deepseek.com/chat/completions"
+    MODEL = "deepseek-flash"
+
+    def __init__(self, timeout: int = 45):
+        import os
+
+        import requests
+
+        self.key = os.environ.get("DEEPSEEK_API_KEY")
+        if not self.key:
+            raise ValueError("DEEPSEEK_API_KEY is required for the DeepSeek backend")
+        self.model = os.environ.get("GUARDIAN_DEEPSEEK_MODEL") or self.MODEL
+        self.session = requests.Session()
+        self.timeout = timeout
+
+    def step(self, agent, system, messages, tools, effort):
+        import time
+
+        import requests
+
+        body = {"model": self.model, "messages": self._to_openai(system, messages), "tools": self._tools(tools),
+                "tool_choice": "auto", "thinking": {"type": "disabled"}, "max_tokens": 4096}
+        for attempt in range(3):
+            try:
+                response = self.session.post(self.URL, json=body, headers={"Authorization": f"Bearer {self.key}"},
+                                             timeout=self.timeout, allow_redirects=False)
+            except requests.RequestException as exc:
+                raise RuntimeError(f"DeepSeek API request failed: {type(exc).__name__}") from exc
+            if response.status_code == 200:
+                return self._parse(response.json())
+            if response.status_code not in {429, 500, 502, 503, 504} or attempt == 2:
+                raise RuntimeError(f"DeepSeek API failed: HTTP {response.status_code}")
+            time.sleep(2 ** attempt)
+
+
 class FreeModelBackend(OpenRouterBackend):
     """FreeModel chat completions using the same tool and message format."""
 

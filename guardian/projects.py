@@ -18,12 +18,15 @@ import os
 import shutil
 import stat
 import subprocess
+import tempfile
 import threading
 import time
 import uuid
 import zipfile
 from pathlib import Path
 from urllib.parse import urlparse
+
+from guardian.git_snapshot import git, resolve_commit
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = ROOT / "guardian-out" / "projects"
@@ -116,14 +119,15 @@ def safe_extract(zip_path: Path, dest: Path) -> int:
         n = 0
         for i in infos:
             name = i.filename.replace("\\", "/")
-            if name.startswith("/") or ".." in Path(name).parts or ":" in Path(name).parts[0]:
+            parts = Path(name).parts
+            if not parts or name.startswith("/") or ".." in parts or ":" in parts[0]:
                 raise ValueError(f"unsafe path in archive: {name}")
             if stat.S_ISLNK(i.external_attr >> 16):
                 continue  # never materialise symlinks
             if any(p in SKIP_DIRS for p in Path(name).parts):
                 continue
             target = (dest / name).resolve()
-            if not str(target).startswith(str(root)):
+            if not target.is_relative_to(root):
                 raise ValueError(f"unsafe path in archive: {name}")
             if i.is_dir():
                 target.mkdir(parents=True, exist_ok=True)
@@ -135,20 +139,64 @@ def safe_extract(zip_path: Path, dest: Path) -> int:
         return n
 
 
-def _git_snapshot(repo: Path, message: str):
+def _snapshot_commit(repo: Path, source: Path, message: str, *, parent: str | None, ref: str, force: bool = False) -> str:
+    """Commit a copied tree in Guardian's repository without using its ordinary index or checkout."""
+    with tempfile.TemporaryDirectory(prefix="guardian-index-") as index:
+        env = {**GIT_ENV, "GIT_INDEX_FILE": str(Path(index) / "index"), "GIT_NO_REPLACE_OBJECTS": "1"}
+        cmd = SAFE_GIT + ["--work-tree", str(source), "-c", "user.name=guardian", "-c", "user.email=guardian@localhost",
+                          "-c", "commit.gpgsign=false"]
+        subprocess.run(cmd + ["add", *(["--force"] if force else []), "-A", "--", "."],
+                       cwd=repo, check=True, env=env, capture_output=True)
+        tree = subprocess.check_output(cmd + ["write-tree"], cwd=repo, env=env, text=True).strip()
+        parents = ["-p", parent] if parent else []
+        commit = subprocess.check_output(cmd + ["commit-tree", tree, *parents, "-m", message], cwd=repo, env=env, text=True).strip()
+    git(repo, "update-ref", ref, commit)
+    return commit
+
+
+def snapshot_baseline(project: str) -> tuple[Path, str]:
+    """Resolve the immutable head of a finished ZIP or plain-folder scan."""
+    job = get(project)
+    if not job or job["status"] != "done" or not (job["kind"] == "zip" or job["kind"] == "path" and not job.get("git")):
+        raise ValueError("select a finished ZIP or plain-folder scan as the baseline")
+    root = (BASE / project).resolve()
+    check = root / "check"
+    try:
+        link = json.loads((check / "latest.json").read_text())["path"]
+        report_path = (ROOT / link).resolve()
+        if not report_path.is_relative_to(check):
+            raise ValueError("invalid report path")
+        report = json.loads(report_path.read_text())
+        repo = Path(report["repo"]).resolve()
+        if not repo.is_relative_to(root / "src"):
+            raise ValueError("invalid snapshot path")
+        return repo, resolve_commit(repo, report["headline"]["head_commit_full"])
+    except (OSError, KeyError, ValueError) as exc:
+        raise ValueError("the selected baseline snapshot is unavailable; scan it again") from exc
+
+
+def _git_snapshot(repo: Path, message: str, baseline: str | None = None):
     subprocess.run(SAFE_GIT + ["init", "-q"], cwd=repo, check=True, env=GIT_ENV)
-    subprocess.run(SAFE_GIT + ["add", "-A"], cwd=repo, check=True, env=GIT_ENV)
-    subprocess.run(SAFE_GIT + ["-c", "user.name=guardian", "-c", "user.email=guardian@localhost", "commit", "-q",
-                               "--no-verify", "-m", message], cwd=repo, check=True, env=GIT_ENV)
+    parent = None
+    if baseline:
+        source, parent = snapshot_baseline(baseline)
+        dst = "refs/guardian/previous-snapshot"
+        cmd = SAFE_GIT + ["-c", "protocol.file.allow=always", "fetch", "-q", "--no-tags", "--no-recurse-submodules",
+                          "--", str(source), f"{parent}:{dst}"]
+        subprocess.run(cmd, cwd=repo, check=True, env=GIT_ENV, capture_output=True, timeout=120)
+    _snapshot_commit(repo, repo, message, parent=parent, ref="HEAD")
+    return "refs/guardian/previous-snapshot" if parent else None
 
 
-def start_zip(upload: Path, filename: str) -> str:
-    pid = _new("zip", filename, {})
-    threading.Thread(target=_run_zip, args=(pid, upload), daemon=True).start()
+def start_zip(upload: Path, filename: str, baseline: str | None = None) -> str:
+    if baseline:
+        snapshot_baseline(baseline)
+    pid = _new("zip", filename, {"baseline_project": baseline} if baseline else {})
+    threading.Thread(target=_run_zip, args=(pid, upload, baseline), daemon=True).start()
     return pid
 
 
-def _run_zip(pid: str, upload: Path):
+def _run_zip(pid: str, upload: Path, baseline: str | None = None):
     try:
         src = BASE / pid / "src"
         _step(pid, "Extracting archive safely (no symlinks, no paths outside the folder, size limits)")
@@ -157,12 +205,14 @@ def _run_zip(pid: str, upload: Path):
         tops = [p for p in src.iterdir() if not p.name.startswith(".") and p.name != "__MACOSX"]
         repo = tops[0] if len(tops) == 1 and tops[0].is_dir() else src  # zip of a single folder: use that folder
         _step(pid, f"Extracted {n} files")
-        if (repo / ".git").exists():
-            shutil.rmtree(repo / ".git")
-        _git_snapshot(repo, "uploaded snapshot")
-        _analyse(pid, repo, None, "HEAD", label=Path(JOBS[pid]["label"]).stem)
+        if not n:
+            raise ValueError("the archive has no project files to scan")
+        base = _git_snapshot(repo, "uploaded snapshot", baseline)
+        _analyse(pid, repo, base, "HEAD", label=Path(JOBS[pid]["label"]).stem)
     except Exception as e:
         _job(pid, status="error", message=f"{type(e).__name__}: {e}"[:400])
+    finally:
+        upload.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------- Git URL
@@ -214,6 +264,62 @@ def _run_git(pid: str, url: str, base: str | None, head: str | None):
         _job(pid, status="error", message=f"{type(e).__name__}: {e}"[:400])
 
 
+def examples() -> list[dict]:
+    import yaml
+
+    corpus = ROOT / "testbed" / "corpus.yaml"
+    if not corpus.is_file():
+        return []
+    return [app for app in yaml.safe_load(corpus.read_text())["apps"] if app.get("demo_language")]
+
+
+def start_example(name: str) -> str:
+    app = next((item for item in examples() if item["name"] == name), None)
+    if not app:
+        raise ValueError("unknown example repository")
+    url = validate_git_url(app["repo"])
+    pid = _new("git", app["name"], {"url": url, "base": app["base"]["ref"], "head": app["ref"], "example": name})
+    threading.Thread(target=_run_example, args=(pid, app, url), daemon=True).start()
+    return pid
+
+
+def _run_example(pid: str, app: dict, url: str):
+    try:
+        repo = BASE / pid / "src"
+        cache = ROOT / "sandbox" / "corpus" / f"{app['name']}.git"
+        base, head = app["base"]["ref"], app["ref"]
+        bc, hc = app["base"]["commit"], app["commit"]
+        refs = [f"{bc}:refs/tags/{base}", f"{hc}:refs/tags/{head}"]
+        _step(pid, "Fetching the pinned release pair (bare repository, no checkout)")
+        subprocess.run(SAFE_GIT + ["init", "-q", "--bare", str(repo)], env=GIT_ENV, check=True, capture_output=True)
+        if cache.is_dir():
+            source = subprocess.run(SAFE_GIT + ["-c", "protocol.file.allow=always", "fetch", "-q", "--update-shallow", "--no-tags",
+                                               "--no-recurse-submodules", "--", str(cache), *refs],
+                                    cwd=repo, env=GIT_ENV, capture_output=True, timeout=90)
+        else:
+            source = None
+        if source is None or source.returncode:
+            subprocess.run(SAFE_GIT + ["fetch", "-q", "--depth=80", "--no-tags", "--no-recurse-submodules",
+                                       "--", url, *refs], cwd=repo, env=GIT_ENV, check=True, capture_output=True, timeout=150)
+        if resolve_commit(repo, base) != bc or resolve_commit(repo, head) != hc:
+            raise ValueError("the downloaded releases do not match the pinned commits")
+        if git(repo, "merge-base", "--is-ancestor", bc, hc, check=False).returncode and (
+            git(repo, "rev-parse", "--is-shallow-repository").stdout.strip() == b"true"
+        ):
+            _step(pid, "Fetching additional release history to verify ancestry")
+            try:
+                fetched = subprocess.run(SAFE_GIT + ["fetch", "-q", "--deepen=120", "--no-tags", "--no-recurse-submodules",
+                                                     "--", url, f"{hc}:refs/tags/{head}"], cwd=repo, env=GIT_ENV,
+                                         capture_output=True, timeout=70)
+                if fetched.returncode:
+                    _step(pid, "Extra history is unavailable; using the pinned release trees")
+            except subprocess.TimeoutExpired:
+                _step(pid, "History fetch timed out; using the pinned release trees")
+        _analyse(pid, repo, base, head, label=app["name"])
+    except Exception as exc:
+        _job(pid, status="error", message=f"{type(exc).__name__}: {exc}"[:400])
+
+
 # ---------------------------------------------------------------- local folder
 def path_roots() -> list[Path]:
     """Folders a local-path scan may read from. GUARDIAN_PATH_ROOTS (os.pathsep-separated) overrides the default."""
@@ -263,16 +369,70 @@ def safe_copy(src: Path, dest: Path) -> int:
     return n
 
 
-def start_path(raw: str, base: str | None, head: str | None) -> str:
+def _copy_worktree(src: Path, dest: Path) -> int:
+    """Copy tracked and non-ignored untracked files from disk. Missing tracked paths stay deleted."""
+    result = git(src, "ls-files", "-t", "--cached", "-z")
+    if any(entry.startswith(b"S ") for entry in result.stdout.split(b"\0")):
+        raise ValueError("working-tree scans need a complete checkout; use a committed scan for sparse checkouts")
+    files = git(src, "ls-files", "--cached", "--others", "--exclude-standard", "-z").stdout.split(b"\0")
+    count = size = 0
+    for raw in sorted(set(filter(None, files))):
+        rel = Path(os.fsdecode(raw))
+        if rel.is_absolute() or ".." in rel.parts or any(p in SKIP_DIRS for p in rel.parts):
+            continue
+        source = src / rel
+        if any((src / parent).is_symlink() for parent in rel.parents):
+            continue
+        try:
+            fd = os.open(source, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        except (FileNotFoundError, NotADirectoryError):
+            continue
+        except OSError:
+            if source.is_symlink():
+                continue
+            raise
+        with os.fdopen(fd, "rb") as stream:
+            st = os.fstat(stream.fileno())
+            if not stat.S_ISREG(st.st_mode):
+                continue
+            count += 1
+            size += st.st_size
+            if count > MAX_FILES or size > MAX_ZIP_BYTES:
+                raise ValueError("working tree exceeds the local scan file or size limit")
+            target = dest / rel
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with target.open("wb") as out:
+                remaining = st.st_size
+                while remaining and (chunk := stream.read(min(1 << 20, remaining))):
+                    out.write(chunk)
+                    remaining -= len(chunk)
+            end = os.fstat(stream.fileno())
+            if remaining or (end.st_size, end.st_mtime_ns) != (st.st_size, st.st_mtime_ns):
+                raise ValueError("working tree changed during capture; retry when the files are saved")
+            target.chmod(0o600 | (st.st_mode & 0o111))
+    return count
+
+
+def start_path(raw: str, base: str | None, head: str | None, *, working_tree: bool = False, baseline: str | None = None) -> str:
     path = validate_local_path(raw)
-    is_git = (path / ".git").exists() or ((path / "HEAD").is_file() and (path / "objects").is_dir() and (path / "refs").is_dir())
+    has_worktree = (path / ".git").exists()
+    is_git = has_worktree or ((path / "HEAD").is_file() and (path / "objects").is_dir() and (path / "refs").is_dir())
+    if working_tree and (not has_worktree or head):
+        raise ValueError("a working-tree scan needs a local Git checkout and uses its files as the head")
+    if baseline:
+        if is_git:
+            raise ValueError("select a base commit for a Git repository; saved snapshots are for ZIPs and plain folders")
+        snapshot_baseline(baseline)
     pid = _new("path", path.name, {"path": str(path), "git": is_git,
+                                   "snapshot_source": "working_tree" if working_tree else "commits" if is_git else "folder",
+                                   "baseline_project": baseline,
                                    "base": (base or None) if is_git else None, "head": (head or None) if is_git else None})
-    threading.Thread(target=_run_path, args=(pid, path, is_git, base, head), daemon=True).start()
+    threading.Thread(target=_run_path, args=(pid, path, is_git, base, head, working_tree, baseline), daemon=True).start()
     return pid
 
 
-def _run_path(pid: str, path: Path, is_git: bool, base: str | None, head: str | None):
+def _run_path(pid: str, path: Path, is_git: bool, base: str | None, head: str | None,
+              working_tree: bool = False, baseline: str | None = None):
     try:
         repo = BASE / pid / "src"
         if is_git:
@@ -289,8 +449,6 @@ def _run_path(pid: str, path: Path, is_git: bool, base: str | None, head: str | 
                                cwd=repo, capture_output=True, text=True, timeout=300, env=GIT_ENV)
             if f.returncode != 0:
                 raise RuntimeError("could not read the branches of the local repository: " + f.stderr[-300:])
-            from guardian.git_snapshot import resolve_commit
-
             for role, ref in (("base", base), ("head", head)):
                 if not ref:
                     continue
@@ -311,6 +469,15 @@ def _run_path(pid: str, path: Path, is_git: bool, base: str | None, head: str | 
                         base = commit
                     else:
                         head = commit
+            if working_tree:
+                anchor = resolve_commit(repo, "HEAD")
+                _step(pid, "Copying the working tree into a private snapshot (tracked and non-ignored untracked files)")
+                with tempfile.TemporaryDirectory(dir=repo.parent, prefix="worktree-") as tmp:
+                    _copy_worktree(path, Path(tmp))
+                    snapshot_ref = "refs/guardian/working-tree"
+                    _snapshot_commit(repo, Path(tmp), "Guardian working-tree snapshot", parent=anchor, ref=snapshot_ref, force=True)
+                _analyse(pid, repo, base or "HEAD", snapshot_ref, label=path.name)
+                return
             head_ref = head or "HEAD"
             if not base and subprocess.run(SAFE_GIT + ["rev-parse", "--verify", "-q", "--end-of-options", f"{head_ref}~1^{{commit}}"],
                                            cwd=repo, env=GIT_ENV, capture_output=True).returncode == 0:
@@ -323,8 +490,8 @@ def _run_path(pid: str, path: Path, is_git: bool, base: str | None, head: str | 
             if not n:
                 raise ValueError("the folder has no files to scan")
             _step(pid, f"Copied {n} files")
-            _git_snapshot(repo, "local folder snapshot")
-            _analyse(pid, repo, None, "HEAD", label=path.name)
+            previous = _git_snapshot(repo, "local folder snapshot", baseline)
+            _analyse(pid, repo, previous, "HEAD", label=path.name)
     except Exception as e:
         _job(pid, status="error", message=f"{type(e).__name__}: {e}"[:400])
 

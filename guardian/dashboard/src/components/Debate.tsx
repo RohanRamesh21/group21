@@ -2,11 +2,12 @@ import { AnimatePresence, motion } from "motion/react";
 import { useMemo } from "react";
 import type { FeedAudit, FeedItem, FeedMessage, RunState } from "../types";
 import { agentOf, shortPurl, spring } from "../ui";
+import { EvidenceChips } from "./AgentLanes";
 
 const DEBATE = new Set(["hypothesis", "challenge", "answer", "corroborate", "clear", "dispute"]);
 const OUTCOME: Record<string, string> = { corroborate: "Confirmed", clear: "Cleared", dispute: "Disputed" };
 
-export function Debate({ feed, state }: { feed: FeedItem[]; state: RunState | null }) {
+export function Debate({ feed, state, onEvidence }: { feed: FeedItem[]; state: RunState | null; onEvidence: (id: string) => void }) {
   const threads = useMemo(() => {
     const by = new Map<string, FeedMessage[]>();
     for (const f of feed) if (f.type === "message" && DEBATE.has(f.kind) && f.finding_id) by.set(f.finding_id, [...(by.get(f.finding_id) ?? []), f]);
@@ -14,6 +15,8 @@ export function Debate({ feed, state }: { feed: FeedItem[]; state: RunState | nu
   }, [feed]);
   const rules = feed.filter((f) => f.type === "audit" && ["rejected", "floor_intervention", "denied_tool"].includes(f.event)) as FeedAudit[];
   const missed = feed.filter((f) => f.type === "message" && f.kind === "missed_risk") as FeedMessage[];
+  const general = feed.filter((f): f is FeedMessage => f.type === "message" && f.sender === "skeptic" &&
+    DEBATE.has(f.kind) && !f.finding_id);
 
   return (
     <section className="panel flex min-h-0 flex-col p-4">
@@ -21,9 +24,17 @@ export function Debate({ feed, state }: { feed: FeedItem[]; state: RunState | nu
         <span className="font-medium">Skeptic review</span>
         <span className="text-xs text-muted">{rules.length} constitution interventions</span>
       </div>
-      <div className="scroll-thin flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
-        {!threads.length && !missed.length && <p className="text-sm text-muted">Every hypothesis is challenged here before it can reach the verdict.</p>}
+      <div className="scroll-thin flex max-h-72 min-h-0 flex-1 flex-col gap-3 overflow-y-auto">
+        {!threads.length && !missed.length && !general.length && <p className="text-sm text-muted">Skeptic review messages appear here when available.</p>}
         <AnimatePresence initial={false}>
+          {general.map((m) => (
+            <motion.div key={m.seq} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+              className="rounded-lg border border-line bg-raised/50 p-3 text-[12px]">
+              <div className="mb-1 font-medium">{OUTCOME[m.kind] ?? m.kind.replaceAll("_", " ")} · investigation</div>
+              <p className="mb-2 text-ink/85">{m.claim}</p>
+              <EvidenceChips ids={m.evidence_ids} onEvidence={onEvidence} />
+            </motion.div>
+          ))}
           {threads.map(([fid, ms]) => {
             const f = state?.findings?.[fid];
             const end = [...ms].reverse().find((m) => OUTCOME[m.kind]);

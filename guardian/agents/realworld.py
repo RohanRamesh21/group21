@@ -33,6 +33,7 @@ MAX_RESPONSE_BYTES = 12 * 1024 * 1024
 MAX_ARCHIVE_BYTES = 64 * 1024 * 1024
 MAX_ARCHIVE_MEMBERS = 20_000
 DEMO_HTTP_HOSTS = {"localhost:4873", "127.0.0.1:4873"}
+ADVISORY_MAX_AGE_SECONDS = 24 * 60 * 60
 # Names attackers imitate most (plus every direct dependency of the app, added at runtime).
 POPULAR = ["axios", "express", "lodash", "react", "request", "chalk", "commander", "debug", "moment", "webpack",
            "typescript", "eslint", "jest", "dotenv", "uuid", "yargs", "socket.io", "ws", "mongoose", "redis",
@@ -55,6 +56,7 @@ class RealFacts:
         self.base_pkgs, _ = parse_lockfile(self._lockfile(self.base))
         self.head_pkgs, _ = parse_lockfile(self._lockfile(self.head))
         self._memo: dict[tuple[str, str], str] = {}
+        self.checked_advisories: set[str] = set()
         self.diff = self._compute_diff()
 
     # --- plumbing ------------------------------------------------------------
@@ -166,6 +168,34 @@ class RealFacts:
         before = {(p.name, p.version, p.resolved, p.integrity, p.has_install_script) for p in self.base_pkgs.values()}
         return {(p.name, p.version) for p in self.head_pkgs.values()
                 if (p.name, p.version, p.resolved, p.integrity, p.has_install_script) not in before}
+
+    def reuse_scan_advisories(self, receipt: dict) -> dict[str, str]:
+        """Use successful exact-version OSV responses from the same head commit."""
+        timestamp = receipt.get("queried_at")
+        queries = receipt.get("queries")
+        if (receipt.get("schema") != 1 or receipt.get("source") != "osv.dev/querybatch"
+                or receipt.get("head") != self.head or type(timestamp) is not int
+                or not 0 <= time.time() - timestamp <= ADVISORY_MAX_AGE_SECONDS
+                or not isinstance(queries, list)):
+            return {}
+        exact = {(n, v): _purl(n, v) for n, v in self._changed_packages()}
+        reused = {}
+        for row in queries:
+            if not isinstance(row, dict) or row.get("ecosystem") != "npm":
+                continue
+            name, version, ids = row.get("name"), row.get("version"), row.get("advisories")
+            if (not isinstance(name, str) or not isinstance(version, str) or not isinstance(ids, list)
+                    or not all(isinstance(vid, str) and vid for vid in ids)):
+                continue
+            purl = exact.get((name, version))
+            if purl:
+                eid = self._ev("osv_lookup", {
+                    "package": f"{name}@{version}", "source": "OSV.dev batch query from the deterministic scan",
+                    "head": self.head, "queried_at": timestamp, "advisories": [{"id": vid} for vid in ids],
+                })
+                self._memo["osv_lookup", purl] = eid
+                reused[f"pkg:{purl}"] = eid
+        return reused
 
     # --- fact tools (return evidence id) -------------------------------------
     def answer(self, tool: str, arg: str) -> str | None:
@@ -388,9 +418,11 @@ class RealFacts:
                                 "evidence": eid, "hard_signal": hard, "floor": "high" if hard else "info"}
         elif det == "D0":
             for name, ver in sorted(changed):
-                eid = self.answer("osv_lookup", _purl(name, ver))
+                purl = _purl(name, ver)
+                eid = self.answer("osv_lookup", purl)
                 adv = json.loads(self.store.content(eid))["advisories"]
                 mal = [a for a in adv if a["id"].startswith("MAL-")]
+                self.checked_advisories.add(f"pkg:{purl}")
                 if adv:
                     yield {"type": "malicious_package" if mal else "known_vulnerability", "component": _purl(name, ver),
                                 "summary": ", ".join(a["id"] for a in adv[:5]), "evidence": eid,

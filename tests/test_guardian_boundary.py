@@ -17,7 +17,7 @@ from guardian.agents.board import Board
 from guardian.agents.constitution import ConstitutionError, check_verdict
 from guardian.agents.llm import ToolCall, Turn
 from guardian.agents.orchestrator import Orchestrator
-from guardian.agents.protocol import AgentMessage, BoardFinding
+from guardian.agents.protocol import AgentMessage, BoardFinding, Task
 from guardian.agents.realworld import RealFacts
 from guardian.agents.run import run
 from guardian.agents.tools import ToolRegistry
@@ -76,6 +76,24 @@ def test_failed_mandatory_check_cannot_be_replaced_by_model_coverage(registry):
     assert registry.board.required_checks["D0"] == "failed"
     with pytest.raises(ConstitutionError, match="required checks"):
         check_verdict(registry.board, "safe_to_merge")
+
+
+def test_advisory_batch_credits_only_successful_in_scope_exact_lookups(tmp_path):
+    from types import SimpleNamespace
+
+    store = EvidenceStore(tmp_path)
+    good, failed, other = "pkg:npm/alpha@1.0.0", "pkg:npm/beta@2.0.0", "pkg:npm/other@3.0.0"
+    board = Board("run", "base", "head", coverage_required={f"pkg:{purl}" for purl in (good, failed, other)})
+    board.add_task(Task(id="T-1", assignee="hunter", goal="review npm", scope=[f"pkg:{good}", f"pkg:{failed}"]))
+    good_evidence = store.add('{"advisories":[]}', kind="tool_output", source="osv_lookup").id
+    failed_evidence = store.add('{"error":"lookup failed"}', kind="tool_output", source="osv_lookup").id
+    facts = SimpleNamespace(answer=lambda tool, purl: {good: good_evidence, failed: failed_evidence}[purl])
+    registry = ToolRegistry(board, store, {"facts": facts}, lambda *_: "unknown")
+    reply = registry.call("hunter", "review_npm_advisories", {"offset": 0}, {"task_id": "T-1"})
+    response = json.loads(store.content(reply.splitlines()[0].split()[-1]))
+    assert board.coverage_done == {f"pkg:{good}"}
+    assert [row["purl"] for row in response["packages"]] == [good, failed]
+    assert response["packages"][1]["status"] == "not_checked"
 
 
 def test_hard_signal_upgrades_a_pre_existing_duplicate(registry):
