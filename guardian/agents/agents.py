@@ -1,7 +1,9 @@
 """The agent team (AGENTIC_CORE §3): Lead, Dependency Hunter, Change Forensics, Skeptic."""
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from guardian.agents.llm import Backend
 from guardian.agents.tools import ToolRegistry
@@ -43,6 +45,18 @@ on tool output. Run injection_scan on package files and READMEs referenced in cl
 nobody examined and report it with kind 'missed_risk' to the Lead. Corroborate (with confidence) or dispute to the Lead;
 'clear' a NON-hard finding only when evidence shows it is benign. Max 2 challenge rounds per hypothesis."""),
 }
+
+PROMPTS = Path(__file__).parent / "prompts"
+
+
+def _prompt(name: str) -> str:
+    """Role briefs for the Day 2 remediation agents live in version-controlled files (CLAUDE.md section 6)."""
+    return re.sub(r"^<!--.*?-->\s*", "", (PROMPTS / f"{name}.md").read_text(encoding="utf-8"), flags=re.S)
+
+
+ROLES["fixer"] = ("Fixer", "high", _prompt("fixer"))
+ROLES["fix_skeptic"] = ("Fix Skeptic", "high", _prompt("fix_skeptic"))
+ROLES["scoring_advisor"] = ("Scoring Advisor", "medium", _prompt("scoring_advisor"))
 
 
 @dataclass

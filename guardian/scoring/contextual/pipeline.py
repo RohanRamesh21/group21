@@ -56,7 +56,7 @@ def _direct_parents(inventory: list[dict], edges: list[dict]):
     return parents
 
 
-def enrich(scores: dict, report: dict, reach_error: str | None = None, affected_lookup=None, fix_for: str = "relevant") -> dict:
+def enrich(scores: dict, report: dict, reach_error: str | None = None, affected_lookup=None, fix_for: str = "relevant", weights: dict | None = None) -> dict:
     """Mutates and returns `scores`. `fix_for`: "relevant" = introduced or high/critical findings; "all" = every finding."""
     findings = scores["findings"]
     snapshot = ([(f["id"], f["level"], f["decision"], f["floor"]) for f in findings], scores["verdict"])
@@ -66,7 +66,7 @@ def enrich(scores: dict, report: dict, reach_error: str | None = None, affected_
     for f in findings:
         f["confidence"] = confidence.confidence(f, errors)
 
-    rs = sensitivity.rank_stability(findings)
+    rs = sensitivity.rank_stability(findings, weights=weights)
     for f in findings:
         f["rank_stability"] = rs["per_finding"][f["id"]]
 

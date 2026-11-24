@@ -1,6 +1,7 @@
 """Guardian command line.
 
     guardian scan <repo> [--ref REF] [--out DIR] [--cdxgen] [--no-sbom]
+    guardian remediate run|decide|apply|report ...      (Day 2: docs/DAY2_PROPOSAL.md)
 """
 from __future__ import annotations
 
@@ -98,6 +99,56 @@ def scan(repo: Path, ref: str, out: Path, use_cdxgen: bool = False, make_sbom: b
             "evidence": [lock_ev.id, pkg_ev.id]}
 
 
+def _remediate(args) -> int:
+    from guardian.remediation import apply as applier
+    from guardian.remediation import report as reporter
+    from guardian.remediation import runner, service, validate
+    from guardian.remediation.context import RemediationContext
+    from guardian.remediation.store import BASE, RemediationStore
+
+    def reopen(run: str):
+        store = RemediationStore(run)
+        meta = store.meta()
+        if not meta:
+            raise SystemExit(f"unknown remediation run {run} (looked in {BASE})")
+        return service.Remediator(RemediationContext.from_paths(meta["scores_path"], meta["report_path"], meta.get("project")), store)
+
+    if args.rcmd == "run":
+        ctx = RemediationContext.load(args.project)
+        rem = service.open_run(ctx)
+        res = runner.run_remediation(rem, args.mode, args.top)
+        print(json.dumps(res, indent=1))
+        for p in rem.store.plans():
+            print(f"{p.id} [{p.produced_by}] {p.type} {p.target or ''} | forecast, not verified | review: {p.review.outcome} | {p.finding_summary.get('title')}")
+        print("run:", rem.store.root)
+        return 0
+    rem = reopen(args.run)
+    if args.rcmd == "decide":
+        try:
+            a = rem.decide(args.plan, args.decision, args.reviewer, args.note)
+        except service.DecisionError as e:
+            print("REFUSED:", e)
+            return 2
+        print(a.model_dump_json(indent=1))
+        return 0
+    if args.rcmd == "apply":
+        try:
+            v = validate.validate(rem.store, args.plan, rem.ctx, tier=args.tier)
+        except applier.ApplyRefused as e:
+            print("REFUSED:", e)
+            return 2
+        print(v.wording)
+        print(json.dumps({"outcome": v.outcome, "branch": v.branch, "work_dir": v.work_dir, "build_tests": v.build_tests,
+                          "failed_conditions": (v.delta or {}).get("failed_conditions")}, indent=1))
+        return 0 if v.outcome != "failed" else 1
+    if args.rcmd == "report":
+        rep = reporter.write(rem.store, rem.ctx)
+        print(reporter.to_markdown(rep))
+        print("written:", rem.store.root / "report.md")
+        return 0
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="guardian", description="Software Supply Chain Guardian")
     sub = ap.add_subparsers(dest="cmd", required=True)
@@ -119,7 +170,29 @@ def main(argv: list[str] | None = None) -> int:
     inv.add_argument("--world", choices=["canned", "real"], default="canned",
                      help="real = live tools on sandbox/uptime-kuma scenario/base..scenario/s3-s9")
     inv.add_argument("--out", type=Path, default=Path("guardian-out/agents"))
+    rm = sub.add_parser("remediate", help="Day 2: recommend fixes for the top findings, record a human decision, apply in a sandbox, rescan")
+    rsub = rm.add_subparsers(dest="rcmd", required=True)
+    rr = rsub.add_parser("run", help="create fix plans for the top-N scored findings of the latest check")
+    rr.add_argument("--project", default=None)
+    rr.add_argument("--top", type=int, default=3)
+    rr.add_argument("--mode", choices=["rule_based", "agent", "replay"], default="rule_based",
+                    help="rule_based = no LLM; agent = Fixer+Skeptic on the configured provider (falls back to rule_based); replay = scripted agent loop, no LLM")
+    rd = rsub.add_parser("decide", help="a HUMAN approves, rejects or escalates a plan (this is the only way to create an approval)")
+    rd.add_argument("run")
+    rd.add_argument("plan")
+    rd.add_argument("decision", choices=["approve", "reject", "escalate"])
+    rd.add_argument("--reviewer", required=True)
+    rd.add_argument("--note", default=None)
+    ra = rsub.add_parser("apply", help="apply an APPROVED plan in a throwaway local copy, rescan and compare (refused without a matching approval)")
+    ra.add_argument("run")
+    ra.add_argument("plan")
+    ra.add_argument("--tier", choices=["tier1", "tier2"], default="tier1")
+    rp = rsub.add_parser("report", help="write and print the remediation report")
+    rp.add_argument("run")
     args = ap.parse_args(argv)
+
+    if args.cmd == "remediate":
+        return _remediate(args)
 
     if args.cmd == "investigate":
         from guardian.agents.run import run, timeline

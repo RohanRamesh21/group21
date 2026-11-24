@@ -104,7 +104,9 @@ def check(repo: Path, base: str, head: str, out: Path) -> dict:
         from guardian.scoring.contextual.pipeline import enrich, reach_for_report
         from guardian.scoring.score import score_report
         reach, reach_err = reach_for_report(report)  # contextual: static import scan of the head tree (estimated, never executes code)
-        scores = enrich(score_report(report, reach=reach), report, reach_error=reach_err)  # contextual: rank stability, confidence, fix candidates
+        from guardian.scoring.advisor import active_weights  # Day 2: a human-approved AHP matrix (if any) replaces the baseline weights
+        aw, ainfo = active_weights(out)
+        scores = enrich(score_report(report, reach=reach, weights=aw, matrix_info=ainfo), report, reach_error=reach_err, weights=aw)  # contextual: rank stability, confidence, fix candidates
         spath = out / f"scores-{rb['commit'][:8]}-{rh['commit'][:8]}.json"
         spath.write_text(json.dumps(scores, indent=1))
         pointer["scores"] = str(spath)

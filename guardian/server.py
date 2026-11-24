@@ -27,6 +27,14 @@ HUMAN_TIMEOUT = 120  # seconds; after that the policy answer is used and the aud
 
 app = FastAPI(title="Supply Chain Guardian")
 
+from guardian.remediation.api import router as remediation_router  # noqa: E402  Day 2: remediation chain
+
+app.include_router(remediation_router)
+
+from guardian.scoring.ahp_api import router as ahp_router  # noqa: E402  Day 2: AI-advised AHP
+
+app.include_router(ahp_router)
+
 
 class Run:
     def __init__(self, run_id: str, mode: str, world: str):
@@ -214,6 +222,8 @@ def scores(project: str | None = None):
         latest.write_text(json.dumps(ptr))
     sp = Path(ptr["scores"]) if Path(ptr["scores"]).is_absolute() else ROOT / ptr["scores"]
     data = json.loads(sp.read_text())
+    from guardian.scoring.advisor import with_active_matrix  # Day 2: show the scores under the human-approved AHP matrix, if one exists
+    data = with_active_matrix(d, data)
     if str(sp) not in _WARMED:  # pre-write explanations in the background so the UI opens them instantly
         _WARMED.add(str(sp))
         from guardian.scoring.explain import warm

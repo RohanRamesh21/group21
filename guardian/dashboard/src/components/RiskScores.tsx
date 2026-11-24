@@ -26,6 +26,7 @@ export interface Fix {
 interface Scores {
   verdict: "block" | "review" | "allow"; reasons: string[]; counts: Record<string, Record<string, number>>; findings: Scored[];
   method: { ahp: { weights: Record<string, number>; consistency_ratio: number; consistent: boolean; lambda_max: number; matrix: number[][]; criteria: string[] };
+    ahp_active?: { id: string; source: string; weights: Record<string, number>; consistency_ratio?: number; approved_by?: string; matrix?: number[][] };
     criteria_text: Record<string, string>; floors: Record<string, { level: string; decision: string; why: string }>; verdict_rule: string; epss_poc_threshold: number };
   data: { advisories: number; cves: number; epss_found: number; kev_matches: number; kev_catalog_size: number; errors: string[] };
   fix_candidates?: Record<string, Fix[]>;
@@ -73,6 +74,7 @@ export function RiskScores({ project, fullScan = false }: { project?: string | n
   const v = VERDICT[s.verdict];
   const cur = s.findings.find((f) => f.id === sel) ?? null;
   const ahp = s.method.ahp;
+  const act = s.method.ahp_active;
   return (
     <div className="flex flex-col gap-4">
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
@@ -101,6 +103,7 @@ export function RiskScores({ project, fullScan = false }: { project?: string | n
       <button onClick={() => setShowMethod((x) => !x)} className="panel flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-2.5 text-left text-[12.5px] text-muted hover:text-ink">
         <span className="flex items-center gap-1.5 text-ink"><Scales size={15} /> How scores are computed</span>
         <span>Floors for attacks · SSVC decision · AHP weights (consistency ratio <span className="font-mono text-ink">{ahp.consistency_ratio}</span> {ahp.consistent ? "✓ < 0.10" : "✗"})</span>
+        {act && act.id !== "baseline" && <span className="text-accent">Scored with the human-approved matrix {act.id}{act.approved_by ? ` (approved by ${act.approved_by})` : ""}</span>}
         <span>EPSS for {s.data.epss_found}/{s.data.cves} CVEs · KEV matches {s.data.kev_matches} (catalog {s.data.kev_catalog_size})</span>
         {s.data.errors.map((e) => <span key={e} className="text-high">{e}</span>)}
         {s.contextual && <span>Contextual: confidence · reachability (estimated) · rank stability · fix candidates</span>}
@@ -146,7 +149,10 @@ export function RiskScores({ project, fullScan = false }: { project?: string | n
 }
 
 function Method({ s }: { s: Scores }) {
-  const a = s.method.ahp;
+  const act = s.method.ahp_active;
+  const base = s.method.ahp;
+  // Day 2: when a human approved an AI-advised matrix, show the matrix and weights the scores really used
+  const a = act?.matrix ? { ...base, matrix: act.matrix, weights: act.weights, consistency_ratio: act.consistency_ratio ?? base.consistency_ratio } : base;
   return (
     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden">
       <div className="panel grid gap-6 px-5 py-4 text-[12.5px] lg:grid-cols-3">

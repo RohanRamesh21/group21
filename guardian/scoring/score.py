@@ -1,4 +1,5 @@
-"""Explainable risk scoring for a `guardian check` report. Deterministic: no AI changes a score.
+"""Explainable risk scoring for a `guardian check` report. Deterministic: no AI computes or edits a score.
+An AI may only PROPOSE the AHP pairwise matrix (guardian/scoring/advisor.py); it takes effect after a code referee and a human approve it.
 
 Four layers:
   1. Hard floors      supply-chain attacks (malware, tampering, registry redirect, ...) get a minimum level
@@ -137,9 +138,10 @@ def ssvc(expl: str, auto: str, impact: str, mis: str) -> tuple[str, str]:
     return "Track", "no sign of attack"
 
 
-def _contrib(factors: dict) -> tuple[float, list]:
-    rows = [{"factor": k, "value": round(factors[k]["value"], 3), "weight": W[k],
-             "points": round(100 * W[k] * factors[k]["value"], 1), "why": factors[k]["why"]} for k in CRITERIA]
+def _contrib(factors: dict, w: dict | None = None) -> tuple[float, list]:
+    w = w or W
+    rows = [{"factor": k, "value": round(factors[k]["value"], 3), "weight": w[k],
+             "points": round(100 * w[k] * factors[k]["value"], 1), "why": factors[k]["why"]} for k in CRITERIA]
     return round(sum(r["points"] for r in rows), 1), rows
 
 
@@ -150,10 +152,15 @@ def _decide(level_from_rules: str | None, decision: str) -> str:
     return lv
 
 
-def score_report(report: dict, reach: dict | None = None) -> dict:
+def score_report(report: dict, reach: dict | None = None, weights: dict | None = None, matrix_info: dict | None = None) -> dict:
     """Score a check report. `reach` (optional, contextual scoring) maps a vulnerability key to a reachability record
-    (guardian/scoring/contextual/reachability.py). It only ever changes CVE findings, never a hard-signal finding."""
+    (guardian/scoring/contextual/reachability.py). It only ever changes CVE findings, never a hard-signal finding.
+
+    `weights` (optional, Day 2): the AHP weights to use instead of the baseline. They come from a pairwise matrix that
+    guardian/scoring/advisor.py proposed, a code referee validated (Saaty scale, CR < 0.10, bounded drift) and a HUMAN
+    approved. The score stays a deterministic function of those weights; levels, decisions and floors never depend on them."""
     reach = reach or {}
+    w = weights or W
     inv = {p["key"]: p for p in report.get("inventory", [])}
     by_name = {}
     for p in report.get("inventory", []):
@@ -205,7 +212,7 @@ def score_report(report: dict, reach: dict | None = None) -> dict:
             "actionable": {"value": 1.0 if v.get("fixed") or v.get("malicious") else 0.4,
                            "why": f"fixed in {', '.join(v['fixed'][:2])}" if v.get("fixed") else ("remove the package" if v.get("malicious") else "no fixed version published")},
         }
-        sc, rows = _contrib(factors)
+        sc, rows = _contrib(factors, w)
         level = _decide(floor[0] if floor else None, decision)
         cf = []
         if not floor:
@@ -266,7 +273,7 @@ def score_report(report: dict, reach: dict | None = None) -> dict:
             "introduced": {"value": 1.0 if s.get("label", "introduced") == "introduced" else 0.3, "why": "added by this PR" if s.get("label", "introduced") == "introduced" else "already present"},
             "actionable": {"value": 1.0, "why": "revert the change / remove the package"},
         }
-        sc, rows = _contrib(factors)
+        sc, rows = _contrib(factors, w)
         level = _decide(floor[0] if floor else None, decision)
         findings.append({
             "id": f"{s['type']}:{comp}", "kind": "supply_chain", "title": f"{comp}: {s['type'].replace('_', ' ')}", "component": comp,
@@ -290,7 +297,7 @@ def score_report(report: dict, reach: dict | None = None) -> dict:
             "introduced": {"value": 1.0 if c["label"] == "introduced" else 0.3, "why": "added by this PR" if c["label"] == "introduced" else "already present"},
             "actionable": {"value": 1.0, "why": "pin by digest / SHA or tighten the workflow"},
         }
-        sc, rows = _contrib(factors)
+        sc, rows = _contrib(factors, w)
         findings.append({"id": f"{c.get('detector')}:{c.get('file')}:{c.get('line')}:{c.get('type')}", "kind": "ci_image",
                          "title": f"{c.get('file')}: {c.get('type')}", "component": c.get("component"), "label": c["label"],
                          "summary": c.get("summary", ""), "decision": decision, "level": LEVEL[decision], "score": sc, "ssvc": None,
@@ -308,7 +315,8 @@ def score_report(report: dict, reach: dict | None = None) -> dict:
               for lv in ORDER[::-1]}
     return {
         "verdict": verdict, "reasons": reasons, "counts": counts, "findings": findings,
-        "method": {"ahp": AHP, "criteria_text": CRITERIA_TEXT, "epss_poc_threshold": EPSS_POC,
+        "method": {"ahp": AHP, "ahp_active": matrix_info or {"id": "baseline", "source": "baseline matrix", "weights": dict(W)},
+                   "criteria_text": CRITERIA_TEXT, "epss_poc_threshold": EPSS_POC,
                    "floors": {k: {"level": v[0], "decision": v[1], "why": v[2]} for k, v in FLOORS.items()},
                    "levels": LEVEL, "verdict_rule": "block if this PR introduces a critical finding or an Act decision; "
                                                     "review if it introduces a high finding; otherwise allow"},
