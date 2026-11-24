@@ -1,4 +1,4 @@
-"""Scan any project the user brings (any language / package manager): a ZIP upload or a public Git URL.
+"""Scan any project the user brings (any language / package manager): a ZIP upload, a public Git URL or a local folder.
 
 Safety rules (the analysed project is untrusted):
   * Nothing from the project is installed or executed. Every tool that reads it runs in the podman sandbox
@@ -6,6 +6,9 @@ Safety rules (the analysed project is untrusted):
     only *resolve* one from the package.json files (never the project's .npmrc), with registry access only.
   * ZIP: no absolute paths, no `..`, no symlinks, size and file-count limits.
   * Git: https only, host allow-list, read-only shallow clone, hooks disabled, no submodules, no credential prompts.
+  * Local folder: only under the allowed roots (GUARDIAN_PATH_ROOTS, default: the user's home directory). A Git repository
+    is cloned (no checkout, no hooks, no submodules) into the project folder, so the original is never written to; any
+    other folder is copied with the same limits as a ZIP (no symlinks, no node_modules/.git, size and file-count limits).
   * Everything stays under guardian-out/projects/<id>/.
 """
 from __future__ import annotations
@@ -36,6 +39,29 @@ SAFE_GIT = ["git", "-c", f"core.hooksPath={os.devnull}", "-c", "protocol.file.al
 JOBS: dict[str, dict] = {}
 _LOCK = threading.Lock()
 
+# Pipeline stages shown by the dashboard, in order. Each progress message is mapped to one of them (first match wins);
+# the stage only moves forward, so the base-version rescan stays inside "compare".
+STAGES = ["fetch", "inventory", "sbom", "ci", "vulns", "compare", "registry", "policy"]
+_STAGE_HINTS = [
+    ("policy", ("policy-as-code",)),
+    ("registry", ("on the registry",)),
+    ("compare", ("previous state",)),
+    ("vulns", ("looking up vulnerabilities",)),
+    ("ci", ("ci workflows",)),
+    ("sbom", ("building the sbom",)),
+    ("inventory", ("day 1 pipeline", "reading tracked files", "resolving versions", "could not parse", "declared dependencies")),
+    ("fetch", ("clon", "fetching ref", "extract", "copying", "copied", "local repository")),
+]
+
+
+def stage_of(msg: str, current: str | None = None) -> str | None:
+    """Pipeline stage a progress message belongs to, never earlier than `current`."""
+    low = msg.lower()
+    found = next((st for st, keys in _STAGE_HINTS if any(k in low for k in keys)), None)
+    if current and (found is None or STAGES.index(found) < STAGES.index(current)):
+        return current
+    return found
+
 
 def _job(pid: str, **kw):
     with _LOCK:
@@ -46,8 +72,9 @@ def _job(pid: str, **kw):
 
 def _step(pid: str, msg: str):
     with _LOCK:
-        JOBS[pid].setdefault("steps", []).append({"t": round(time.time() - JOBS[pid]["created"], 1), "msg": msg})
-    _job(pid, status="running", message=msg)
+        stage = stage_of(msg, JOBS[pid].get("stage"))
+        JOBS[pid].setdefault("steps", []).append({"t": round(time.time() - JOBS[pid]["created"], 1), "msg": msg, "stage": stage})
+    _job(pid, status="running", message=msg, stage=stage)
 
 
 def list_jobs() -> list[dict]:
@@ -187,11 +214,127 @@ def _run_git(pid: str, url: str, base: str | None, head: str | None):
         _job(pid, status="error", message=f"{type(e).__name__}: {e}"[:400])
 
 
+# ---------------------------------------------------------------- local folder
+def path_roots() -> list[Path]:
+    """Folders a local-path scan may read from. GUARDIAN_PATH_ROOTS (os.pathsep-separated) overrides the default."""
+    raw = os.environ.get("GUARDIAN_PATH_ROOTS", "")
+    roots = [Path(x).expanduser() for x in raw.split(os.pathsep) if x.strip()] or [Path.home()]
+    return [r.resolve() for r in roots]
+
+
+def validate_local_path(raw: str) -> Path:
+    if not raw or not raw.strip():
+        raise ValueError("enter the path of a folder on this machine")
+    p = Path(raw.strip()).expanduser()
+    if not p.is_absolute():
+        raise ValueError("use an absolute path (for example /home/you/projects/app or ~/projects/app)")
+    p = p.resolve()
+    if not p.is_dir():
+        raise ValueError(f"{p} is not a folder on this machine")
+    roots = path_roots()
+    if not any(p == r or p.is_relative_to(r) for r in roots) or p in (Path("/"), Path.home().resolve()):
+        allowed = ", ".join(str(r) for r in roots)
+        raise ValueError(f"pick a project folder inside {allowed} (set GUARDIAN_PATH_ROOTS to allow other folders)")
+    if p.is_relative_to(ROOT / "guardian-out"):
+        raise ValueError("that folder holds Guardian's own output")
+    return p
+
+
+def safe_copy(src: Path, dest: Path) -> int:
+    """Copy a folder like safe_extract unpacks a ZIP: regular files only, no symlinks, size and file-count limits."""
+    n = total = 0
+    for dirpath, dirnames, filenames in os.walk(src, followlinks=False):
+        dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS and not (Path(dirpath) / d).is_symlink()]
+        rel = Path(dirpath).relative_to(src)
+        for name in filenames:
+            f = Path(dirpath) / name
+            st = f.lstat()
+            if not stat.S_ISREG(st.st_mode):
+                continue  # symlinks, sockets, devices: never copied
+            n += 1
+            total += st.st_size
+            if n > MAX_FILES:
+                raise ValueError(f"folder has more than {MAX_FILES} files")
+            if total > MAX_ZIP_BYTES:
+                raise ValueError(f"folder is larger than {MAX_ZIP_BYTES // (1024 * 1024)} MB (node_modules and .git are skipped)")
+            target = dest / rel / name
+            target.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(f, target, follow_symlinks=False)
+    return n
+
+
+def start_path(raw: str, base: str | None, head: str | None) -> str:
+    path = validate_local_path(raw)
+    is_git = (path / ".git").exists() or ((path / "HEAD").is_file() and (path / "objects").is_dir() and (path / "refs").is_dir())
+    pid = _new("path", path.name, {"path": str(path), "git": is_git,
+                                   "base": (base or None) if is_git else None, "head": (head or None) if is_git else None})
+    threading.Thread(target=_run_path, args=(pid, path, is_git, base, head), daemon=True).start()
+    return pid
+
+
+def _run_path(pid: str, path: Path, is_git: bool, base: str | None, head: str | None):
+    try:
+        repo = BASE / pid / "src"
+        if is_git:
+            _step(pid, f"Cloning the local repository {path} (no checkout, no hooks, no submodules; the original is not modified)")
+            # A local clone uses git's "file" protocol, which SAFE_GIT disables (it guards remote clones and submodules).
+            # Allowed here only, for this one source folder; submodules stay off.
+            local_git = SAFE_GIT + ["-c", "protocol.file.allow=always"]
+            r = subprocess.run(local_git + ["clone", "-q", "--no-checkout", "--no-hardlinks", "--no-recurse-submodules", "--", str(path), str(repo)],
+                               capture_output=True, text=True, timeout=300, env=GIT_ENV)
+            if r.returncode != 0:
+                raise RuntimeError("clone failed: " + r.stderr[-300:])
+            # local branches of the original become branches here too, so base/head can name them as usual
+            f = subprocess.run(local_git + ["fetch", "-q", "--update-head-ok", "--no-recurse-submodules", "origin", "+refs/heads/*:refs/heads/*"],
+                               cwd=repo, capture_output=True, text=True, timeout=300, env=GIT_ENV)
+            if f.returncode != 0:
+                raise RuntimeError("could not read the branches of the local repository: " + f.stderr[-300:])
+            from guardian.git_snapshot import resolve_commit
+
+            for role, ref in (("base", base), ("head", head)):
+                if not ref:
+                    continue
+                try:
+                    resolve_commit(repo, ref)
+                except ValueError:
+                    # A bare cache can store commits under refs outside the clone's branch and tag refspecs.
+                    try:
+                        commit = resolve_commit(path, ref)
+                    except ValueError as exc:
+                        raise ValueError(f"ref {ref} not found in {path}") from exc
+                    fetched = subprocess.run(local_git + ["fetch", "-q", "--update-shallow", "--no-recurse-submodules",
+                                                          "origin", f"{commit}:refs/guardian/selected-{role}"],
+                                             cwd=repo, capture_output=True, text=True, timeout=300, env=GIT_ENV)
+                    if fetched.returncode:
+                        raise RuntimeError(f"could not copy the selected {role} commit")
+                    if role == "base":
+                        base = commit
+                    else:
+                        head = commit
+            head_ref = head or "HEAD"
+            if not base and subprocess.run(SAFE_GIT + ["rev-parse", "--verify", "-q", "--end-of-options", f"{head_ref}~1^{{commit}}"],
+                                           cwd=repo, env=GIT_ENV, capture_output=True).returncode == 0:
+                base = f"{head_ref}~1"
+                _job(pid, base_default=True)
+            _analyse(pid, repo, base, head_ref, label=path.name)
+        else:
+            _step(pid, f"Copying {path} (regular files only; symlinks, node_modules and .git skipped)")
+            n = safe_copy(path, repo)
+            if not n:
+                raise ValueError("the folder has no files to scan")
+            _step(pid, f"Copied {n} files")
+            _git_snapshot(repo, "local folder snapshot")
+            _analyse(pid, repo, None, "HEAD", label=path.name)
+    except Exception as e:
+        _job(pid, status="error", message=f"{type(e).__name__}: {e}"[:400])
+
+
 # ---------------------------------------------------------------- analysis (universal: any ecosystem)
 def _analyse(pid: str, repo: Path, base: str | None, head: str, label: str):
     from guardian.universal import check_any
 
     mode = "compare" if base else "single"
+    _job(pid, mode=mode)
     _step(pid, "Day 1 pipeline: components -> SBOM -> dependency graph -> vulnerabilities -> suspicious changes -> evidence"
                + (f" (comparing {base} -> {head})" if base else " (full scan, no earlier version to compare)"))
     out = BASE / pid / "check"

@@ -267,6 +267,13 @@ All v3 tools remain; they are now **called by agents** rather than run in a fixe
 The investigation runs its implemented hard-signal detectors before the first model turn. Agents can request the
 results and choose further checks. See [Guardian self-protection](GUARDIAN_SELF_PROTECTION.md) for current coverage.
 
+**What a live investigation looks at (24 Nov).** The dashboard's Investigate page starts a live run on any finished scan:
+`server.py:_target` takes the repository copy and the full base and head commits from that scan's report, and
+`agents/run.py` builds `RealFacts` on them (the CLI `guardian investigate` still defaults to the local demo branches). A
+repository with no root `package-lock.json` gives the package tools an empty package set and logs a `note` event; commits,
+changed and sensitive files are still examined. A model failure is logged as `investigation_error` with a redacted reason,
+and the verdict falls back to the hard-signal rule. The recorded replay is offered separately and labelled as a recorded example.
+
 ---
 
 ## 8. LangGraph implementation

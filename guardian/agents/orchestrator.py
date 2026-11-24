@@ -13,7 +13,8 @@ from langgraph.types import Send
 
 from guardian.agents.agents import Agent
 from guardian.agents.board import Board
-from guardian.agents.boundary import untrusted
+from guardian.agents.boundary import redact, untrusted
+from guardian.agents.llm import ScriptedBackend
 from guardian.agents.tools import ToolRegistry
 
 
@@ -46,7 +47,14 @@ class Orchestrator:
         return untrusted([m.model_dump(exclude_none=True, exclude={"run_id"}) for m in msgs])
 
     def _run_agent(self, agent: Agent, brief: str) -> str:
-        result = agent.run(brief)
+        try:
+            if agent is self.lead and not isinstance(self.backend, ScriptedBackend):
+                result = agent.run(brief, yield_on_dispatch=True)
+            else:
+                result = agent.run(brief)
+        except Exception as exc:
+            self.board.log(event="investigation_error", agent=agent.name, error=type(exc).__name__, detail=redact(str(exc))[:200])
+            result = "exhausted"
         if result in ("exhausted", "refusal", "max_tokens", "length"):
             self.board.investigation_interrupted = True
         return result
@@ -60,6 +68,8 @@ class Orchestrator:
             text = "Investigate this comparison and submit a verdict.\n" + untrusted({
                 "run_id": self.board.run_id, "base": self.board.base, "head": self.board.head,
             })
+            if "scan:summary" in self.board.coverage_required:
+                text += "\nRead scan_findings at offset 0 before planning. The scan covers all inventoried ecosystems."
         else:
             text = ("Update. New messages to you:\n" + self._fmt(news) +
                     f"\nBoard: {untrusted(self.board.snapshot())}\nContinue: re-plan, build/resolve cases, or submit the verdict.")
@@ -81,7 +91,7 @@ class Orchestrator:
                  + untrusted(task.model_dump(include={"id", "depth", "goal", "scope", "acceptance"})))
         result = self._run_agent(agent, brief)
         if task.status == "running":
-            task.status = "done" if result != "exhausted" else "exhausted"
+            task.status = "exhausted" if result in {"exhausted", "refusal", "max_tokens", "length"} else "done"
         return {"done": [task.id]}
 
     def skeptic_node(self, state: State) -> dict:
@@ -105,7 +115,7 @@ class Orchestrator:
     # --- routing -------------------------------------------------------------
     def route(self, state: State) -> str:
         b = self.board
-        if b.verdict or b.investigation_interrupted or b.rounds >= self.max_rounds:
+        if b.verdict or b.out_of_time() or b.rounds >= self.max_rounds:
             return END
         if b.open_tasks():
             return "dispatch"
@@ -113,6 +123,8 @@ class Orchestrator:
             return "skeptic"
         if self._unread("hunter") or self._unread("forensics"):
             return "respond"
+        if b.investigation_interrupted:
+            return END
         return "lead"
 
     def _build(self):

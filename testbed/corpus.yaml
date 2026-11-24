@@ -68,3 +68,54 @@ apps:
     ref: 14.1.1
     commit: 4649aa9700619f94cf9c66876e9549d83420e16c
     covers: Rust (Cargo.lock) via Syft
+
+  # ---- Flagship apps per language (24 Nov): popular, containerised applications with a committed lockfile and CI,
+  # used the way uptime-kuma is used for npm. Each is checked as a PR: previous release (base) -> latest release (head).
+  - name: paperless-ngx
+    repo: https://github.com/paperless-ngx/paperless-ngx
+    ref: v3.5.1
+    commit: 35b0439195bbdb87a6d519152e6782abe0720c3b
+    base: {ref: v3.5.0, commit: bfd0d7fe3671cb8ffa28fb5ea69f6aef817dca5a}
+    covers: Python (Django) document manager + Angular frontend; uv/pip lock, Dockerfile, CI
+  - name: miniflux
+    repo: https://github.com/miniflux/v2
+    ref: v2.3.5
+    commit: faecfa2fac61a91f4f69550bb1afd506c4b51749
+    base: {ref: v2.3.4, commit: 238c5614e584ebc87894e7d9f10bc91373a0b2c2}
+    covers: Go RSS reader; go.mod/go.sum, Dockerfiles, CI
+  - name: stirling-pdf
+    repo: https://github.com/Stirling-Tools/Stirling-PDF
+    ref: v3.5.0
+    commit: 588b7992061b52f88c4c0b9ab3509f72b9c43111
+    base: {ref: v3.4.0, commit: c544e2c3457f52d05675b36dffacc44a4479149e}
+    covers: Java (Spring Boot, Gradle) PDF tool; Gradle wrapper, Dockerfiles, CI
+  - name: vaultwarden
+    repo: https://github.com/dani-garcia/vaultwarden
+    ref: 1.37.5
+    commit: 6ed6921cc2b0e03b4d74189574d2a5e71c512e97
+    base: {ref: 1.37.4, commit: 7c188967e7a467b19b2757bc3326f9cf3ccae327}
+    covers: Rust password manager server; Cargo.lock, Dockerfiles, CI
+  - name: firefly-iii
+    repo: https://github.com/firefly-iii/firefly-iii
+    ref: v6.7.9
+    commit: ba26768619842a4926655f315716f1b7788933d7
+    base: {ref: v6.7.8, commit: c7d1adf351856e843e08abed037b12169d177ca9}
+    covers: PHP (Laravel) finance manager; composer.lock + package-lock.json, CI
+  - name: mastodon
+    repo: https://github.com/mastodon/mastodon
+    ref: v4.7.6
+    commit: a593c9420d2ff4664d448a9cb71bf8ed4ff0c29a
+    base: {ref: v4.7.5, commit: 24cd1c875a1ac393e587421726394d5692ff5496}
+    covers: Ruby on Rails social network + JS frontend; Gemfile.lock + yarn.lock, Dockerfile, CI
+  - name: jellyfin
+    repo: https://github.com/jellyfin/jellyfin
+    ref: v12.4
+    commit: 83d0d0e7f76e23e2e085c8ff67d28b772d35967d
+    base: {ref: v12.3, commit: 06de749d435e2d0be0c5119a41f2300fdd7143e5}
+    covers: C# (.NET) media server; NuGet (central package management), CI
+  - name: netdata
+    repo: https://github.com/netdata/netdata
+    ref: v2.13.0
+    commit: 1f88c0da6429415abc18f3faf065aaee6f69236b
+    base: {ref: v2.12.3, commit: 0549a74d8493c32dcea87506ff8de6555ddf6905}
+    covers: C/C++ monitoring agent (+ Go and Rust parts); CMake with bundled and fetched deps, Dockerfile, CI

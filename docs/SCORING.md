@@ -17,8 +17,12 @@ Every finding gets three things:
 Then the pull request gets **one verdict**:
 
 - **Block**: the PR adds something Critical (or an "Act" decision).
-- **Review** when the PR adds a High finding or required scanner coverage is incomplete.
+- **Review** when the PR adds a High finding, **or any finding whose own severity is High or Critical** (SSVC may rank a high CVE
+  nobody exploits yet as "Track", but introducing it is still a human decision), or required scanner coverage is incomplete.
 - **Allow** when the PR adds no High or Critical finding and scanner coverage is complete.
+
+The final verdict is the **stricter** of this risk-score verdict and the policy-as-code decision (Conftest/OPA, `policies/guardian.rego`:
+`deny` → block, `warn` → review). A policy that cannot run makes the verdict at least Review. See §14.
 
 Guardian computes these results deterministically. Any AI summary is optional interpretation.
 
@@ -306,3 +310,16 @@ sentences as inferred. See [Guardian self-protection](GUARDIAN_SELF_PROTECTION.m
 - Saaty, T. L., *The Analytic Hierarchy Process* (consistency ratio limit 0.10; random index 1.12 for 5 criteria)
 - Shimizu & Hashimoto, *Vulnerability Management Chaining* (arXiv 2506.01220): KEV or EPSS ≥ 0.088
 - Sherif et al. (2026), CVSS alone is a poor predictor of real exploitation (arXiv 2603.12450)
+
+
+## 14. Changes on 24 Nov 2026 (Day 1 gaps and stretch goals)
+
+Found by running all nine attack scenarios; every change has a test (`tests/test_day1_gaps.py`, `tests/test_stretch_goals.py`).
+
+| Change | Why | Example (uptime-kuma 2.5.12 → scenario) |
+|---|---|---|
+| Introduced High/Critical **severity** → at least Review | A new high-severity CVE was "allow" because SSVC said Track | s1 (axios 0.21.1) and s2 (qs 6.5.2): allow → review |
+| New hard-signal floors: `action_pin_removed` (High/Attend), `signature_invalid`, `lockfile_integrity_mismatch`, `registry_version_missing`, `provenance_mismatch`, `dependency_confusion` (Critical/Act), `suspicious_install_behavior`, `provenance_dropped` (High/Attend) | CLAUDE.md §3.2 lists SHA→tag as a hard signal; provenance failures are attacks, not CVEs | s7: allow → review; s4: review → block (`dayjs@1.11.99` is not on the registry) |
+| Reachability changes **exposure** for CVEs only | A runtime dependency that no shipped code imports is less urgent; attacks are never discounted | `not_imported`: exposure ×0.5 and SSVC mission "support"; a counterfactual shows the decision if it were imported |
+| CVSS v3 base score shown (computed from the vector, FIRST formula) | The brief shows "CVSS 9.8"; v4 vectors are shown as vectors | score card and Day 1 step 3 |
+| Policy-as-code combined with the score verdict | Organisation rules (licences, trusted images, malware anywhere) must be able to block on their own | s3: score block + policy block (GP-001/002/003) |

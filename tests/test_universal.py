@@ -71,6 +71,9 @@ def offline(monkeypatch):
     from guardian.scoring import intel
     monkeypatch.setattr(intel, "epss", lambda cves: ({}, None))
     monkeypatch.setattr(intel, "kev", lambda: ({}, None))
+    from guardian import policy, registry_intel
+    monkeypatch.setattr(registry_intel, "analyse", lambda b, h, c, p, log=None: ([], {"checked": 0, "packages": [], "errors": []}))
+    monkeypatch.setattr(policy, "evaluate", lambda r: {"engine": "stub", "policies": [], "decision": None, "deny": [], "warn": [], "error": None})
 
 
 def test_base_head_pipeline_detects_lockfile_tamper_and_works_without_npm(tmp_path, offline):

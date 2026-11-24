@@ -86,6 +86,9 @@ def test_tool_errors_are_reported_as_not_checked_never_scored(monkeypatch, tmp_p
     monkeypatch.setattr(u, "osv_api", lambda inv: ([], None))
     monkeypatch.setattr(intel, "epss", lambda cves: ({}, None))
     monkeypatch.setattr(intel, "kev", lambda: ({}, None))
+    from guardian import policy, registry_intel
+    monkeypatch.setattr(registry_intel, "analyse", lambda b, h, c, p, log=None: ([], {"checked": 0, "packages": [], "errors": []}))
+    monkeypatch.setattr(policy, "evaluate", lambda r: {"engine": "stub", "policies": [], "decision": None, "deny": [], "warn": [], "error": None})
     repo = tmp_path / "repo"
     repo.mkdir()
     (repo / "requirements.txt").write_text("flask==2.0.0\n")

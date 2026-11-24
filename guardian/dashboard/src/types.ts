@@ -21,16 +21,14 @@ export interface Case {
   title: string; finding_ids: string[]; verdict: string; risk: Risk; resolved: boolean;
   confidence: number; rationale?: string; evidence_ids: string[];
 }
+export interface RunTarget { project: string | null; app: string; base?: string; head?: string; base_ref?: string; head_ref?: string;
+  compare?: boolean; verdict?: string; recorded?: boolean }
 export interface RunState {
-  run_id: string; status: "starting" | "running" | "done" | "error"; error?: string; mode: string; world: string;
+  run_id: string; status: "starting" | "running" | "done" | "error"; error?: string; mode: string; world: string; target?: RunTarget;
   pending_human?: { id: string; question: string; options: string[]; timeout: number } | null; elapsed: number;
   plan?: string[]; tasks?: Record<string, { assignee: string; goal: string; scope: string[]; status: string }>;
   findings?: Record<string, Finding>; cases?: Record<string, Case>;
   coverage?: { required: string[]; done: string[] }; coverage_gaps?: string[];
   verdict?: { decision: "block" | "safe_to_merge" | "inconclusive"; rationale: string; case_ids: string[]; evidence_ids: string[] } | null;
-}
-export interface Meta {
-  components?: number; lockfile_entries?: number; direct?: number; runtime?: number; install_scripts?: number;
-  changed_packages?: number; repo?: string; model?: string; effort?: string; base?: string; head?: string; provider?: string; error?: string;
 }
 export interface Evidence { id: string; kind: string; source: string; path?: string; untrusted: boolean; content: string }

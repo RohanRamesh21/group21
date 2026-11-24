@@ -38,3 +38,53 @@ Components found by the same readers: vcpkg dependencies, conan requires, CMake 
 submodules and Gradle dependencies. Each records its file and line, and has a version only when it is exactly
 pinned. Unpinned components are written to the SBOM without a version, so scanners cannot match a range like `31.+`
 as if it were a release. The declared range stays in the `guardian:declared` property.
+
+## Added 2026-11-24: Day 1 gaps and stretch goals
+
+Found by running all nine attack scenarios (`docs/TESTING.md` §1) and built for the stretch goals. Ground truth: `tests/test_day1_gaps.py`,
+`tests/test_stretch_goals.py`.
+
+| ID | Type | Severity | Hard | Signal | Why it matters | Known false positives |
+|---|---|---|---|---|---|---|
+| D8 | `untrusted_image` | high (unknown registry) / medium (unknown publisher on a known registry) | no | Base image whose `registry/repository` matches no glob in `guardian.yaml` `images.trusted` | Whoever publishes the image controls what the build runs (scenario s6) | Internal images not yet on the list |
+| D8 | `image_not_pinned` | high for `:latest` or no tag, else medium | no | Image referenced by tag, not `@sha256` digest | A tag can be repointed; `latest` moves on every release | Images rebuilt on purpose |
+| D10 | `action_pin_removed` | high | **yes** | An action pinned to a commit SHA on base is referenced by a tag on head (same workflow) | Tag-moving attacks (tj-actions/changed-files 2025) only work against tags; scenario s7 even kept the old `# v6.0.1` comment | Deliberate move to a trusted first-party tag (still needs review) |
+| D20 | `publisher_change` | medium | no | npm version published by a different account than the previous release | Account takeover publishes from a new account or token | Maintainer rotation, move to trusted publishing |
+| D20 | `maintainer_change` | low | no | Maintainer list changed since the previous release | Takeovers often add a maintainer first | Normal team changes |
+| D21 | `unusual_release` | medium | no | Published < 72 h ago; or after > 1 year of silence; or ≥ 5 versions within a day | Malicious releases are usually removed within days; dormant packages are takeover targets | Fast-moving projects |
+| D21 | `young_package` | medium | no | Package created < 30 days ago | Most typosquats are brand new | New legitimate packages |
+| D22 | `suspicious_install_behavior` | high | no | Install script (`preinstall`/`install`/`postinstall` + the JS file it runs, read from the tarball in memory) reads secrets, makes network requests, starts programs, runs obfuscated code or contacts raw IPs / data-drop services | Install-time code runs on every developer machine and CI runner | Native-binary installers (esbuild, sharp): skipped when on the policy's install-script allow-list |
+| D23 | `dependency_confusion` | critical | **yes** | Name in `guardian.yaml` `internal_scopes` resolved from the public registry | A public package replaced an internal one (Birsan 2021) | none when the scope list is right |
+| D24 | `signature_invalid` | critical | **yes** | npm registry ECDSA signature over `name@version:integrity` does not verify | The tarball is not what npm signed | none |
+| D24 | `lockfile_integrity_mismatch` | critical | **yes** | Lockfile integrity ≠ the registry's for the same version | The lockfile points at a different tarball | none |
+| D24 | `registry_version_missing` | critical | **yes** | Lockfile says registry.npmjs.org, but the registry has no such version (scenario s4: `dayjs@1.11.99`) | Forged lockfile entry, or a version npm removed (often malware) | Versions unpublished for other reasons |
+| D24 | `provenance_mismatch` | critical | **yes** | SLSA provenance subject digest ≠ lockfile integrity | Provenance is for another build | none |
+| D24 | `provenance_dropped` | high | no | Previous release had build provenance, this one has none | Hand-published release, e.g. with a stolen token | Project stopped using provenance |
+| T0 | `tool_error` for `npm registry checks` | info, `not_checked` | no | Registry checks could not run (offline, host not in `fetch_hosts`) | Coverage gap is reported, never hidden | n/a |
+
+Registry checks (D20–D24) cover npm packages new in the change (PR mode) or the direct dependencies (full scan, max 80). They use only hosts
+in `registries.fetch_hosts`, cache for a day, and never run package code.
+
+### Policy rules (`policies/guardian.rego`, Conftest/OPA in the sandbox)
+| Rule | Effect | Fires when |
+|---|---|---|
+| GP-001 | deny | a known malicious package is anywhere in the application |
+| GP-002 | deny | the change introduces any hard signal |
+| GP-003 | deny | the change introduces a critical vulnerability in shipped (runtime) code |
+| GP-004 | deny | the change introduces a base image from an untrusted registry |
+| GP-005 | deny | the change introduces a component whose licence is on `policy.license_denylist` |
+| GP-101 | warn | the change introduces a high-severity vulnerability |
+| GP-102 | warn | the change introduces an unpinned or untrusted image or action |
+| GP-103 | warn | the change weakens a dependency source (extra repository/index, insecure transport, checksum bypass, blocked egress) |
+| GP-104 | warn | the change brings package behaviour or history that needs review (D20–D22, provenance dropped) |
+| GP-105 | warn | a check did not run (coverage incomplete) |
+
+### Reachability (not a detector: it changes priority)
+Each vulnerability gets `imported` / `via_import` / `not_imported` / `dev_only` / `unknown` from an import-level analysis of shipped code
+(`guardian/reachability.py`). Only CVE findings marked `not_imported` get a lower exposure (×0.5) and the SSVC mission "support";
+malicious packages, tampering and other hard signals are never discounted.
+
+### .NET (added 24 Nov, found on jellyfin)
+`Directory.Packages.props` (`<PackageVersion Include Version>`) and `.csproj/.fsproj/.vbproj` files with an explicit `Version` become
+NuGet components (OSV ecosystem NuGet). D19 `dynamic_version` for `*` and version ranges; D19 `insecure_transport` / `extra_repository`
+for `nuget.config` package sources that use HTTP or are not nuget.org / Azure Artifacts.

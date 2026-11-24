@@ -1,124 +1,162 @@
 # Handoff: Software Supply Chain Guardian (Bosch BGSW hackathon)
 
-Written 23 Nov 2026 to continue in a new session. Read this first, then `docs/FINAL_PLAN.md` (v3) and `docs/AGENTIC_CORE.md` (v4, agent design).
+Last updated **24 Nov 2026** on branch `sandbox` (latest commit `27a8504` "Protect Guardian investigations from untrusted
+evidence", plus the uncommitted work described below). Read this first, then `docs/FINAL_PLAN.md` (v3) and
+`docs/AGENTIC_CORE.md` (v4, agent design). The problem statement is `docs/Amrita_BD Hackathon_Problem_Statement (1).pdf`.
 
-**24 Nov update:** [Guardian self-protection](docs/GUARDIAN_SELF_PROTECTION.md) records Rohan's proposal,
-the implemented boundaries around agent review, the offline regression tests, and the remaining work.
+**Not committed yet:** everything in "24 Nov (night)" below is in the working tree only. Commit and push when the user asks.
 
 ## 1. Context
 - **Event:** Bosch BGSW hiring hackathon. Day 1 = build + continuous evaluation, Day 2 = production stages, Day 3 = tech + HR interview. Goal: win.
 - **Problem statement:** "Software Supply Chain Guardian: know what you build, trust what you ship." An agentic AI that discovers, detects, analyses, remediates and validates supply-chain risks.
-  - **Day 1 checkpoint:** "Show us what is in the application, what changed, and what appears risky." Must have: discover components; supply-chain view (SBOM + graph + image/CI); detect vulnerabilities; detect suspicious changes; present evidence.
-  - **Day 2:** prioritise risks, investigate one non-CVE risk, recommend a fix, validate it in a sandbox, verify and report, with human approval.
+  - **Day 1 checkpoint:** "Show us what is in the application, what changed, and what appears risky."
+  - **Day 2:** prioritise, investigate a non-CVE risk, recommend a fix, validate it in a sandbox, verify and report, with human approval.
+  - **Stretch goals (slide 6):** reachability, automated remediation, provenance verification, advanced package risk, policy-as-code, continuous monitoring.
 - **Our framing:** a pre-merge PR check. Every risk is labelled *introduced* (by this PR), *pre-existing* or *fixed*.
-- **Sample app:** Uptime Kuma pinned to release **2.5.12** (commit `5aa5dec4…`), forked locally at `sandbox/uptime-kuma`.
+- **Sample app:** Uptime Kuma release **2.5.12** (commit `5aa5dec4…`), forked locally at `sandbox/uptime-kuma`, with attack scenarios on branches `scenario/control`, `scenario/s1` … `scenario/s8` (all branch from 2.5.12).
 
 ## 2. How the user wants to work
 - Simple, clear English. Discuss in chat first; write files once a plan is agreed.
 - Be honest: say what is verified and what is not. Never present replay or canned data as live.
 - Commit or push only when asked. Keep local scenario branches local.
-- Never execute analysed package code (always `--ignore-scripts`). Local registry only; never publish to public registries.
-- Never print or log API keys. Cognee is the preferred long-term memory.
-- The user interrupts long tool calls. Keep steps short, and say what an interrupted step may have changed.
+- Never execute analysed package code. Never publish to public registries.
+- Never print or log API keys.
+- Codex also works on this branch (agent self-protection, `docs/GUARDIAN_SELF_PROTECTION.md`); check `git status` and `git log` before editing.
 
-## 3. How to run (all verified)
+## 3. How to run (verified 24 Nov on this machine)
 ```bash
-cd /Users/kirankishorev/Documents/BOSCH/guardian
-.venv/bin/guardian sandbox setup                                 # once per machine: pinned tool images + Grype DB (docs/SETUP.md)
-.venv/bin/guardian sandbox status                                # exit 0 = every sandboxed tool can run
-.venv/bin/uvicorn guardian.server:app --port 8765          # dashboard at http://localhost:8765
-.venv/bin/guardian check sandbox/uptime-kuma --base scenario/base --head scenario/s3-s9   # no-AI Day 1 check (universal pipeline)
-.venv/bin/guardian scan sandbox/uptime-kuma --ref scenario/s3-s9                          # full scan of one commit
-.venv/bin/guardian investigate --backend replay --out guardian-out/agents                # recorded agent run (CLI)
-.venv/bin/python -m pytest -q                                                            # 64 pass, 4 skip without scenario/s3-s9 / Verdaccio (24 Nov, this machine)
-cd guardian/dashboard && npx vite build                                                  # rebuild UI after edits
+.venv/bin/guardian sandbox setup      # once per machine: digest-pinned images (node, syft, grype, osv-scanner, zizmor, conftest) + Grype DB
+.venv/bin/guardian sandbox status     # exit 0 = every sandboxed tool can run
+.venv/bin/guardian check sandbox/uptime-kuma --base 5aa5dec425f8a955b54e150636979a6927745ec5 --head scenario/s3 --fail-on block
+                                      # Day 1 + stretch goals on the malware PR; writes guardian-out/check (the dashboard's main report)
+.venv/bin/guardian scan <repo> --ref <ref>             # full scan of one commit
+.venv/bin/guardian fix                                  # remediation plan for the latest check; --validate FIX-… applies + rescans
+.venv/bin/guardian watch [--all] [--interval 60]        # continuous monitoring: newly disclosed vulns / newly exploited CVEs
+.venv/bin/uvicorn guardian.server:app --port 8765       # dashboard (GUARDIAN_MONITOR_INTERVAL=<min> for automatic monitoring)
+.venv/bin/python testbed/corpus.py fetch && .venv/bin/python testbed/corpus.py scan    # 20 real open-source apps (8 flagship apps per language)
+.venv/bin/python -m pytest -q                           # 94 passed, 4 skipped (need scenario/s3-s9 or Verdaccio)
+cd guardian/dashboard && npx tsc --noEmit && npx vite build                            # rebuild the UI after edits
 ```
-- **"Address already in use" on 8765** means a server is already running (possibly the Claude browser-pane preview). Open the page, stop that server, or use `--port 8766`.
-- The dashboard reads `guardian-out/check/latest.json`. Re-run `guardian check` after changing the scenario.
-- **Local registry (Verdaccio)** must be running for the suspicious-change detectors and the "real" agent world: `curl http://localhost:4873/-/ping`. It serves two hostnames: `localhost:4873` plays the approved public registry (allow-listed in `guardian.yaml`); `127.0.0.1:4873` plays the attacker's registry.
-- **Sandbox (23 Nov):** every tool that reads a scanned repo (npm resolution, Syft, Grype, OSV-Scanner, zizmor) runs in rootless podman: `--network=none`, read-only, pinned images, limits. npm resolution reaches only `registry.npmjs.org` through an in-process allow-list proxy on a Unix socket. If podman is missing, those steps are reported as `tool_error` ("not checked") and NOT run on the host. Details: `docs/SETUP.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`.
-- **More languages (23 Nov):** C/C++ (vcpkg, conan, CMake FetchContent, meson, submodules), Java (Gradle/Maven repositories, wrappers, dynamic versions) and Go (replace, go.sum, checksum switches) are read statically: detectors D15-D19 in `docs/DETECTORS.md`. Synthetic sample apps with ground truth: `testbed/apps/` (`tests/test_sample_apps.py`).
-- **Real-app corpus (24 Nov):** CLAUDE.md §3.1 now allows pinned, read-only test clones (`testbed/corpus.yaml`: 12 apps across npm, Python, Go, Maven, Gradle, C++ and Rust). Run `testbed/corpus.py fetch` then `testbed/corpus.py scan`. The first run found 211 duplicate or false-positive findings and a D10 line-number bug, all fixed with regression tests. Results: `docs/TESTING.md`.
-- **Rebuild the attack scenario:** `.venv/bin/python testbed/injector/build_s3_s9.py`. It creates `scenario/base` and `scenario/s3-s9` (commit "fix typo") in the sandbox fork. Lockfile only, scripts ignored, nothing pushed. A canary file in the temp folder proves the install script never ran.
+- Dashboard scans (Git URL, ZIP, local folder) are stored under `guardian-out/projects/<id>/`; the latest CLI `guardian check`
+  (`guardian-out/check/latest.json`) is listed among them as "main". **Restart uvicorn after pulling backend changes** (the
+  redesigned UI needs `/api/projects/path`, `/api/sources` and the new `/api/runs`).
+- **Investigate page** runs live agents on any finished scan (its repo copy, base and head commits). It no longer depends on
+  `scenario/base` / `scenario/s3-s9`. The CLI `guardian investigate` still defaults to those branches (`agents/run.py`).
 
-## 4. What is done (verified on real data)
+## 4. What is done (verified on real data, 24 Nov)
 
-| Day 1 need | Status | Evidence |
+**Finding reviews:** Risk scores now records Confirm, Challenge, and Defer decisions with an evidence-bound timeline and JSON download. See [Human feedback](docs/HUMAN_FEEDBACK.md) for the review and reopening demo.
+
+### Day 1 (all five steps of the brief)
+Main demo report = 2.5.12 (`5aa5dec4`) → `scenario/s3` (`8c505a38`):
+| Step | Result |
+|---|---|
+| 1 Discover | 1,368 components (1,228 unique name@version): npm 1,311 + GitHub Actions 57; 217 direct; 690 runtime; 17 install scripts |
+| 2 Supply-chain view | Syft CycloneDX + SPDX + Guardian CycloneDX; 2,598 dependency links; SBOM agrees with the lockfile 100%; 21 workflows / 79 actions (all SHA-pinned); 16 base images (none digest-pinned) |
+| 3 Vulnerabilities | OSV.dev 120 + Grype 120 → 121 merged (119 confirmed by both) on 30 packages; CVSS v3 score shown; reachability: 67 imported by shipped code, 11 via an imported dependency, 3 not imported (all `axois`, which nothing imports), 40 dev-only |
+| 4 Suspicious changes | `axois@1.7.9`: malware MAL-2025-15245, attacker host `10.0.0.5:4873` (critical), typosquat of axios, new install script |
+| 5 Evidence | every finding: component, dependency path, file:line, advisory/detector proof, level; new-in-this-change first |
+| Verdict | **block** (risk score block, policy block: GP-001, GP-002, GP-003) |
+
+All 10 scenario branches (2.5.12 → branch), run 24 Nov:
+| Scenario | Injected | Verdict |
 |---|---|---|
-| Discover components | ✅ | 1,312 lockfile entries (1,203 unique name@version), 161 direct, 654 runtime, 17 install scripts. Syft CycloneDX + SPDX SBOMs match the lockfile 100%. |
-| Dependency graph | ✅ | 2,542 links = 2,346 unique, **exactly equal to `npm ls --all`** (0 missing, 0 extra; test covers both 2.5.12 and the PR head). 45 packages are installed in more than one folder, which explains the gap. |
-| CI and images | ✅ | 20 workflows, 79 actions (all SHA-pinned), 12 base images (none digest-pinned). zizmor finds 9 workflow issues (3 high `dangerous-triggers`). 21 CI/image findings, all pre-existing. |
-| Vulnerabilities | ✅ | OSV (offline copy, 212 MB in `.cache/osv`) + Grype (DB built 23 Nov 2026) on every package: 30 vulnerable packages, 121 advisories, 119 confirmed by both. Matches live api.osv.dev exactly (jsonata 3/3, protobufjs 11/11, tar 12/12, axois 2/2). |
-| Suspicious changes | ✅ | `axois@1.0.0`: look-alike of axios (high), resolved from a host not on the allow-list (critical), new postinstall script (high), malware `MAL-2025-15245` (critical). `.npmrc` registry redirect (critical). The kuma-helper bump stays info. |
-| Introduced vs pre-existing | ✅ | `guardian check`: 3 critical introduced (all axois), 118 pre-existing, 0 fixed, decision = block. |
-| Evidence | ✅ | Content-addressed evidence store with IDs (`E-…`), lockfile line numbers, untrusted text wrapped as data. |
+| control | safe bump | allow, 0 alerts |
+| s1 | direct dep downgraded to vulnerable axios 0.21.1 | review (24 advisories; axios imported at `server/check-version.js:2`) |
+| s2 | transitive override to vulnerable qs 6.5.2 | review (path traced through express > body-parser) |
+| s3 | typosquat + attacker registry + install script + malware | block |
+| s4 | dayjs "update" adds an install script | **block**: `dayjs@1.11.99` does not exist on registry.npmjs.org (forged lockfile entry) |
+| s5 | integrity changed / host changed | block |
+| s6 | base image → `ghcr.io/unknown-org/…:latest` | review (untrusted image + `:latest`) |
+| s7 | action SHA → tag (comment still says v6.0.1) | review (hard signal `action_pin_removed`) |
+| s8 | AI issue-triage workflow | review (template injection + unpinned third-party action) |
+| s9 | `.npmrc` registry redirect ("fix typo" commit) | block (hard signal + GP-002) |
 
-**Agents (v4, `guardian/agents/`)**
-- Lead, Dependency Hunter, Change Forensics and Skeptic on LangGraph.
-- Constitution C1–C9 is enforced in code: claims need evidence, hard-signal floors, coverage before verdict, untrusted-data wrapping, tool allow-lists, humans own irreversible decisions, budgets, only the Skeptic clears.
-- Two worlds: `canned` (Stage A fixed facts, used by the replay) and `real` (`realworld.py`: git, lockfile, registry, OSV, policy).
-- Backends: `ScriptedBackend` (replay), `OpenRouterBackend`, `ClaudeBackend` (direct Anthropic; currently fixed to Opus 5.5).
+### Stretch goals (all six, no LLM involved)
+| Goal | Where | What it does |
+|---|---|---|
+| 1 Reachability | `guardian/reachability.py` | import-level: is the vulnerable package imported by shipped code (npm/PyPI/Go; Go is package-precise via OSV). `not_imported` lowers a CVE's priority; attacks are never discounted |
+| 2 Automated remediation | `guardian/remediation.py`, UI "Fix & validate" | one fix per package (lowest release that fixes all its advisories; override for transitive; remove a newly added bad package; restore a tampered file; pip pin edit) → validate in the sandbox (npm registry-only) and rescan before vs after → retry if the chosen version has its own advisories (axios 0.33.0 → 0.34.0) → human approves → local branch `guardian/fix-…`. Never pushed or merged; build/tests not run (policy) |
+| 3 Provenance | `guardian/registry_intel.py` | npm registry signatures verified (ECDSA), lockfile integrity vs registry, SLSA provenance attestation (source repo, workflow, digest match), provenance dropped, version missing from registry |
+| 4 Advanced package risk | `guardian/registry_intel.py` | publisher / maintainer change, brand-new or dormant-revived releases, release bursts, young packages, install-script behaviour read from the tarball (secrets, network, process spawning, obfuscation), internal-scope dependency confusion |
+| 5 Policy-as-code | `policies/guardian.rego`, `guardian/policy.py` | Conftest/OPA in the sandbox; deny = block, warn = review; final verdict = stricter of score and policy; `guardian check --fail-on block` for CI |
+| 6 Continuous monitoring | `guardian/monitor.py`, `guardian watch`, Risk scores tab | re-queries OSV for the saved inventory, refreshes KEV/EPSS, re-scores, keeps a history; on demand, `--interval`, or `GUARDIAN_MONITOR_INTERVAL` in the server |
 
-**Dashboard (`guardian/server.py` + `guardian/dashboard/`, Vite/React/Tailwind/Motion/React Flow)**
-- **Investigation tab:**
-  - agent lanes and a live timeline
-  - rule rejections and risk-floor alerts
-  - supply-chain mini graph, Skeptic review, case board
-  - human approval dialog (waits 120 s, then falls back to policy) and evidence drawer
-  - verdict animation
-- **Dependency graph tab:** real data, no AI.
-  - summary cards
-  - three views: Risk paths / This PR / Direct runtime deps
-  - search, plus a click panel showing path to the app, source host, lockfile line, signals and advisories with fix versions
-  - long columns wrap
-- **Header** shows the model ("claude-sonnet-5.5 | low effort").
+### Flagship apps per language (24 Nov)
+Like uptime-kuma for npm, each checked previous release → latest release (`testbed/corpus.yaml`, results in `docs/TESTING.md` §6):
+paperless-ngx (Python), miniflux (Go), Stirling-PDF (Java), vaultwarden (Rust), firefly-iii (PHP), mastodon (Ruby), jellyfin (.NET),
+netdata (C/C++). They found 5 more false-positive/coverage bugs (fixed, incl. .NET packages being invisible).
+All eight also pass end to end in the dashboard. **Step-by-step UI test guide: `docs/TESTING.md` §7.** Pinned commits and facts:
+`docs/SAMPLE_APP.md`.
+
+### Earlier work (still valid)
+- **Sandbox** (`guardian/sandbox/`; podman = a Docker-like container tool, rootless, installed per machine): every tool that reads a scanned repo (npm, Syft, Grype, OSV-Scanner, zizmor, Conftest) runs in rootless
+  podman: `--network=none`, read-only, digest-pinned images, limits. npm reaches only `registry.npmjs.org` through an in-process allow-list
+  proxy. Only resolution-only settings from a repo's `.npmrc` (e.g. `legacy-peer-deps`) are passed; registry/git/script settings never.
+- **Languages:** npm, Python, Go, Java (Maven/Gradle), C/C++ (CMake, vcpkg, conan, meson, submodules), Rust and the rest of Syft's list.
+- **Corpus:** 20 real apps (`testbed/corpus.yaml`: 12 small apps/libraries + 8 flagship apps) and synthetic sample apps (`testbed/apps/`), see `docs/TESTING.md`.
+- **Agents (v4, `guardian/agents/`)**: Lead, Dependency Hunter, Change Forensics, Skeptic on LangGraph; constitution C1–C9 in code; replay
+  backend works offline. Codex added mandatory checks independent of model decisions (`docs/GUARDIAN_SELF_PROTECTION.md`).
+
+### Dashboard (redesigned 24 Nov, late morning; user asked for it)
+Two pages. **Scan** (home): source form (Git URL · ZIP · Local path, optional base → head) → live eight-stage pipeline →
+results with **Overview · Dependency graph · Risk scores · Fix & validate**; recent scans below the form; hash links
+`#/scan/<id>/<view>`. **Investigate**: pick a finished scan or bring a new source (scanned first, then the agents start);
+live agents on that scan; a labelled "recorded example" replay. The Day 1 report view and the header project picker were
+removed (`/api/day1` and `guardian/day1.py` remain). Code: `guardian/dashboard/src/` (`App.tsx`, `route.ts`, `api.ts`,
+`components/Home`, `SourceInput`, `ScanPage`, `ScanProgress`, `ProjectResults`, `ResultsOverview`, `RecentScans`, `Investigate`).
+UI tested end to end in Chromium (Playwright): `docs/TESTING.md` §5. Another agent added finding reviews in Risk scores at the
+same time (`FindingReview.tsx`, `guardian/reviews.py`).
 
 ## 5. Not done yet
-1. **Working LLM key (blocked on user).** The OpenRouter key in `.env` returns **401 "User not found"**; it is the same key the user pasted, so the key itself is dead. Config is ready: `GUARDIAN_LLM_PROVIDER=openrouter`, `GUARDIAN_MODEL=anthropic/claude-sonnet-5.5`, `GUARDIAN_EFFORT=low` (`GUARDIAN_EFFORT` overrides every agent's effort). Test a key with `curl -s -o /dev/null -w "%{http_code}" https://openrouter.ai/api/v1/key -H "Authorization: Bearer $OPENROUTER_API_KEY"` (200 = good). Alternative: an Anthropic key. In that case make `ClaudeBackend` use `GUARDIAN_MODEL` / `claude-sonnet-5-5` (about 5 minutes).
-2. **Investigation tab is replay only.** The replay uses canned details (commit `a1b2c3d`, host `10.0.0.5`). Once a key works: run live on the real world (`mode=live, world=real`), then record it as the new replay.
-3. **"Real data, no AI" mode in the Investigation tab.** Planned: detectors + vulns + CI findings → board findings, cases per component, rule-based verdict through `check_verdict`. Today only the terminal `guardian check` and the graph tab show real findings.
-4. **Dashboard views for the vulnerability list and the CI/image risks.** The data is already in `/api/depgraph` (`nodes[].vulns`, `ci`, `ci_stats`). The user said to leave the *vulnerability graph* out for now; confirm before building.
-5. **More attack scenarios.** Only S3 (registry hijack) + S9 (typosquat with install script) are built. Others planned in FINAL_PLAN §4 (S1–S9), e.g. CI action tag drift and image change.
-6. **Day 2, not started:** prioritisation (EPSS/KEV planned), deep non-CVE investigation, Fixer agent, sandbox validation, verify + report, human approval of the fix.
-7. **Sandbox follow-ups:** allow-list for approved extra Maven repositories (D19); read Gradle version catalogs; move D1-D14 docs into `docs/DETECTORS.md`; the remaining CLAUDE.md §7 docs (`README` is minimal; `AGENTS.md`, `RISK_SCORING.md`, `EVIDENCE_AND_REPORT.md`, `CHAOS_SCENARIOS.md`, `SAMPLE_APP.md`, `RESPONSIBLE_AI.md`, `TESTING.md`, `CHANGELOG.md` do not exist yet).
-8. **CLAUDE.md vs reality:** its §4 layout (`pipeline/`, `detectors/`, `referee/`, `risk.py`, `llm.py`, Streamlit `ui/`, `chaos/`) and §5 commands (`uv sync --frozen`, `guardian chaos`) do not match this repo. Decide which one changes.
-9. **Housekeeping:**
-   - commit when the user asks
-   - the published architecture page (`https://claude.ai/artifact/Qt8VSW5P5drXaXrtZStaz6`) is outdated: Juice Shop, 12 agents
-   - ask the user to delete the old OpenRouter key (it was pasted in chat)
+1. **Agentic workflow** (user: not now). LLM key: the OpenRouter key in `.env` returned 401 earlier; test with
+   `curl -s -o /dev/null -w "%{http_code}" https://openrouter.ai/api/v1/key -H "Authorization: Bearer $OPENROUTER_API_KEY"`.
+   The Investigate page runs live agents on any scan but needs a working key; `.env` now sets `GUARDIAN_LLM_PROVIDER=freemodel`,
+   which `agents/run.py` does not implement (the page shows "unknown backend freemodel"). A Fixer agent can wrap `guardian/remediation.py`.
+2. **Build and test in validation:** not done on purpose (Guardian never runs analysed code). If wanted for the sample app only, it needs a
+   decision (CLAUDE.md §3.2) and a no-network container profile.
+3. **Gaps** (`docs/KNOWN_LIMITATIONS.md`): function-level reachability, Sigstore certificate-chain verification, registry checks for
+   non-npm ecosystems, tag-moved detection for actions, Gradle version catalogs, an allow-list for approved extra Maven repositories.
+4. **Docs still missing** (CLAUDE.md §7): `AGENTS.md`, `EVIDENCE_AND_REPORT.md`, `CHAOS_SCENARIOS.md`, `RESPONSIBLE_AI.md` (also a
+   hackathon deliverable: "Responsible AI & Security Note"); a human-readable report export. (`SAMPLE_APP.md` and `CHANGELOG.md` exist since 24 Nov.)
+5. **CLAUDE.md:** §4 (layout) and §5 (commands) were updated on 24 Nov to match the code. §2 still describes an Investigator/Judge
+   design while the code has Lead / Hunter / Forensics / Skeptic; that is a design decision for the team.
+6. **Housekeeping:** commit/push when asked; ask the user to delete the old OpenRouter key (it was pasted in chat).
 
 ## 6. Key files
 | Path | What |
 |---|---|
-| `guardian/cli.py` | `scan`, `check`, `investigate` commands (`scan` and `check` both run `universal.check_any`) |
-| `guardian/universal.py` | The Day 1 pipeline for any repo: components, SBOM, graph, vulns (OSV.dev + Grype), detectors, base vs head labels, report |
-| `guardian/vuln/scan.py` | Offline OSV-Scanner fallback and the merge of advisories by ID/alias overlap |
-| `guardian/sandbox/` | podman runner (`__init__.py`), egress allow-list proxy (`egress.py`), in-container bridge (`bridge.js`), `setup.py` |
-| `guardian/adapters/build_files.py` | C/C++, Java, Go, pip build-file readers and detectors D15-D19 |
-| `testbed/apps/` | Synthetic sample apps per ecosystem + `expected.json` ground truth |
-| `testbed/corpus.yaml`, `testbed/corpus.py` | Real open-source apps at pinned commits; fetch + scan runner |
-| `guardian/inventory/ci_risk.py` | D8 image not digest-pinned, D9 zizmor (offline), D10 action not SHA-pinned |
-| `guardian/adapters/npm.py` | Lockfile v3 parser, aliases, optional peers, runtime set |
-| `guardian/agents/` | protocol, board (+ ordered `feed`), constitution, tools, llm backends, agents, orchestrator, run, realworld, fakeworld |
-| `guardian/server.py` | FastAPI: `/api/meta`, `/api/runs` (+ SSE events, human answer, evidence), `/api/depgraph` |
-| `guardian/dashboard/src/` | `App.tsx`, `components/` (TopBar, Overview, AgentLanes, GraphView, Debate, CaseBoard, HumanModal, EvidenceDrawer, DepGraph) |
-| `guardian.yaml` | Policy: allowed/fetch hosts, typosquat distance, install-script allow-list, sensitive paths |
-| `testbed/injector/build_s3_s9.py` | Builds the attack scenario safely |
-| `testbed/replays/s3_s9_agents.json` | Recorded agent turns for the replay |
-| `tools.lock`, `requirements.lock.txt` | Pinned tool versions and checksums |
-| `.env` (mode 600, git-ignored) | Keys and model settings. Never print it. |
+| `guardian/cli.py` | `scan`, `check` (+ `--fail-on`), `fix`, `watch`, `sandbox`, `investigate` |
+| `guardian/universal.py` | The pipeline for any repo: discovery, SBOM, graph, vulns, detectors, labels, report; calls the modules below |
+| `guardian/reachability.py`, `registry_intel.py`, `policy.py`, `remediation.py`, `monitor.py` | Stretch goals 1–6 |
+| `policies/guardian.rego` | Sample policies (GP-001 … GP-105) |
+| `guardian/scoring/score.py` | Floors, SSVC, AHP score, verdict (introduced high/critical → at least review) |
+| `guardian/sandbox/` | podman runner, egress proxy, bridge, setup |
+| `guardian/adapters/` | npm lockfile parser; C/C++/Java/Go/pip build-file readers |
+| `guardian/inventory/ci_risk.py` | D8 images (untrusted, floating, not digest-pinned), D9 zizmor, D10 actions |
+| `guardian/day1.py` | Day 1 view (5 steps) |
+| `guardian/server.py` | FastAPI: day1, depgraph, scores, policy, provenance, remediation (+ jobs, approve), monitor, projects, runs |
+| `guardian/dashboard/src/components/` | `Home`, `SourceInput`, `ScanPage`/`ScanProgress`, `ProjectResults`/`ResultsOverview`, `DepGraph`, `RiskScores`, `Guard` (policy + monitoring), `Remediation`, `Investigate` + agent views |
+| `guardian/agents/` | Agent team, constitution, boundary (Codex), tools, replay |
+| `guardian.yaml` | Policy data: hosts, trusted images, install-script allow-list, licence deny-list, sandbox images and limits |
+| `testbed/` | `apps/` (synthetic, ground truth), `corpus.yaml` + `corpus.py` (real apps), `injector/` (attack scenarios) |
+| `tools.lock`, `requirements.lock.txt` | Pinned tool versions, image digests, checksums |
 
-## 7. Demo script (works now, no key needed)
-1. **Terminal:** run `guardian check`. Say: "1,312 packages; 3 critical problems introduced by this PR, including malware; 118 older ones reported separately; decision: block."
-2. **Dependency graph tab:**
-   - Risk paths: "red = critical; lines show how it gets in."
-   - This PR, then click `axois`: look-alike, attacker registry, install script, malware.
-   - `kuma-helper` beside it: routine, not flagged.
-3. **Investigation tab, Replay:** press Run check, answer **No** to the human question, end on "Block this merge". Be honest that this tab is a recorded agent run.
+## 7. Demo script (no LLM key needed)
+1. **Terminal:** `guardian check sandbox/uptime-kuma --base 5aa5dec4… --head scenario/s3 --fail-on block` → exit 1. Say: "1,368
+   components; this PR adds a look-alike of axios from an attacker registry, with an install script and a known malware ID: block."
+2. **Dashboard home:** Local path `…/sandbox/uptime-kuma`, Compare: base `5aa5dec4…`, head `scenario/s3` → Run scan. Narrate the
+   live pipeline (≈1 min). Or open the "main" card under Recent scans (the CLI report) to skip the wait.
+3. **Overview:** block, the three attack signals on `axois` (lockfile tamper, new install script, typosquat), vulnerabilities by severity.
+4. **Dependency graph:** Risk paths, then This PR → click `axois`.
+5. **Risk scores:** policy panel (GP-001 malware, GP-002 attack signal) + score card; press **Re-check now** (monitoring).
+6. **Fix & validate:** select "Remove axois" → Validate → verdict block → allow, 3 fixed, 0 new problems → (approve creates a local
+   branch in the project's copy under `guardian-out/projects/`, never in the fork).
+7. **Another source:** ZIP (e.g. a Java or C++ app) or `https://github.com/gin-gonic/gin` with base `v1.9.1` head `v1.10.0`.
+8. **Investigate with agents:** live if a key works; otherwise "Play the recorded example run" and say it is a replay.
 
 **Ready answers for judges:**
-- **Why Uptime Kuma?** A real, popular app with all three surfaces (npm, CI, Docker). Real baseline findings. Pinned and reproducible. MIT licence. Juice Shop was rejected because it is vulnerable on purpose.
-- **Is the LLM needed for Day 1?** No. Detection uses fixed rules; agents add investigation and explanation.
-- **Are the vulnerabilities real?** Yes: two offline databases, matched live OSV exactly, and every finding carries an advisory ID anyone can look up.
-- **Why 2,542 vs 2,346 links?** The same version installed in several folders. The unique count equals npm exactly.
-- **What does red mean?** Critical: CVSS 9 or more, or malware, or a hard signal. Only `axois` is new in this PR; jsonata, protobufjs and tar were already there.
+- **Is the LLM needed for detection?** No. Detection, scoring, policy, remediation and monitoring are deterministic; agents add investigation.
+- **Is anything from the app executed?** No. Tools run in a no-network podman sandbox; npm only resolves metadata; tarballs are read in memory.
+- **Are the vulnerabilities real?** Yes: OSV.dev + Grype agree on 119 of 121, and every finding carries an advisory ID.
+- **What blocks a merge?** A critical or attack-signal finding introduced by the PR, or a `deny` policy rule. High-severity introduced findings need a human.

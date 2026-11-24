@@ -107,3 +107,62 @@ def test_repeated_action_gets_its_own_line():
     wf = ("jobs:\n  a:\n    steps:\n      - uses: actions/checkout@v4\n  b:\n    steps:\n      - name: x\n"
           "        uses: actions/checkout@v4 # v4.2\n      - uses: actions/checkout@v4\n")
     assert [(a.line, a.version_comment) for a in parse_workflow("ci.yml", wf)] == [(4, None), (8, "v4.2"), (9, None)]
+
+
+# ------------------------------------------------------------------ flagship apps (24 Nov): jellyfin, Stirling-PDF, miniflux, netdata
+def test_dotnet_central_package_versions_and_feeds(tmp_path):
+    """jellyfin: versions live in Directory.Packages.props; .csproj files reference packages without a version."""
+    _write(tmp_path, {
+        "Directory.Packages.props": '<Project><ItemGroup>\n<PackageVersion Include="Newtonsoft.Json" Version="12.0.1" />\n'
+                                    '<PackageVersion Include="Serilog" Version="[4.0,)" />\n</ItemGroup></Project>',
+        "Api/Api.csproj": '<Project><ItemGroup><PackageReference Include="Newtonsoft.Json" /></ItemGroup></Project>',
+        "nuget.config": '<configuration><packageSources><add key="nuget.org" value="https://api.nuget.org/v3/index.json" />\n'
+                        '<add key="corp" value="http://feed.corp.example/nuget" /></packageSources></configuration>'})
+    comps, finds = bf.scan(tmp_path, u.find_manifests(tmp_path))
+    assert {(c["name"], c["version"]) for c in comps} == {("Newtonsoft.Json", "12.0.1"), ("Serilog", "")}
+    assert all(c["purl"].startswith("pkg:nuget/") for c in comps)
+    assert sorted(f["type"] for f in finds) == ["dynamic_version", "insecure_transport"]
+
+
+def test_tsconfig_path_aliases_are_not_packages(tmp_path):
+    """Stirling-PDF: 101 imports like @editor-core/hooks are tsconfig "paths" aliases, not npm packages."""
+    _write(tmp_path, {"frontend/package.json": '{"name": "fe", "dependencies": {"react": "19.0.0"}}',
+                      "frontend/tsconfig.json": '{"compilerOptions": {"paths": {"@editor/*": ["./src/editor/*"], "@editor-core/*": ["./src/core/*"]}}}',
+                      "frontend/src/a.ts": "import x from '@editor-core/hooks/useX';\nimport y from '@editor/saas/auth';\n"
+                                           "import r from 'react';\nimport z from 'left-pad';\n"})
+    found = {f["component"] for f in u.undeclared_imports(tmp_path, [], u.find_manifests(tmp_path))}
+    assert found == {"npm:left-pad"}
+
+
+def test_test_fixture_html_is_not_a_shipped_page(tmp_path):
+    """miniflux: 65 'CDN script without SRI' findings came from internal/reader/sanitizer/testdata/*.html."""
+    _write(tmp_path, {"internal/reader/sanitizer/testdata/page.html": '<script src="https://cdn.example.com/a.js"></script>',
+                      "web/index.html": '<script src="https://cdn.example.com/b.js"></script>'})
+    _, finds = u.vendored_and_cdn(tmp_path)
+    assert [f["file"] for f in finds] == ["web/index.html"]
+
+
+def test_release_burst_ignores_prereleases():
+    """netdata: '9 versions of @playwright/test within a day' were nightly pre-releases."""
+    import time
+
+    from guardian import registry_intel as ri
+    now = time.time()
+    iso = lambda s: time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime(s))  # noqa: E731
+    doc = {"versions": {"1.0.0": {"dist": {}}, "1.1.0": {"dist": {}}},
+           "time": {"created": iso(now - 900 * 86400), "1.0.0": iso(now - 30 * 86400), "1.1.0": iso(now - 10 * 86400),
+                    **{f"1.2.0-alpha-{i}": iso(now - 10 * 86400 + i * 600) for i in range(9)}}}
+
+    class F:
+        def get_json(self, url, ttl=0):
+            return doc
+    finds, _ = ri.check_package(F(), {}, "pw", "1.1.0", None, "https://registry.npmjs.org/pw/-/pw-1.1.0.tgz", False, {}, now)
+    assert "unusual_release" not in {f["type"] for f in finds}
+
+
+def test_a_local_function_called_require_is_not_an_import(tmp_path):
+    """Stirling-PDF: a form validator `const require = (field) => ...` called as require("adminUsername")."""
+    _write(tmp_path, {"package.json": '{"name": "a", "dependencies": {}}',
+                      "src/form.ts": "const require = (k: string) => { if (!draft[k]) errors[k] = 'required'; };\nrequire(\"adminUsername\");\n"
+                                     "import pad from 'left-pad';\n"})
+    assert {f["component"] for f in u.undeclared_imports(tmp_path, [], u.find_manifests(tmp_path))} == {"npm:left-pad"}

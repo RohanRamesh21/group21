@@ -20,7 +20,8 @@ from pathlib import Path
 
 SHA = re.compile(r"^[0-9a-f]{40}$", re.I)
 # folders whose contents are not shipped with the application (tests, docs, examples, benchmarks, tooling)
-NON_SHIPPED_DIRS = {"test", "tests", "testing", "doc", "docs", "example", "examples", "bench", "benchmark", "benchmarks", "tools"}
+NON_SHIPPED_DIRS = {"test", "tests", "testing", "doc", "docs", "example", "examples", "bench", "benchmark", "benchmarks", "tools",
+                    "testdata", "fixtures", "__tests__", "__fixtures__", "__mocks__", "spec"}
 
 
 def non_shipped(path: str) -> bool:
@@ -246,6 +247,41 @@ def pom(src: Path, rel: str) -> tuple[list[dict], list[dict]]:
     return [], finds
 
 
+# ------------------------------------------------------------------ .NET
+NUGET_HOSTS = {"api.nuget.org", "www.nuget.org", "nuget.org", "pkgs.dev.azure.com"}
+DOTNET_PKG = re.compile(r'<Package(Version|Reference)\s+(?:Include|Update)="([^"]+)"(?:\s+Version="([^"]+)")?', re.I)
+
+
+def dotnet(src: Path, rel: str) -> tuple[list[dict], list[dict]]:
+    """NuGet packages from Directory.Packages.props (central versions) and project files with an explicit Version.
+    Syft only reads packages.lock.json / deps.json, so centrally managed .NET apps (e.g. jellyfin) showed no packages."""
+    text, comps, finds = _read(src / rel), [], []
+    for m in DOTNET_PKG.finditer(text):
+        kind, name, ver = m.groups()
+        if not ver:
+            continue  # version comes from Directory.Packages.props
+        line = _line(text, m.start())
+        floating = "*" in ver or ver.startswith(("[", "("))
+        comps.append(_component("nuget", name, ver, f"pkg:nuget/{name}@{ver}", rel, line, Path(rel).name, pinned=not floating))
+        if floating:
+            finds.append(_finding("D19", "dynamic_version", "medium", f"{name}:{ver}", rel, line,
+                                  f"{rel}:{line} uses version '{ver}' for {name}: it resolves to whatever is newest at restore time"))
+    return comps, finds
+
+
+def nuget_config(src: Path, rel: str) -> tuple[list[dict], list[dict]]:
+    text, finds = _read(src / rel), []
+    for m in re.finditer(r'<add\s+key="([^"]*)"\s+value="(https?://[^"]+)"', text, re.I):
+        url, line = m.group(2), _line(text, m.start())
+        host = re.sub(r"^\w+://([^/:]+).*$", r"\1", url).lower()
+        if _http(url):
+            finds.append(_finding("D19", "insecure_transport", "high", host, rel, line, f"{rel}:{line} uses NuGet source {url} over plain HTTP"))
+        elif host not in NUGET_HOSTS:
+            finds.append(_finding("D19", "extra_repository", "medium", host, rel, line,
+                                  f"{rel}:{line} adds NuGet source {url}: a second feed can serve a same-named package (dependency confusion)"))
+    return [], finds
+
+
 # ------------------------------------------------------------------ Go
 def go_mod(src: Path, rel: str) -> tuple[list[dict], list[dict]]:
     text, finds = _read(src / rel), []
@@ -295,6 +331,10 @@ def scan(src: Path, manifests: list[dict]) -> tuple[list[dict], list[dict]]:
         parser = {"vcpkg.json": vcpkg, "conanfile.txt": conanfile_txt, "CMakeLists.txt": cmake, ".gitmodules": gitmodules,
                   "gradle-wrapper.properties": wrapper_properties, "maven-wrapper.properties": wrapper_properties,
                   "build.gradle": gradle, "build.gradle.kts": gradle, "pom.xml": pom, "go.mod": go_mod}.get(name)
+        if parser is None and (name == "Directory.Packages.props" or name.endswith((".csproj", ".fsproj", ".vbproj"))):
+            parser = dotnet
+        if parser is None and name.lower() == "nuget.config":
+            parser = nuget_config
         if parser is None and name.endswith(".cmake"):
             parser = cmake
         if parser is None and name.endswith(".wrap") and "subprojects" in Path(rel).parts:

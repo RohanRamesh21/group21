@@ -35,10 +35,10 @@ const nodeTypes = { g: GNode };
 
 const HOST = /\b(?:\d{1,3}(?:\.\d{1,3}){3}|localhost):\d{2,5}\b/;
 
-export function buildGraph(findings: Record<string, Finding>) {
+export function buildGraph(findings: Record<string, Finding>, app = "application") {
   const comps = new Map<string, Finding[]>();
   for (const f of Object.values(findings)) comps.set(f.component, [...(comps.get(f.component) ?? []), f]);
-  const nodes: Node<NData>[] = [{ id: "app", type: "g", position: { x: 0, y: 0 }, data: { label: "uptime-kuma", sub: "application", kind: "app" } }];
+  const nodes: Node<NData>[] = [{ id: "app", type: "g", position: { x: 0, y: 0 }, data: { label: app, sub: "application", kind: "app" } }];
   const edges: Edge[] = [];
   const hosts = new Map<string, Risk>();
   const pkgs = [...comps.keys()].filter((c) => !c.startsWith("E-"));
@@ -92,8 +92,8 @@ function FitOnChange({ count }: { count: number }) {
   return null;
 }
 
-export function GraphView({ state }: { state: RunState | null }) {
-  const { nodes, edges } = useMemo(() => buildGraph(state?.findings ?? {}), [state?.findings]);
+export function GraphView({ state, app }: { state: RunState | null; app?: string }) {
+  const { nodes, edges } = useMemo(() => buildGraph(state?.findings ?? {}, app), [state?.findings, app]);
   return (
     <section className="panel flex min-h-[340px] flex-col overflow-hidden">
       <div className="flex items-center justify-between px-4 pt-3 text-sm">

@@ -42,6 +42,7 @@ TOOLS: dict[str, dict] = {
     "grype": {"image": "grype", "entrypoint": "/grype", "host": "grype"},
     "osv-scanner": {"image": "osv-scanner", "entrypoint": "/osv-scanner", "host": "osv-scanner"},
     "zizmor": {"image": "zizmor", "entrypoint": "/usr/bin/zizmor", "host": "zizmor"},
+    "conftest": {"image": "conftest", "entrypoint": "/conftest", "host": "conftest"},
 }
 DEFAULT_LIMITS = {"memory": "2g", "cpus": "2", "pids": 512, "timeout_s": 900, "tmp_size": "512m"}
 
@@ -227,3 +228,22 @@ def status() -> dict:
         import json
         out["grype_db"] = json.loads(meta.read_text())
     return out
+
+
+# Resolution-only npm settings a repository's .npmrc may pass to sandboxed npm. Everything else in that file (registry,
+# git, script-shell, node-options, auth tokens ...) is ignored: a repository .npmrc can redirect downloads or make npm
+# run a program (tests/test_sandbox.py). Values must be plain words or numbers.
+NPMRC_SAFE_KEYS = {"legacy-peer-deps", "strict-peer-deps", "engine-strict", "save-exact", "save-prefix", "min-release-age",
+                   "before", "omit", "include", "install-strategy", "prefer-dedupe", "lockfile-version", "package-lock"}
+
+
+def safe_npmrc_env(*npmrc_texts: str) -> dict[str, str]:
+    """npm_config_* environment variables for the allow-listed settings found in the given .npmrc texts."""
+    import re
+    env: dict[str, str] = {}
+    for text in npmrc_texts:
+        for line in (text or "").splitlines():
+            m = re.match(r"^\s*([a-z][a-z-]*)\s*=\s*([\w.:^~ -]{1,40})\s*$", line)
+            if m and m.group(1) in NPMRC_SAFE_KEYS:
+                env["npm_config_" + m.group(1).replace("-", "_")] = m.group(2).strip()
+    return env

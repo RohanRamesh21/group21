@@ -1,7 +1,8 @@
 """Entry point for an agentic run.
 
 world="canned": Stage A fixed facts (works offline; used by the replay test).
-world="real":   Stage B real tools on sandbox/uptime-kuma scenario/base..scenario/s3-s9.
+world="real":   Stage B real tools on any repository (repo, base, head); the dashboard passes a finished scan's
+                repository and commits. The defaults are the local uptime-kuma demo branches used by the CLI.
 """
 from __future__ import annotations
 
@@ -14,7 +15,7 @@ from guardian import config
 from guardian.agents import fakeworld
 from guardian.agents.board import Board
 from guardian.agents.constitution import introduced_hard_signals
-from guardian.agents.llm import ClaudeBackend, GeminiBackend, OpenRouterBackend, ScriptedBackend, load_script, make_resolver
+from guardian.agents.llm import ClaudeBackend, FreeModelBackend, GeminiBackend, OpenRouterBackend, ScriptedBackend, load_script, make_resolver
 from guardian.agents.orchestrator import Orchestrator
 from guardian.agents.tools import ToolRegistry
 from guardian.store.evidence import EvidenceStore
@@ -26,7 +27,7 @@ DEFAULT_REPLAY = ROOT / "testbed" / "replays" / "s3_s9_agents.json"
 def run(out: Path, backend: str = "auto", replay: Path = DEFAULT_REPLAY, run_id: str = "RUN-12",
         world_kind: str = "canned", repo: Path = ROOT / "sandbox" / "uptime-kuma",
         base: str = "scenario/base", head: str = "scenario/s3-s9", pace: float = 0.0,
-        human_override=None, on_board=None) -> Board:
+        human_override=None, on_board=None, scan_report: dict | None = None) -> Board:
     if not re.fullmatch(r"[A-Za-z0-9_-]{1,64}", run_id) or world_kind not in {"canned", "real"}:
         raise ValueError("invalid investigation identifier or world")
     if backend == "replay" and world_kind == "real":
@@ -39,7 +40,17 @@ def run(out: Path, backend: str = "auto", replay: Path = DEFAULT_REPLAY, run_id:
         world = {"facts": facts}
         board = Board(run_id=run_id, base=facts.base, head=facts.head)
         board.coverage_required = facts.coverage_required()
+        if scan_report is not None:
+            headline = scan_report["headline"]
+            if (headline.get("base_commit_full"), headline.get("head_commit_full")) == (facts.base, facts.head):
+                world["scan_report"] = scan_report
+                board.coverage_required.add("scan:summary")
+        if facts.base == facts.head and "scan_report" not in world:
+            board.required_checks["single_commit_scope"] = "unsupported"
         human = facts.human
+        if facts.missing_lockfile:
+            board.log(event="note", text="No package-lock.json at the repository root, so the npm package tools have nothing "
+                                         "to examine. Commits, changed files and sensitive paths are still investigated.")
     else:
         world = fakeworld.build(store)
         board = Board(run_id=run_id, base="2.5.12", head="scenario/s3-s9")
@@ -57,6 +68,8 @@ def run(out: Path, backend: str = "auto", replay: Path = DEFAULT_REPLAY, run_id:
         on_board(board, store)
     if backend == "auto":
         backend = config.provider()
+    else:
+        config.load_env()
     if backend == "replay":
         if world_kind == "real":
             raise SystemExit("replay works only with the canned world; use --backend openrouter|claude for real facts")
@@ -65,6 +78,8 @@ def run(out: Path, backend: str = "auto", replay: Path = DEFAULT_REPLAY, run_id:
         model = OpenRouterBackend()
     elif backend == "gemini":
         model = GeminiBackend()
+    elif backend == "freemodel":
+        model = FreeModelBackend()
     elif backend == "claude":
         model = ClaudeBackend()
     else:
@@ -73,7 +88,8 @@ def run(out: Path, backend: str = "auto", replay: Path = DEFAULT_REPLAY, run_id:
     try:
         Orchestrator(board, registry, model).run()
     except Exception as exc:
-        board.log(event="investigation_error", error=type(exc).__name__)
+        from guardian.agents.boundary import redact
+        board.log(event="investigation_error", error=type(exc).__name__, detail=redact(str(exc))[:200])
         board.investigation_interrupted = True
     if board.verdict is None or board.investigation_interrupted:
         blockers = introduced_hard_signals(board)

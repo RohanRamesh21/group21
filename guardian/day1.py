@@ -19,9 +19,12 @@ SLIDE_CHECKS = [  # brief wording -> detector types that answer it
     ("Typosquatted package", {"typosquat"}),
     ("Suspicious update", {"suspicious_update", "untrusted_source", "source_change", "extra_index_url", "non_registry_source",
                            "sensitive_file_change", "extension_untrusted_update", "sandbox_egress_blocked", "extra_repository",
+                           "action_pin_removed", "maintainer_change", "publisher_change", "unusual_release", "young_package",
+                           "suspicious_install_behavior", "dependency_confusion", "signature_invalid", "provenance_dropped",
+                           "registry_version_missing", "provenance_mismatch",
                            "insecure_transport", "checksum_bypass"}),
     ("Unsafe install script", {"install_script", "new_install_script"}),
-    ("Untrusted / unpinned image", {"image_not_pinned"}),
+    ("Untrusted / unpinned image", {"image_not_pinned", "untrusted_image"}),
     ("Modified lockfile", {"modified_lockfile", "lockfile_tamper"}),
 ]
 
@@ -31,6 +34,21 @@ def _abs(p: str | None) -> Path | None:
         return None
     q = Path(p)
     return q if q.is_absolute() else ROOT / q
+
+
+def _reach_fact(r: dict | None) -> str:
+    if not r:
+        return ""
+    c = r.get("counts") or {}
+    return (f"reachability (shipped code imports): {c.get('imported', 0)} imported, {c.get('via_import', 0)} through an imported "
+            f"dependency, {c.get('not_imported', 0)} not imported, {c.get('dev_only', 0)} dev-only, {c.get('unknown', 0)} unknown")
+
+
+def _registry(p: dict | None) -> dict | None:
+    if not p:
+        return None
+    return {"scope": p.get("scope"), "checked": p.get("checked", 0), "signed": p.get("signed", 0), "attested": p.get("attested", 0),
+            "errors": p.get("errors") or [], "packages": (p.get("packages") or [])[:60]}
 
 
 def _sandbox_fact(sb: dict | None) -> str:
@@ -114,12 +132,15 @@ def build(report: dict, scores: dict | None) -> dict:
     vh = h.get("vulnerabilities", {})
     by_sev = {lv: sum(1 for v in vulns if v["severity"] == lv) for lv in LEVELS}
     vrows = []
-    for v in sorted(vulns, key=lambda v: (LEVELS.index(v["severity"]), v["name"]))[:60]:
+    cvss = {f["id"]: (f.get("evidence") or {}).get("cvss_score") for f in (scores or {}).get("findings", []) if f.get("kind") == "vulnerability"}
+    # what this change introduced first, then by severity
+    for v in sorted(vulns, key=lambda v: (v.get("label") != "introduced", LEVELS.index(v["severity"]), v["name"]))[:80]:
         cves = [i for i in v.get("ids", []) if i.startswith("CVE-")]
         vrows.append({"component": f"{v['name']}@{v['version']}", "id": v["id"], "cve": cves[0] if cves else None, "severity": v["severity"],
                       "fixed": v.get("fixed", [])[:3], "malicious": v.get("malicious", False), "label": v.get("label"),
                       "direct": v.get("direct"), "sources": v.get("sources", []), "summary": v.get("summary", "")[:160],
-                      "path": path_of(v.get("component_key"), v["name"], v["version"])})
+                      "path": path_of(v.get("component_key"), v["name"], v["version"]), "cvss": cvss.get(v.get("key")),
+                      "reachability": v.get("reachability")})
     transitive_v = sum(1 for v in vulns if not v.get("direct"))
     errs = vh.get("errors") or {}
     step3 = {
@@ -127,7 +148,8 @@ def build(report: dict, scores: dict | None) -> dict:
         "facts": [f"{len(vulns)} advisories: " + ", ".join(f"{k} {n}" for k, n in by_sev.items() if n) if vulns else "no known vulnerabilities in any component with an exact version",
                   f"{sum(1 for v in vulns if v.get('fixed'))} have a fixed version · {sum(1 for v in vulns if v.get('malicious'))} known-malicious · "
                   f"{transitive_v} sit in transitive dependencies (path shown)",
-                  "sources: OSV.dev + Grype (cross-checked; both = stronger evidence)"],
+                  "sources: OSV.dev + Grype (cross-checked; both = stronger evidence)",
+                  _reach_fact(h.get("reachability"))],
         "note": ("Scanner problems: " + "; ".join(f"{k}: {v[:120]}" for k, v in errs.items())) if errs else
                 (f"{s.get('unpinned')} component(s) have no exact version, so they cannot be matched to advisories" if s.get("unpinned") else None),
         "rows": vrows, "by_severity": by_sev,
@@ -161,16 +183,20 @@ def build(report: dict, scores: dict | None) -> dict:
         "facts": [(f"compared {h.get('base_commit', '')[:8]} -> {h.get('head_commit', '')[:8]}: {len(h.get('changes', {}).get('files', []))} files changed, "
                    f"{len(pc.get('added', []))} components added, {len(pc.get('updated', []))} updated, {len(pc.get('removed', []))} removed")
                   if compare else "full scan of one version (no earlier version given): every finding is reported as already present",
+                  (f"registry checks ({(report.get('provenance') or {}).get('scope')}): {(report.get('provenance') or {}).get('checked', 0)} "
+                   f"npm package(s), {(report.get('provenance') or {}).get('signed', 0)} with a valid registry signature, "
+                   f"{(report.get('provenance') or {}).get('attested', 0)} with build provenance") if (report.get("provenance") or {}).get("checked") else "",
                   f"{sum(1 for c in checks if c['status'] == 'found')} of {len(checks)} attack patterns from the brief found; "
                   f"{len(other)} other risk signals (CI weaknesses, extension permissions ...)"],
-        "checks": checks, "rows": rows4[:80], "package_changes": pc,
+        "checks": checks, "rows": rows4[:80], "package_changes": pc, "registry": _registry(report.get("provenance")),
         "note": ("NOT checked in this scan (a tool did not run): " + "; ".join(f"{x['component']}: {x['summary'][:140]}" for x in not_checked))
                 if not_checked else None,
     }
 
     # ---- 5. evidence
     ev = []
-    for f in (scores or {}).get("findings", [])[:25]:
+    findings = (scores or {}).get("findings", [])
+    for f in sorted(findings, key=lambda f: f["label"] != "introduced")[:30]:  # stable: keeps the score order within each group
         e = f.get("evidence", {})
         comp = f.get("component", "")
         nm, ver = (comp.rsplit("@", 1) + [None])[:2] if "@" in comp[1:] else (comp, None)
@@ -180,16 +206,16 @@ def build(report: dict, scores: dict | None) -> dict:
                    "path": path_of(src["key"] if src else None) if src else [],
                    "where": (f"{src.get('source_file') or 'package-lock.json'}:{src.get('lockfile_line')}" if src and src.get("lockfile_line") else
                              (src.get("source_file") if src else e.get("file"))) or (f"{e.get('file')}:{e.get('line')}" if e.get("file") else None),
-                   "proof": {k: e[k] for k in ("advisory", "cve", "cvss_vector", "url", "detector", "resolved") if e.get(k)},
+                   "proof": {k: e[k] for k in ("advisory", "cve", "cvss_score", "cvss_vector", "url", "detector", "resolved") if e.get(k)},
                    "why": [c["why"] for c in f.get("contributions", [])[:3]], "floor": f.get("floor")})
     step5 = {"n": 5, "title": "Present evidence", "status": "done" if ev else "nothing_found",
-             "facts": [f"verdict: {(scores or {}).get('verdict', h.get('verdict', '?'))} · "
-                       + "; ".join((scores or {}).get("reasons", [])[:2]),
+             "facts": [f"verdict: {h.get('verdict') or (scores or {}).get('verdict', '?')} · "
+                       + "; ".join((h.get("verdict_reasons") or (scores or {}).get("reasons", []))[:2]),
                        "every finding: what, which component, dependency path, file:line, advisory/detector proof, initial risk level"],
              "rows": ev, "counts": (scores or {}).get("counts")}
 
     return {"question": "What is in the application, what changed, and what appears risky?",
             "chain": ["Repository", "SBOM", "Dependency graph", "Risk detection", "Evidence"],
             "repo": app, "head_commit": h.get("head_commit"), "base_commit": h.get("base_commit"), "compare": compare,
-            "mode": h.get("mode"), "verdict": (scores or {}).get("verdict", h.get("verdict")),
+            "mode": h.get("mode"), "verdict": h.get("verdict") or (scores or {}).get("verdict"),  # final: score + policy
             "steps": [step1, step2, step3, step4, step5]}

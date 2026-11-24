@@ -13,6 +13,11 @@ uv pip install --python .venv/bin/python -e .
 
 ## 2. The sandbox (required for scanning)
 
+**What podman is:** a program for running containers (like Docker). A container is a sealed, throw-away box for one program: it sees
+only the files you share with it, can be cut off from the network and given memory/time limits, and starts in about a second. Podman
+runs "rootless" (as your normal user, no root service). It is installed on the machine, not as a Python/npm dependency:
+Linux `sudo apt install podman` (or your distro's package), macOS/Windows: Podman Desktop or `podman machine init && podman machine start`.
+
 Every tool that reads a scanned repository (npm lockfile resolution, Syft, Grype, OSV-Scanner, zizmor) runs in a
 rootless **podman** container. Nothing else needs to be installed on the host: the containers bring the tools.
 Guardian refuses to run these tools on the host. A step whose container cannot start is reported as a
@@ -26,7 +31,7 @@ Guardian refuses to run these tools on the host. A step whose container cannot s
 One-time setup. It needs internet access once, and is the only step that downloads tools:
 
 ```bash
-.venv/bin/guardian sandbox setup    # pulls the 5 digest-pinned images, downloads + verifies + imports the Grype DB
+.venv/bin/guardian sandbox setup    # pulls the 6 digest-pinned images (incl. Conftest), downloads + verifies + imports the Grype DB
 .venv/bin/guardian sandbox status   # exit code 0 when everything is ready
 ```
 
@@ -67,18 +72,35 @@ repositories.
 ## 3. Real-app test corpus (optional)
 
 ```bash
-.venv/bin/python testbed/corpus.py fetch            # 12 pinned public repos, bare and read-only, into sandbox/corpus/ (~19 MB)
-.venv/bin/python testbed/corpus.py scan [name ...]  # about 2 minutes for all 12; results in guardian-out/corpus/summary.json
+.venv/bin/python testbed/corpus.py fetch            # 20 pinned public repos, bare and read-only, into sandbox/corpus/ (~230 MB, ~7 min)
+.venv/bin/python testbed/corpus.py scan [name ...]  # ~2 min for the 12 small apps, ~5 min for the 8 flagship apps; guardian-out/corpus/summary.json
 ```
 
-The list, and why each app is in it, is in `testbed/corpus.yaml`. Results are in `docs/TESTING.md`.
+The list, and why each app is in it, is in `testbed/corpus.yaml`. Results are in `docs/TESTING.md`; how to run the flagship apps
+through the dashboard is `docs/TESTING.md` §7.
 
-## 4. Dashboard
+## 4. Policy, remediation and monitoring
+- Policies: `policies/*.rego` (Conftest/OPA, run in the sandbox); lists in `guardian.yaml` (`images.trusted`, `policy.license_denylist`,
+  `install_scripts.allowlist`, `internal_scopes`). CI gate: `guardian check … --fail-on block` (exit 1).
+- Remediation: `guardian fix` (plan), `guardian fix --validate FIX-…` (apply in the sandbox + rescan), approval in the dashboard.
+- Monitoring: `guardian watch [--all] [--interval MIN]`, or start the server with `GUARDIAN_MONITOR_INTERVAL=<minutes>`.
+- npm registry checks need `registry.npmjs.org` in `registries.fetch_hosts` (default) and network access; offline they are reported as
+  "not checked".
+
+## 5. Dashboard
 
 ```bash
-.venv/bin/uvicorn guardian.server:app --port 8765          # http://localhost:8765
+.venv/bin/uvicorn guardian.server:app --port 8765          # http://localhost:8765 (restart it after backend changes)
 cd guardian/dashboard && npm ci && npx vite build           # rebuild the UI after edits (.npmrc sets ignore-scripts)
+cd guardian/dashboard && npx vite                           # dev server on :5173, proxies /api to GUARDIAN_API (default http://127.0.0.1:8765)
 ```
+
+| Variable | Default | Effect |
+|---|---|---|
+| `GUARDIAN_PATH_ROOTS` | your home directory | Folders the **Local path** source may read (`:`-separated). The home directory itself is always refused. |
+| `GUARDIAN_MONITOR_INTERVAL` | off | Minutes between automatic monitoring re-checks |
+| `GUARDIAN_LLM_PROVIDER`, `OPENROUTER_API_KEY`, `GOOGLE_API_KEY`, `ANTHROPIC_API_KEY` | none | Live agents on the Investigate page; without a key only the recorded example runs |
+| `GUARDIAN_API` (Vite dev server only) | `http://127.0.0.1:8765` | Backend the dev server proxies to |
 
 ## Troubleshooting
 

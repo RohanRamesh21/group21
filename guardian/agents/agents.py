@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from guardian.agents.llm import Backend
+from guardian.agents.llm import Backend, ScriptedBackend
 from guardian.agents.tools import ToolRegistry
 
 PREAMBLE = """You are the {role} of the Bosch Software Supply Chain Guardian, an agentic pre-merge check.
@@ -22,7 +22,8 @@ ROLES = {
 Dependency Hunter (packages) and Change Forensics (diffs, commits, sensitive files, CI, Dockerfile), re-plan as results,
 handoffs and Skeptic messages arrive, group findings into cases by root cause, resolve each case within the
 constitution's floors, ask the human only questions a human alone can answer, and submit the verdict.
-Start with diff_summary and policy_lookup, then write_plan and dispatch tasks in parallel. Choose depth per item:
+Start with diff_summary and policy_lookup, then write_plan and dispatch both specialists in the same tool-call batch when possible.
+The scheduler runs the tasks before your next briefing. Do not poll the board for results. Choose depth per item:
 deep for anything suspicious, quick for routine items. Check coverage_report before submitting. Every open finding must
 be in a case or cleared. Introduced High/Critical cases mean the decision is 'block'."""),
     "hunter": ("Dependency Hunter", "medium", """Your job: for every package in your task, establish what it is, how it got
@@ -66,9 +67,11 @@ class Agent:
             return os.environ["GUARDIAN_EFFORT"]
         return ROLES[self.name][1]
 
-    def run(self, user_text: str) -> str:
+    def run(self, user_text: str, *, yield_on_dispatch: bool = False) -> str:
         self.history.append({"role": "user", "content": user_text})
         schemas = self.tools.schemas_for(self.name)
+        task = self.tools.board.tasks.get(self.task_id or "")
+        awaiting_result = not isinstance(self.backend, ScriptedBackend) and task is not None and task.status == "running"
         for _ in range(self.max_steps):
             if len(str(self.history)) > 180_000 or not self.tools.board.take_model_slot():
                 break
@@ -85,5 +88,9 @@ class Agent:
             self.history.append({"role": "user", "content": results})
             if self.tools.board.verdict is not None:
                 return "end_turn"
+            if awaiting_result and task.status == "done":
+                return "end_turn"
+            if yield_on_dispatch and self.tools.board.open_tasks():
+                return "dispatched"
         self.tools.board.log(event="step_budget_exhausted", agent=self.name)
         return "exhausted"

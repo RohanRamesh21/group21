@@ -51,6 +51,7 @@ class RealFacts:
         self.http.trust_env = False
         self.http.headers["User-Agent"] = "guardian-hackathon-scanner"
         self.deadline = time.monotonic() + 360
+        self.missing_lockfile: set[str] = set()
         self.base_pkgs, _ = parse_lockfile(self._lockfile(self.base))
         self.head_pkgs, _ = parse_lockfile(self._lockfile(self.head))
         self._memo: dict[tuple[str, str], str] = {}
@@ -58,9 +59,12 @@ class RealFacts:
 
     # --- plumbing ------------------------------------------------------------
     def _lockfile(self, ref: str) -> str:
+        """Root package-lock.json at `ref`. A project without one (another ecosystem, or npm without a lockfile) has
+        no npm packages for the agents' package tools; they still examine commits, changed and sensitive files."""
         text = git_show(self.repo, ref, "package-lock.json")
         if text is None:
-            raise FileNotFoundError(f"no package-lock.json at {ref} in {self.repo}")
+            self.missing_lockfile.add(ref)
+            return '{"lockfileVersion": 3, "packages": {"": {}}}'
         return text
 
     def _git(self, *args: str) -> str:

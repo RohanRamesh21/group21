@@ -1,12 +1,16 @@
 import { AnimatePresence, motion } from "motion/react";
 import { useMemo } from "react";
-import { ArrowRight, Gavel, Prohibit, User, Warning } from "@phosphor-icons/react";
+import { ArrowRight, CheckCircle, Gavel, Info, Prohibit, User, Warning, WarningCircle } from "@phosphor-icons/react";
 import type { FeedAudit, FeedItem, FeedMessage } from "../types";
 import { RiskTag, agentOf, spring } from "../ui";
 
 const LANES = ["lead", "hunter", "forensics", "skeptic"] as const;
 // These tool calls are shown by the message, verdict or human row they produce.
 const HIDDEN_TOOLS = new Set(["post_message", "submit_verdict", "ask_human"]);
+
+// Deterministic detectors that run before any model (guardian/agents/tools.py REQUIRED_DETECTORS).
+const CHECK: Record<string, string> = { D0: "known vulnerabilities and malware (OSV)", D1: "look-alike package names", D3: "lockfile origin and integrity",
+  D4: "updated packages and new install scripts", D7: "sensitive files and registry redirects", ci_image: "CI and image changes" };
 
 const KIND_TONE: Record<string, string> = {
   hypothesis: "text-accent bg-accent/10", challenge: "text-high bg-high/10", answer: "text-ink bg-white/5",
@@ -76,7 +80,7 @@ function Empty() {
         <div className="flex -space-x-2">{LANES.map((a) => { const g = agentOf(a); return (
           <span key={a} className="grid size-8 place-items-center rounded-full ring-2 ring-surface" style={{ background: `${g.hex}26` }}><g.Icon size={15} style={{ color: g.hex }} /></span>); })}
         </div>
-        Press Run check to watch the agents work
+        Start the investigation to watch the agents work
       </div>
     </div>
   );
@@ -169,12 +173,40 @@ function AuditRow({ e, onEvidence }: { e: FeedAudit; onEvidence: (id: string) =>
       </div>
     );
   }
+  if (e.event === "required_check") {
+    const ok = e.status === "passed";
+    return (
+      <div className="flex items-center gap-2 px-2 py-1 text-[12px]">
+        {ok ? <CheckCircle size={14} className="text-ok" weight="fill" /> : <WarningCircle size={14} className="text-high" weight="fill" />}
+        <span className="text-muted">Required check</span>
+        <span className="text-ink/90">{CHECK[String(e.detector)] ?? String(e.detector)}</span>
+        <span className={ok ? "text-ok" : "text-high"}>{String(e.status)}{e.error ? ` (${String(e.error)})` : ""}</span>
+      </div>
+    );
+  }
+  if (e.event === "note") {
+    return (
+      <div className="flex items-start gap-2 rounded-lg border border-line bg-white/[0.03] px-3 py-2 text-[12.5px] text-ink/80">
+        <Info size={15} className="mt-0.5 shrink-0 text-accent" />{String(e.text)}
+      </div>
+    );
+  }
+  if (e.event === "investigation_error") {
+    return (
+      <div className="flex items-start gap-2 rounded-lg border border-high/30 bg-high/8 px-3 py-2 text-[12.5px]">
+        <Warning size={15} className="mt-0.5 shrink-0 text-high" weight="bold" />
+        <div><span className="font-medium text-high">The agents stopped: {String(e.error)}.</span>{" "}
+          <span className="text-ink/80">{String(e.detail ?? "")}</span></div>
+      </div>
+    );
+  }
   if (e.event === "verdict") {
     return (
-      <div className="flex items-center gap-2 rounded-lg border border-crit/40 bg-crit/10 px-3 py-2 text-[13px]">
-        <Gavel size={16} className="text-crit" weight="bold" />
+      <motion.div initial={{ scale: 0.96 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 16 }}
+        className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-[13px] ${e.decision === "block" ? "border-crit/40 bg-crit/10" : e.decision === "safe_to_merge" ? "border-ok/40 bg-ok/10" : "border-high/40 bg-high/10"}`}>
+        <Gavel size={16} className={e.decision === "block" ? "text-crit" : e.decision === "safe_to_merge" ? "text-ok" : "text-high"} weight="bold" />
         <span className="font-medium">Verdict submitted: {String(e.decision).replace(/_/g, " ")}</span>
-      </div>
+      </motion.div>
     );
   }
   return <div className="px-2 py-1 font-mono text-[11px] text-faint">{e.event}</div>;

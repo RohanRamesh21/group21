@@ -1,21 +1,14 @@
-import { AnimatePresence, animate, motion, useMotionValue, useTransform } from "motion/react";
-import { useEffect } from "react";
+import { AnimatePresence, motion } from "motion/react";
 import { CheckCircle, Prohibit, ShieldCheck } from "@phosphor-icons/react";
-import type { Meta, RunState } from "../types";
-import { RISK, spring } from "../ui";
+import type { Context } from "../api";
+import type { RunState } from "../types";
+import { CountUp, RISK, spring } from "../ui";
 
-function CountUp({ value }: { value: number }) {
-  const mv = useMotionValue(0);
-  const text = useTransform(mv, (v) => Math.round(v).toLocaleString());
-  useEffect(() => { const c = animate(mv, value, { duration: 1.1, ease: [0.16, 1, 0.3, 1] }); return () => c.stop(); }, [value, mv]);
-  return <motion.span>{text}</motion.span>;
-}
-
-function Stat({ label, value, sub, tone }: { label: string; value: number; sub?: string; tone?: string }) {
+function Stat({ label, value, sub, tone }: { label: string; value: number | null; sub?: string; tone?: string }) {
   return (
     <div className="flex flex-col gap-1 px-5 py-4">
       <span className="text-xs text-muted">{label}</span>
-      <span className={`font-mono text-3xl font-medium tracking-tight ${tone ?? "text-ink"}`}><CountUp value={value} /></span>
+      <span className={`font-mono text-3xl font-medium tracking-tight ${tone ?? "text-ink"}`}>{value == null ? <span className="text-faint">–</span> : <CountUp value={value} />}</span>
       {sub && <span className="text-[11px] text-faint">{sub}</span>}
     </div>
   );
@@ -41,7 +34,9 @@ function CoverageRing({ done, total }: { done: number; total: number }) {
   );
 }
 
-export function Overview({ meta, state }: { meta: Meta | null; state: RunState | null }) {
+/** Headline of an agent run. Numbers come from the scan being investigated (none for the recorded example). */
+export function Overview({ ctx, state, recorded }: { ctx: Context | null; state: RunState | null; recorded: boolean }) {
+  const scan = recorded ? null : ctx;
   const findings = Object.values(state?.findings ?? {});
   const open = findings.filter((f) => f.status !== "cleared");
   const crit = open.filter((f) => f.risk === "critical").length;
@@ -55,8 +50,8 @@ export function Overview({ meta, state }: { meta: Meta | null; state: RunState |
           <motion.div key={phase} initial={{ opacity: 0, y: 12, filter: "blur(4px)" }} animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             exit={{ opacity: 0, y: -10, filter: "blur(4px)" }} transition={spring} className="flex h-full flex-col gap-3">
             {phase === "idle" && (<>
-              <div className="flex items-center gap-2 text-muted"><ShieldCheck size={18} /> Pre-merge check</div>
-              <div className="text-3xl font-semibold tracking-tight">Ready to inspect this pull request</div>
+              <div className="flex items-center gap-2 text-muted"><ShieldCheck size={18} /> Agent investigation</div>
+              <div className="text-3xl font-semibold tracking-tight">{ctx ? <>Ready to investigate <span className="font-mono text-accent">{ctx.app}</span></> : "Pick a scan to investigate"}</div>
               <p className="max-w-[52ch] text-sm leading-relaxed text-muted">Four agents examine what changed, prove every claim with evidence, and recommend block or merge. A human owns the final call.</p>
             </>)}
             {phase === "running" && (<>
@@ -88,9 +83,9 @@ export function Overview({ meta, state }: { meta: Meta | null; state: RunState |
       </motion.div>
 
       <div className="panel grid grid-cols-2 divide-line md:grid-cols-5 md:divide-x">
-        <Stat label="Components" value={meta?.components ?? 0} sub={`${meta?.lockfile_entries ?? 0} lockfile entries`} />
-        <Stat label="Changed in PR" value={meta?.changed_packages ?? 0} sub="packages added or updated" />
-        <Stat label="Install scripts" value={meta?.install_scripts ?? 0} sub="run code at npm install" />
+        <Stat label="Components" value={scan ? scan.inventory.packages : null} sub={scan ? `${scan.inventory.direct} direct` : recorded ? "recorded example" : "from the scan"} />
+        <Stat label="Changed" value={scan ? scan.changes.added + scan.changes.updated : null} sub={scan ? `packages added or updated · ${scan.changes.files} files` : "packages added or updated"} />
+        <Stat label="Install scripts" value={scan ? scan.inventory.install_scripts : null} sub="run code at install time" />
         <Stat label="Open risks" value={open.length} sub={`${crit} critical`} tone={crit ? "text-crit" : "text-ink"} />
         <CoverageRing done={state?.coverage?.done.length ?? 0} total={state?.coverage?.required.length ?? 0} />
       </div>

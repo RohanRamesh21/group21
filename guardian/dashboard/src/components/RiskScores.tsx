@@ -3,17 +3,28 @@ import { useEffect, useMemo, useState } from "react";
 import { ArrowSquareOut, CheckCircle, Info, Scales, ShieldWarning, Sparkle, Warning } from "@phosphor-icons/react";
 import type { Risk } from "../types";
 import { RISK, RiskTag, spring } from "../ui";
+import { REACH } from "./DepGraph";
+import { FindingReview, REVIEW_LABEL, type ReviewDisposition } from "./FindingReview";
+import { Guard } from "./Guard";
 
 interface Contribution { factor: string; value: number; weight: number; points: number; why: string }
+interface FixForecast {
+  id: string; type: string; target: string | null; fix_score: number; rollback: string; checks_not_run: string[];
+  expected_risk_reduction: { findings_cleared: number }; compat: { risk: number; semver?: string | null };
+}
 export interface Scored {
   id: string; kind: "vulnerability" | "supply_chain" | "ci_image"; title: string; component: string; label: string; summary: string;
   decision: "Act" | "Attend" | "Track*" | "Track"; level: Risk; score: number; floor: string | null;
   ssvc: { exploitation: string; automatable: string; technical_impact: string; mission: string; rule: string } | null;
   contributions: Contribution[]; counterfactuals: { if: string; then: string }[];
   evidence: Record<string, any>;
+  review?: ReviewDisposition;
+  confidence?: { value: number; band: "high" | "medium" | "low"; missing: string[] };
+  rank_stability?: { baseline_rank: number; rank_p05: number; rank_p95: number; delta: number };
+  fix_candidates?: FixForecast[];
 }
 interface Scores {
-  verdict: "block" | "review" | "allow"; reasons: string[]; counts: Record<string, Record<string, number>>; findings: Scored[];
+  verdict: "block" | "review" | "allow"; reasons: string[]; final_verdict?: "block" | "review" | "allow"; final_reasons?: string[]; counts: Record<string, Record<string, number>>; findings: Scored[];
   method: { ahp: { weights: Record<string, number>; consistency_ratio: number; consistent: boolean; lambda_max: number; matrix: number[][]; criteria: string[] };
     criteria_text: Record<string, string>; floors: Record<string, { level: string; decision: string; why: string }>; verdict_rule: string; epss_poc_threshold: number };
   data: { advisories: number; cves: number; epss_found: number; kev_matches: number; kev_catalog_size: number; errors: string[] };
@@ -34,29 +45,44 @@ function Decision({ d }: { d: string }) {
   return <span className={`rounded-md px-1.5 py-0.5 font-mono text-[11px] ring-1 ring-inset ${DEC_TONE[d] ?? ""}`}>{d}</span>;
 }
 
+function findingKey(finding: Scored) {
+  return finding.review?.key ?? finding.id;
+}
+
 export function RiskScores({ project, fullScan = false }: { project?: string | null; fullScan?: boolean }) {
   const [s, setS] = useState<Scores | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [sel, setSel] = useState<string | null>(null);
   const [filter, setFilter] = useState<"introduced" | "all" | "pre_existing">("all");
+  const [reopenedOnly, setReopenedOnly] = useState(false);
   const [showMethod, setShowMethod] = useState(false);
+  const [refresh, setRefresh] = useState(0);
   useEffect(() => {
-    setS(null); setErr(null); setSel(null);
-    fetch(`/api/scores${project ? `?project=${project}` : ""}`)
+    const controller = new AbortController();
+    setS(null); setErr(null);
+    fetch(`/api/scores${project ? `?project=${encodeURIComponent(project)}` : ""}`, { signal: controller.signal })
       .then(async (r) => (r.ok ? r.json() : Promise.reject((await r.json()).detail)))
-      .then((d: Scores) => { setS(d); setSel(d.findings[0]?.id ?? null); })
-      .catch((e) => setErr(String(e)));
-  }, [project]);
-  const list = useMemo(() => (s?.findings ?? []).filter((f) => filter === "all" || f.label === filter), [s, filter]);
+      .then((d: Scores) => setS(d))
+      .catch((e) => { if (!controller.signal.aborted) setErr(String(e)); });
+    return () => controller.abort();
+  }, [project, refresh]);
+  const list = useMemo(() => (s?.findings ?? []).filter((f) => (filter === "all" || f.label === filter) &&
+    (!reopenedOnly || f.review?.status === "reopened")), [s, filter, reopenedOnly]);
   if (err) return <div className="panel px-5 py-4 text-sm text-crit">{err}</div>;
   if (!s) return <div className="panel px-5 py-4 text-sm text-muted">Scoring findings…</div>;
-  const v = VERDICT[s.verdict];
-  const cur = s.findings.find((f) => f.id === sel) ?? null;
+  const finalVerdict = s.final_verdict ?? s.verdict;  // risk score + policy-as-code
+  const v = VERDICT[finalVerdict];
+  const reasons = s.final_reasons ?? s.reasons;
+  const cur = list.find((f) => findingKey(f) === sel) ?? list[0];
+  const updateReview = (review: ReviewDisposition) => setS((current) => current && ({ ...current,
+    findings: current.findings.map((f) => f.review?.key === review.key ? { ...f, review } : f),
+  }));
   const ahp = s.method.ahp;
   return (
     <div className="flex flex-col gap-4">
+      <Guard project={project} />
       <section className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        {fullScan ? (
+        {fullScan && finalVerdict === "allow" ? (
           <div className="panel flex items-start gap-3 px-5 py-4">
             <Info size={22} className="mt-0.5 text-accent" />
             <div><div className="font-medium">Full scan (no pull request to compare)</div>
@@ -66,7 +92,8 @@ export function RiskScores({ project, fullScan = false }: { project?: string | n
           <div className={`flex items-start gap-3 rounded-xl border px-5 py-4 ${v.cls}`}>
             <v.Icon size={26} weight="duotone" className="mt-0.5 shrink-0" />
             <div className="min-w-0"><div className="text-lg font-semibold">{v.text}</div>
-              <ul className="mt-1 space-y-0.5 text-sm text-ink/85">{s.reasons.slice(0, 4).map((r) => <li key={r} className="truncate">• {r}</li>)}</ul></div>
+              <ul className="mt-1 space-y-0.5 text-sm text-ink/85">{reasons.slice(0, 5).map((r) => <li key={r} className="truncate">• {r}</li>)}</ul>
+              {fullScan && <div className="mt-1 text-[12px] text-muted">Full scan (no pull request to compare): this verdict comes from what is already in the app.</div>}</div>
           </div>)}
         <div className="panel grid grid-cols-4 divide-x divide-line">
           {(["critical", "high", "medium", "low"] as Risk[]).map((lv) => (
@@ -95,16 +122,30 @@ export function RiskScores({ project, fullScan = false }: { project?: string | n
                 {filter === k && <motion.span layoutId="score-filter" className="mt-1.5 block h-0.5 rounded-full bg-accent" />}
               </button>))}
           </div>
-          <div className="border-b border-line px-4 py-1.5 text-[11px] text-faint">Sorted by decision (floors and SSVC) first, then by priority score within the same decision.</div>
+          <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border-b border-line px-4 py-1.5 text-[11px] text-faint">
+            <span>Sorted by risk level, then by priority score.</span>
+            {s.findings.some((f) => f.review) && <div className="flex items-center gap-3">
+              <button type="button" aria-pressed={reopenedOnly} onClick={() => setReopenedOnly((value) => !value)}
+                className={reopenedOnly ? "text-accent" : "text-muted hover:text-ink"}>
+                Reopened ({s.findings.filter((f) => (filter === "all" || f.label === filter) && f.review?.status === "reopened").length})
+              </button>
+              <button type="button" onClick={() => setRefresh((value) => value + 1)} className="text-muted hover:text-ink">Refresh</button>
+            </div>}
+          </div>
           <ul className="min-h-0 flex-1 overflow-y-auto">
             {list.map((f) => (
-              <li key={f.id}>
-                <button onClick={() => setSel(f.id)} className={`flex w-full items-center gap-3 border-b border-line px-4 py-2.5 text-left hover:bg-raised ${sel === f.id ? "bg-raised" : ""}`}>
+              <li key={findingKey(f)}>
+                <button onClick={() => setSel(findingKey(f))} className={`flex w-full items-center gap-3 border-b border-line px-4 py-2.5 text-left hover:bg-raised ${cur === f ? "bg-raised" : ""}`}>
                   <RiskTag risk={f.level} className="shrink-0" />
                   <Decision d={f.decision} />
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-mono text-[12px]">{f.title}</div>
-                    <div className="truncate text-[11px] text-muted">{f.label === "introduced" ? "introduced by this PR" : "already present"} · {f.kind.replace("_", " ")}</div>
+                    <div className="truncate text-[11px] text-muted">{f.label === "introduced" ? "introduced by this PR" : "already present"} · {f.kind.replace("_", " ")}
+                      {f.confidence && <> · {f.confidence.band} confidence</>}
+                    </div>
+                    {f.review && f.review.status !== "unreviewed" && <div className={`text-[11px] ${f.review.status === "reopened" ? "text-high" : "text-muted"}`}>
+                      {REVIEW_LABEL[f.review.status]}
+                    </div>}
                   </div>
                   <div className="w-16 shrink-0 text-right">
                     <div className="font-mono text-[13px]">{f.score.toFixed(1)}</div>
@@ -112,10 +153,11 @@ export function RiskScores({ project, fullScan = false }: { project?: string | n
                   </div>
                 </button>
               </li>))}
-            {!list.length && <li className="px-4 py-6 text-sm text-muted">Nothing here.</li>}
+            {!list.length && <li className="px-4 py-6 text-sm text-muted">{reopenedOnly ? "No reopened findings." : "Nothing here."}</li>}
           </ul>
         </div>
-        <AnimatePresence mode="wait">{cur && <ScoreCard key={cur.id} f={cur} project={project} />}</AnimatePresence>
+        <AnimatePresence mode="wait">{cur && <ScoreCard key={cur.review?.revision ?? cur.id} f={cur} project={project}
+          onReviewSaved={updateReview} onRefresh={() => setRefresh((value) => value + 1)} />}</AnimatePresence>
       </section>
     </div>
   );
@@ -150,7 +192,48 @@ function Method({ s }: { s: Scores }) {
     </motion.div>);
 }
 
-function ScoreCard({ f, project }: { f: Scored; project?: string | null }) {
+function ScoringContext({ finding }: { finding: Scored }) {
+  const { confidence, rank_stability: rank, fix_candidates: fixes } = finding;
+  if (!confidence && !rank && !fixes?.length) return null;
+  return (
+    <div className="space-y-3 text-[12px]">
+      <div className="grid gap-2 sm:grid-cols-2">
+        {confidence && <div className="rounded-lg border border-line p-3">
+          <div className="font-medium">Evidence confidence</div>
+          <div className="mt-1 capitalize">{confidence.band} · {Math.round(confidence.value * 100)}%</div>
+          {confidence.missing.length > 0 && <div className="mt-1 text-muted">{confidence.missing.join(" · ")}</div>}
+        </div>}
+        {rank && <div className="rounded-lg border border-line p-3">
+          <div className="font-medium">Rank stability</div>
+          <div className="mt-1">Rank {rank.baseline_rank} · 90% range {rank.rank_p05}–{rank.rank_p95}</div>
+          <div className="mt-1 text-muted">AHP weights varied by ±{Math.round(rank.delta * 100)}%.</div>
+        </div>}
+      </div>
+      {!!fixes?.length && <div className="rounded-lg border border-line p-3">
+        <div className="font-medium">Fix forecasts</div>
+        <ul className="mt-2 space-y-2">
+          {fixes.map((fix) => <li key={fix.id}>
+            <div className="flex justify-between gap-2">
+              <span className="capitalize">{fix.type.replaceAll("_", " ")} {fix.target && <span className="font-mono">{fix.target}</span>}</span>
+              <span className="font-mono">{fix.fix_score.toFixed(1)} / 100</span>
+            </div>
+            <div className="text-muted">Estimated findings resolved {fix.expected_risk_reduction.findings_cleared}
+              {fix.compat.semver && ` · ${fix.compat.semver} update`}</div>
+            <div className="text-muted">Rollback · {fix.rollback}</div>
+          </li>)}
+        </ul>
+        <div className="mt-2 text-muted">Use Fix &amp; validate to verify an available fix before approval.</div>
+      </div>}
+    </div>
+  );
+}
+
+function ScoreCard({ f, project, onReviewSaved, onRefresh }: {
+  f: Scored;
+  project?: string | null;
+  onReviewSaved: (review: ReviewDisposition) => void;
+  onRefresh: () => void;
+}) {
   const [ex, setEx] = useState<Explanation | null>(null);
   const [busy, setBusy] = useState(false);
   const ask = (force = false) => {
@@ -170,6 +253,7 @@ function ScoreCard({ f, project }: { f: Scored; project?: string | null }) {
         <div className="flex shrink-0 items-center gap-2"><RiskTag risk={f.level} /><Decision d={f.decision} />
           <span className="font-mono text-2xl">{f.score.toFixed(1)}</span></div>
       </div>
+      <ScoringContext finding={f} />
 
       <div>
         <div className="mb-1.5 text-[11px] uppercase tracking-wide text-faint">Why this level</div>
@@ -215,13 +299,19 @@ function ScoreCard({ f, project }: { f: Scored; project?: string | null }) {
           {ev.cve && <span className="rounded-md bg-raised px-2 py-1">{ev.cve}</span>}
           {ev.epss && <span className="rounded-md bg-raised px-2 py-1">EPSS {Number(ev.epss.epss).toFixed(3)} · pct {Number(ev.epss.percentile).toFixed(2)} · {ev.epss.date}</span>}
           {ev.kev && <span className="rounded-md bg-crit/15 px-2 py-1 text-crit">CISA KEV since {ev.kev.date_added}</span>}
+          {ev.cvss_score != null && <span className="rounded-md bg-raised px-2 py-1">CVSS {Number(ev.cvss_score).toFixed(1)}</span>}
           {ev.cvss_vector && <span className="max-w-full break-all rounded-md bg-raised px-2 py-1">{ev.cvss_vector}</span>}
+          {ev.reachability && <span title={[ev.reachability.why, ...(ev.reachability.evidence ?? [])].join("\n")}
+            className={`rounded-md px-2 py-1 ${ev.reachability.status === "imported" || ev.reachability.status === "via_import" ? "bg-high/15 text-high" : "bg-raised text-muted"}`}>
+            {REACH[ev.reachability.status] ?? ev.reachability.status}{ev.reachability.evidence?.[0] ? ` · ${ev.reachability.evidence[0]}` : ""}</span>}
           {(ev.lockfile_line || ev.file) && <span className="rounded-md bg-raised px-2 py-1">{ev.file ?? "package-lock.json"}{ev.lockfile_line ? `:${ev.lockfile_line}` : ""}</span>}
           {ev.resolved && <span className="max-w-full break-all rounded-md bg-raised px-2 py-1">{ev.resolved}</span>}
           {ev.file && <span className="rounded-md bg-raised px-2 py-1">{ev.file}{ev.line ? `:${ev.line}` : ""}</span>}
         </div>
         {f.summary && <p className="mt-2 text-[12px] text-muted">Advisory text: “{f.summary}”</p>}
       </div>
+
+      {f.review && <FindingReview project={project} disposition={f.review} onSaved={onReviewSaved} onRefresh={onRefresh} />}
 
       <div className="rounded-lg border border-accent/25 bg-accent/5 px-4 py-3">
         <div className="flex items-center justify-between gap-2">

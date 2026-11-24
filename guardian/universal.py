@@ -29,6 +29,7 @@ import shutil
 import sys
 import time
 from collections import deque
+from hashlib import file_digest
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -66,6 +67,9 @@ MANIFESTS = {  # file name -> (ecosystem, role)
     "gradle-wrapper.properties": ("maven", "build-tool"), "maven-wrapper.properties": ("maven", "build-tool"),
     # scripts checked for Go checksum switches (GOSUMDB=off, GOINSECURE ...)
     "Makefile": ("config", "script"), "GNUmakefile": ("config", "script"), ".envrc": ("config", "script"),
+    # .NET central package management and feeds (read by guardian/adapters/build_files.py)
+    "Directory.Packages.props": ("nuget", "manifest"), "nuget.config": ("nuget", "build-tool"), "NuGet.config": ("nuget", "build-tool"),
+    "NuGet.Config": ("nuget", "build-tool"),
 }
 PURL_ECO = {"npm": "npm", "pypi": "PyPI", "golang": "Go", "cargo": "crates.io", "maven": "Maven", "gem": "RubyGems",
             "composer": "Packagist", "nuget": "NuGet", "pub": "Pub", "hex": "Hex", "swift": "SwiftURL", "github": "GitHub Actions",
@@ -192,11 +196,12 @@ def find_manifests(src: Path) -> list[dict]:
             out.append({"path": rel, "ecosystem": eco, "role": role})
         elif re.match(r"^requirements.*\.(txt|in)$", n, re.I) or (p.parent.name == "requirements" and n.endswith((".txt", ".in"))):
             out.append({"path": rel, "ecosystem": "pypi", "role": "lockfile" if "==" in _read(p, 500_000) else "manifest"})
-        elif n.endswith((".csproj", ".fsproj")):
+        elif n.endswith((".csproj", ".fsproj", ".vbproj")):
             out.append({"path": rel, "ecosystem": "nuget", "role": "manifest"})
         elif n == "manifest.json" and '"manifest_version"' in _read(p, 300_000):
             out.append({"path": rel, "ecosystem": "browser-extension", "role": "extension"})
-        elif n.startswith("Dockerfile") or n.endswith(".dockerfile") or re.match(r"^(docker-)?compose.*\.ya?ml$", n):
+        elif n.lower().startswith(("dockerfile", "containerfile")) or n.lower().endswith((".dockerfile", ".containerfile")) \
+                or re.match(r"^(docker-)?compose.*\.ya?ml$", n):  # case-insensitive: uptime-kuma ships docker/dockerfile
             out.append({"path": rel, "ecosystem": "container", "role": "container"})
         elif rel.startswith(".github/workflows/") and n.endswith((".yml", ".yaml")) or n == ".gitlab-ci.yml":
             out.append({"path": rel, "ecosystem": "ci", "role": "ci"})
@@ -245,7 +250,8 @@ def resolve_npm_lockfiles(src: Path, manifests: list[dict], log, work: Path, reg
         res = sandbox.run("npm", ["install", "--package-lock-only", "--ignore-scripts", "--no-audit", "--no-fund",
                                   "--registry=https://registry.npmjs.org/"],
                           output=proj, workdir="{out}", egress=registry_hosts, timeout=300,
-                          env={"npm_config_update_notifier": "false", "npm_config_cache": "/tmp/npm-cache"})
+                          env={"npm_config_update_notifier": "false", "npm_config_cache": "/tmp/npm-cache",
+                               **sandbox.safe_npmrc_env(_read(src / ".npmrc"), _read(src / folder / ".npmrc"))})
         if res.denied:
             blocked[m["path"]] = res.denied
         if res.ok and (proj / "package-lock.json").exists():
@@ -363,10 +369,13 @@ def _syft_inventory(doc: dict, skip_files: set[str]) -> tuple[list[dict], list[d
 
 def vendored_and_cdn(src: Path) -> tuple[list[dict], list[dict]]:
     """Third-party JS copied into the repo or loaded from a CDN. Returns (components, findings)."""
+    from guardian.adapters.build_files import non_shipped
     comps, findings, n = [], [], 0
     for p in _walk(src):
         if n > MAX_TEXT_FILES:
             break
+        if non_shipped(_rel(src, p)):  # test fixtures (e.g. miniflux's sanitizer testdata) are not shipped pages
+            continue
         low = p.name.lower()
         if low.endswith(".js"):
             n += 1
@@ -470,6 +479,18 @@ def browser_extensions(src: Path, manifests: list[dict]) -> tuple[list[dict], li
             add("extension_network_destinations", "info",
                 f"talks to: {', '.join(ext_hosts)} (check each one is expected; page data can be sent there)", "host_permissions")
     return comps, findings
+
+
+def _path_aliases(src: Path) -> set[str]:
+    """Import aliases from tsconfig*/jsconfig `compilerOptions.paths` (e.g. "@editor-core/*" -> "@editor-core"): local code.
+    Found on Stirling-PDF, where 101 aliased imports were reported as undeclared packages."""
+    out: set[str] = set()
+    for p in _walk(src):
+        if re.match(r"^(ts|js)config.*\.json$", p.name):
+            m = re.search(r'"paths"\s*:\s*\{(.*?)\}', _read(p, 500_000), re.S)
+            if m:
+                out |= {k.removesuffix("/*").removesuffix("*").rstrip("/") for k in re.findall(r'"([^"]+)"\s*:', m.group(1))} - {""}
+    return out
 
 
 PY_BUILD_TOOLS = {"setuptools", "pkg_resources", "distutils", "pip", "wheel"}  # provided by the build/install environment
@@ -585,12 +606,19 @@ def undeclared_imports(src: Path, inventory: list[dict], manifests: list[dict]) 
                 continue
             hits.setdefault(("pypi", dist), []).append(f"{_rel(src, p)}:{lineno}")
     imp = re.compile(r"""(?:\brequire\(\s*|\bimport\s*\(\s*|^\s*(?:import|export)\b[^'"`;]*?\bfrom\s*|^\s*import\s+)['"]([^'"./][^'"]*)['"]""", re.M)
+    aliases = _path_aliases(src)
+    local_require = re.compile(r"\bfunction\s+require\s*\(|\b(?:const|let|var)\s+require\s*=|\brequire\s*:\s*\(?|\brequire\s*=\s*\(")
     for p in js_files[:MAX_TEXT_FILES]:
         text = _read(p, 1_500_000)
+        own_require = bool(local_require.search(text))  # e.g. Stirling-PDF's form validator: require("adminUsername")
         for mm in imp.finditer(text):
             spec = mm.group(1)
+            if own_require and "require" in mm.group(0):
+                continue
             if spec.startswith(("node:", "@/", "~", "#", "http:", "https:", "virtual:", "$")) or "${" in spec:
                 continue
+            if any(spec == a or spec.startswith(a + "/") for a in aliases):
+                continue  # tsconfig/jsconfig "paths" alias: the project's own code
             nm = "/".join(spec.split("/")[:2]) if spec.startswith("@") else spec.split("/")[0]
             if nm in NODE_BUILTINS or nm.lower() in declared or nm.lower() in local_js or nm in ("chrome", "vscode", "electron"):
                 continue
@@ -686,7 +714,7 @@ def ci_and_images(src: Path, manifests: list[dict]) -> tuple[list[dict], list[di
                     reg, repo, tag, dig = _split_image(mm.group(1))
                     images.append(ImageRef(dockerfile=m["path"], stage=None, ref=mm.group(1), registry=reg, repository=repo,
                                            tag=tag, digest=dig, line=i).model_dump())
-    ci = ci_image_scan(src, actions, images)
+    ci = ci_image_scan(src, actions, images, (_policy().get("images") or {}))
     root = str(src.resolve()) + "/"
     for f in ci["findings"]:  # zizmor reports absolute paths: make them repository-relative
         for k in ("file", "component"):
@@ -873,6 +901,9 @@ def scan_tree(src: Path, out: Path, app: str, commit: str, log=lambda m: None, w
     res["suspicious"] += tool_errors
     (out / "suspicious.json").write_text(json.dumps(res["suspicious"], indent=1))
     res["sandbox"] = {"mode": sandbox.mode(), "isolated": all(r["isolated"] for r in runs), "runs": runs}
+    from guardian.reachability import collect_imports  # needs the source tree, which check_any deletes later
+    res["imports"] = collect_imports(src)
+    (out / "imports.json").write_text(json.dumps(res["imports"], indent=1))
     (out / "sandbox.json").write_text(json.dumps(res["sandbox"], indent=1))
     return res
 
@@ -1062,6 +1093,19 @@ def change_signals(base: dict, head: dict, files: list[str], policy: dict) -> li
                             "component": f, "file": f, "line": None,
                             "summary": f"{f} changed: it controls how code is built, installed or run (policy: sensitive path)"})
                 break
+    # D10: an action pinned to a commit SHA on base is referenced by a movable tag on head (hard signal, CLAUDE.md 3.2:
+    # tag-moving attacks like tj-actions/changed-files 2025 only work against tag references)
+    pinned = {(a["workflow"], a["owner_repo"]): a for a in base.get("actions", []) if a.get("pinned_sha")}
+    seen: set[tuple] = set()
+    for a in head.get("actions", []):
+        prev = pinned.get((a["workflow"], a["owner_repo"]))
+        if prev and not a.get("pinned_sha") and (a["workflow"], a["uses"]) not in seen:
+            seen.add((a["workflow"], a["uses"]))
+            note = f"; its comment still says '{a['version_comment']}'" if a.get("version_comment") else ""
+            out.append({"detector": "D10", "type": "action_pin_removed", "severity": "high", "hard_signal": True,
+                        "component": a["uses"], "file": a["workflow"], "line": a.get("line"),
+                        "summary": f"{a['owner_repo']} was pinned to commit {prev['ref'][:12]} and is now referenced by the movable "
+                                   f"tag '{a['ref']}'{note}: whoever can move that tag decides what runs in CI"})
     return out
 
 
@@ -1127,10 +1171,49 @@ def check_any(repo: Path, base: str | None, head: str, out: Path, app: str, log=
             for s in snap["suspicious"] if s["type"] == "tool_error"]
     if B is not H:
         sus += [{**s, "label": "introduced"} for s in change_signals(B, H, files, policy)]
+        ancestry = git(repo, "merge-base", "--is-ancestor", bc, hc, check=False)
+        if ancestry.returncode:
+            complete = git(repo, "rev-parse", "--is-shallow-repository", check=False).stdout.strip() == b"false"
+            diverged = ancestry.returncode == 1 and complete
+            sus.append({"detector": "D12", "type": "history_rewrite" if diverged else "tool_error",
+                        "severity": "high" if diverged else "info", "hard_signal": diverged,
+                        "label": "introduced" if diverged else "not_checked", "component": "Git ancestry",
+                        "file": None, "line": None, "summary": (f"Base {bc[:12]} is not an ancestor of head {hc[:12]}."
+                                                              if diverged else "Could not establish ancestry for the selected commits.")})
+    # stretch goals 3 + 4: registry signatures, provenance, publishers, release history, install-script behaviour
+    from guardian import reachability, registry_intel
+    try:
+        intel_f, prov = registry_intel.analyse(B, H, B is not H, policy, log)
+    except Exception as e:  # noqa: BLE001 report, never guess
+        intel_f, prov = [], {"checked": 0, "packages": [], "errors": [f"{type(e).__name__}: {e}"[:200]]}
+    sus += [{**x, "label": "introduced" if x.pop("changed", False) else "pre_existing"} for x in intel_f]
+    if prov.get("errors") and not prov.get("checked"):
+        sus.append({"detector": "T0", "type": "tool_error", "severity": "info", "hard_signal": False, "label": "not_checked",
+                    "component": "npm registry checks", "file": None, "line": None,
+                    "summary": "npm registry checks did not complete, so signatures, provenance and package history were not "
+                               f"checked: {prov['errors'][0]}"})
+    # stretch goal 1: is each vulnerable package imported by shipped code?
+    reach = reachability.annotate(vulns, H["inventory"], H.get("imports") or {})
     # the same package flagged twice: keep the strong signal from the change, drop the weak duplicate from the scan
-    weak_of = {"new_install_script": "install_script", "lockfile_tamper": "untrusted_source"}
+    weak_of = {"new_install_script": "install_script", "lockfile_tamper": "untrusted_source", "action_pin_removed": "suspicious_update"}
     strong = {(weak_of[s["type"]], _name(s["component"])) for s in sus if s["type"] in weak_of}
     sus = [s for s in sus if (s["type"], _name(s["component"])) not in strong]
+    reviewed_files = {}
+    for finding in sus:
+        if finding["type"] in {"sensitive_file_change", "modified_lockfile"}:
+            file = finding["file"]
+            if file not in reviewed_files:
+                # These findings describe a whole-file change, so their text alone cannot identify it.
+                hashes = []
+                for snapshot in ("base", "head"):
+                    path = out / "trees" / snapshot / file
+                    if path.is_file():
+                        with path.open("rb") as stream:
+                            hashes.append(file_digest(stream, "sha256").hexdigest())
+                    else:
+                        hashes.append(None)
+                reviewed_files[file] = hashes
+            finding["review_source"] = reviewed_files[file]
     pkgs = _pkg_diff(B["inventory"], H["inventory"]) if B is not H else {"added": [], "removed": [], "updated": []}
 
     def count(items, lab):
@@ -1139,6 +1222,8 @@ def check_any(repo: Path, base: str | None, head: str, out: Path, app: str, log=
     intro_c = [c for c in ci if c["label"] == "introduced"]
     headline = {
         "base": base or head, "head": head, "app": app, "base_commit": bc[:12], "head_commit": hc[:12], "mode": "universal",
+        "base_commit_full": bc, "head_commit_full": hc, "reachability": reach,
+        "provenance": {k: prov.get(k) for k in ("scope", "checked", "signed", "attested", "errors")},
         "inventory": {**H["summary"], "workflows": H["summary"]["workflows"]},
         "sbom_agreement_pct": H["sbom_agreement"],
         "changes": {"files": files, **{k: len(v) for k, v in pkgs.items()}},
@@ -1157,7 +1242,8 @@ def check_any(repo: Path, base: str | None, head: str, out: Path, app: str, log=
     }
     report = {"headline": headline, "package_changes": pkgs, "suspicious_changes": sus, "vulnerabilities": vulns, "ci_image": ci,
               "inventory": H["inventory"], "actions": H["actions"], "images": H["images"], "manifests": H["manifests"],
-              "sbom": H["sbom"], "runs": {"base": B["dir"], "head": H["dir"]}, "sandbox_runs": H["sandbox"]["runs"]}
+              "sbom": H["sbom"], "runs": {"base": B["dir"], "head": H["dir"]}, "sandbox_runs": H["sandbox"]["runs"],
+              "repo": str(Path(repo).resolve()), "provenance": prov}
     shutil.rmtree(out / "trees", ignore_errors=True)
     path = out / f"report-{bc[:8]}-{hc[:8]}.json"
     path.write_text(json.dumps(report, indent=1))
@@ -1170,8 +1256,26 @@ def check_any(repo: Path, base: str | None, head: str, out: Path, app: str, log=
         pointer["scores"] = str(spath)
         report["headline"]["verdict"] = scores["verdict"]
         report["headline"]["verdict_reasons"] = scores["reasons"]
-        path.write_text(json.dumps(report, indent=1))
+        report["headline"]["score_verdict"] = scores["verdict"]
     except Exception as e:
         pointer["scores_error"] = f"{type(e).__name__}: {e}"[:300]
+    # stretch goal 5: policy-as-code (Conftest/OPA in the sandbox); the verdict is the stricter of score and policy
+    from guardian import policy as pac
+    log("Evaluating policy-as-code (Conftest/OPA, policies/*.rego)")
+    pol = pac.evaluate(report)
+    report["policy"] = pol
+    hl = report["headline"]
+    hl["policy_decision"] = pol["decision"]
+    if pol["error"]:
+        hl["verdict"] = pac.combine(hl.get("verdict"), {"decision": "review"})
+        hl.setdefault("verdict_reasons", []).append(f"Policy check did not run: {pol['error'][:160]}")
+    else:
+        score_v = hl.get("verdict")
+        hl["verdict"] = pac.combine(score_v, pol)
+        pol_reasons = [f"Policy {r['id']}: {r['message']}" for r in (pol["deny"] + pol["warn"])[:6]]
+        # lead with whichever side decided the verdict, so the first reasons explain it
+        decided_by_policy = hl["verdict"] != score_v
+        hl["verdict_reasons"] = pol_reasons + hl.get("verdict_reasons", []) if decided_by_policy else hl.get("verdict_reasons", []) + pol_reasons
+    path.write_text(json.dumps(report, indent=1))
     (out / "latest.json").write_text(json.dumps(pointer))
     return {**report, "path": str(path)}

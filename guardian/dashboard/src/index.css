@@ -55,3 +55,17 @@ body::before {
 .react-flow { --xy-background-color: transparent; --xy-edge-stroke: rgb(255 255 255 / 0.18); }
 .react-flow__attribution { display: none; }
 .react-flow__handle { opacity: 0; }
+.react-flow__controls { border-radius: 10px; overflow: hidden; box-shadow: 0 10px 30px -12px rgb(0 0 0 / 0.8); border: 1px solid var(--color-line); }
+.react-flow__controls-button { background: var(--color-raised); border-bottom: 1px solid var(--color-line); fill: var(--color-muted); color: var(--color-muted); transition: background .15s, fill .15s; }
+.react-flow__controls-button:hover { background: #20242d; fill: var(--color-ink); color: var(--color-ink); }
+.react-flow__controls-button svg { fill: currentColor; }
+
+/* The graph stays invisible until it has been measured and fitted, then the edges fade in behind the nodes. */
+.rf-hidden .react-flow__edges, .rf-hidden .react-flow__edgelabel-renderer { opacity: 0; }
+@keyframes edge-in { from { opacity: 0; } to { opacity: 1; } }
+.rf-reveal .react-flow__edges { animation: edge-in 0.9s ease-out 0.35s both; }
+.react-flow__viewport { will-change: transform; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rf-reveal .react-flow__edges { animation: none; }
+}

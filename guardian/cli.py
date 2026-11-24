@@ -4,6 +4,8 @@
     guardian check <repo> --base BASE --head HEAD [--out DIR]    pre-merge check: what this change introduced
     guardian investigate [--backend ...] [--world ...]           agentic investigation
     guardian sandbox setup | status                              pull pinned tool images + Grype DB / show readiness
+    guardian watch [--project ID | --all] [--interval MIN]       re-check saved inventories for newly disclosed vulnerabilities
+    guardian fix [--project ID] [--validate FIX-... ...]          remediation plan; validate fixes in the sandbox (no branch)
 """
 from __future__ import annotations
 
@@ -25,11 +27,25 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("--base", required=True)
     c.add_argument("--head", required=True)
     c.add_argument("--out", type=Path, default=Path("guardian-out/check"))
+    c.add_argument("--fail-on", choices=["block", "review", "never"], default="never",
+                   help="exit with code 1 when the verdict is at least this strict (for CI gates)")
+    w = sub.add_parser("watch", help="Re-check saved inventories for newly disclosed vulnerabilities (no code rescan)")
+    w.add_argument("--project", help="a scanned project id (default: the main check in guardian-out/check)")
+    w.add_argument("--all", action="store_true", help="the main check and every scanned project")
+    w.add_argument("--interval", type=int, default=0, help="repeat every N minutes (0 = once)")
+    fx = sub.add_parser("fix", help="Remediation plan for the latest check; --validate applies fixes in the sandbox and rescans")
+    fix_source = fx.add_mutually_exclusive_group()
+    fix_source.add_argument("--project")
+    fix_source.add_argument("--report-dir", type=Path, help="the output directory passed to scan or check")
+    fx.add_argument("--validate", nargs="+", metavar="FIX_ID")
     inv = sub.add_parser("investigate", help="Agentic investigation of a PR (base..head)")
-    inv.add_argument("--backend", choices=["auto", "replay", "gemini", "openrouter", "claude"], default="auto",
-                     help="auto picks from guardian/.env; replay = recorded agent turns (canned world only)")
+    inv.add_argument("--backend", choices=["auto", "replay", "freemodel", "gemini", "openrouter", "claude"], default="auto",
+                     help="auto picks from .env; replay uses recorded agent turns")
     inv.add_argument("--world", choices=["canned", "real"], default="canned",
-                     help="real = live tools on sandbox/uptime-kuma scenario/base..scenario/s3-s9")
+                     help="real uses committed facts from a repository")
+    inv.add_argument("--repo", type=Path, help="local Git repository for a real investigation")
+    inv.add_argument("--base", help="base commit, branch or tag")
+    inv.add_argument("--head", help="head commit, branch or tag")
     inv.add_argument("--out", type=Path, default=Path("guardian-out/agents"))
     sb = sub.add_parser("sandbox", help="The podman sandbox every repository-reading tool runs in")
     sb.add_argument("action", choices=["setup", "status"],
@@ -50,11 +66,47 @@ def main(argv: list[str] | None = None) -> int:
     if args.cmd == "investigate":
         from guardian.agents.run import run, timeline
 
+        refs = (args.repo, args.base, args.head)
+        if any(x is not None for x in refs) and (not all(refs) or args.world != "real"):
+            inv.error("--repo, --base and --head must be supplied together with --world real")
+        target = dict(zip(("repo", "base", "head"), refs)) if all(refs) else {}
         args.out.mkdir(parents=True, exist_ok=True)
-        board = run(args.out, backend=args.backend, world_kind=args.world)
+        board = run(args.out, backend=args.backend, world_kind=args.world, **target)
         print(timeline(board))
         print("\nVERDICT:", json.dumps(board.verdict, indent=1))
         print("CASES:", json.dumps({k: c.model_dump(include={"title", "verdict", "risk", "confidence"}) for k, c in board.cases.items()}, indent=1))
+        return 0
+
+    if args.cmd == "watch":
+        import time
+
+        from guardian import monitor
+        while True:
+            for name, d in monitor.targets(args.all, args.project):
+                e = monitor.recheck(d)
+                print(f"{e['at']} {name}: {e['components']} components, {len(e['new_advisories'])} new advisories, "
+                      f"{len(e['newly_exploited'])} newly exploited, verdict {e['verdict_before']} -> {e['verdict_after']}"
+                      + (f" (error: {e['error']})" if e["error"] else ""))
+                for a in e["new_advisories"] + e["newly_exploited"]:
+                    print("   ", a)
+            if not args.interval:
+                return 0
+            time.sleep(args.interval * 60)
+
+    if args.cmd == "fix":
+        from guardian import projects, remediation
+        d = args.report_dir or projects.out_dir(args.project)
+        ptr = json.loads((d / "latest.json").read_text())
+        rep = json.loads(Path(ptr["path"]).read_text())
+        if args.validate:
+            v = remediation.validate(rep, args.validate, d, log=lambda m: print("·", m, file=sys.stderr))
+            print(json.dumps({k: v[k] for k in ("id", "ok", "fixed", "still_present", "new_problems", "coverage_gaps", "attempts", "verdict_before", "verdict_after",
+                                                "diffstat", "patch_file")}, indent=1))
+            print("\nApprove in the dashboard (Fix & validate) to create a local branch. Guardian never pushes or merges.")
+            return 0 if v["ok"] else 1
+        for a in remediation.plan(rep):
+            print(f"{a['id']}  {a['kind']:<15} {a['component']:<40} -> {a.get('to') or '-':<12} {'auto' if a['automatable'] else 'manual'}"
+                  f"  fixes {len(a['findings'])}  | {a['compatibility']}")
         return 0
 
     from guardian.universal import check_any
@@ -63,6 +115,10 @@ def main(argv: list[str] | None = None) -> int:
     rep = check_any(args.repo, base, head, args.out, args.repo.resolve().name, log=lambda m: print("·", m, file=sys.stderr))
     print(json.dumps(rep["headline"], indent=2))
     print("report:", rep["path"])
+    order = ["allow", "review", "block"]
+    if getattr(args, "fail_on", "never") != "never" and rep["headline"].get("verdict") in order \
+            and order.index(rep["headline"]["verdict"]) >= order.index(args.fail_on):
+        return 1
     return 0
 
 

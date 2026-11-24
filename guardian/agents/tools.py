@@ -188,6 +188,9 @@ class ToolRegistry:
         # Fact tools (Stage A: canned; Stage B: real implementations behind the same names).
         self._add("diff_summary", "Structured summary of what changed between base and head.", {}, ["lead", "skeptic", "forensics"],
                   lambda ag, a: self._fact("diff_summary", ""))
+        if "scan_report" in self.world:
+            self._add("scan_findings", "Read the deterministic scan summary and up to 10 findings across all ecosystems. Start at offset 0.",
+                      {"offset": S("integer", minimum=0)}, A, self._scan_findings)
         self._add("lockfile_diff", "Lockfile changes between base and head (new entries, version/hash/URL changes).", {},
                   ["forensics", "hunter"], lambda ag, a: self._fact("lockfile_diff", "", "file:package-lock.json"))
         self._add("git_diff", "Diff hunk for one file between base and head.", {"path": S("string")}, ["forensics"],
@@ -261,11 +264,45 @@ class ToolRegistry:
         }, ["lead"], self._submit_verdict)
 
     # --- tool implementations ------------------------------------------------
+    def _scan_findings(self, agent: str, args: dict) -> str:
+        report = self.world["scan_report"]
+        headline = report["headline"]
+        rows = [f for key in ("vulnerabilities", "suspicious_changes", "ci_image") for f in report.get(key, [])
+                if f.get("label") != "fixed"]
+        levels = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4}
+        rows.sort(key=lambda f: (f.get("label") != "introduced", levels.get(f.get("severity"), 5)))
+        offset = args["offset"]
+        page = {"verdict": headline.get("verdict"), "base": headline.get("base_commit_full"),
+                "head": headline.get("head_commit_full"), "inventory": headline.get("inventory", {}).get("ecosystems", {}),
+                "total": len(rows), "offset": offset, "next_offset": offset + 10 if offset + 10 < len(rows) else None,
+                "findings": [{k: str(f[k])[:240] for k in ("id", "name", "version", "detector", "type", "component",
+                                                            "severity", "label", "file", "line") if f.get(k) is not None}
+                             for f in rows[offset:offset + 10]]}
+        entry = self.store.add(json.dumps(page), kind="tool_output", source="deterministic scan")
+        if offset == 0:
+            self.board.coverage_done.add("scan:summary")
+        return self._render(entry.id)
+
     def run_required_checks(self) -> None:
         """Run the hard-signal detectors before a model can choose what to investigate."""
         self.board.required_checks.update(dict.fromkeys(REQUIRED_DETECTORS, "pending"))
         facts = self.world.get("facts")
-        if facts is not None and (facts.diff["workflows_changed"] or facts.diff["dockerfiles_changed"]):
+        scan = self.world.get("scan_report")
+        if scan is not None:
+            headline = scan["headline"]
+            self.board.required_checks["deterministic_scan"] = "passed" if headline.get("verdict") == "allow" else "needs_review"
+            for item in scan.get("suspicious_changes", []):
+                if not item.get("hard_signal") or item.get("label") == "fixed" or item.get("severity") not in {"high", "critical"}:
+                    continue
+                entry = self.store.add(redact(json.dumps(item)), kind="tool_output", source="deterministic scan")
+                self.board.add_finding(BoardFinding(
+                    id=self.board.next_id("F"), type=item["type"], component=redact(item["component"]),
+                    summary=redact(item["summary"]), hard_signal=True, evidence_ids=[entry.id],
+                    risk=item["severity"], floor=item["severity"], label=item.get("label"), opened_by=item.get("detector", "scan"),
+                ))
+        if facts is not None and (facts.diff["workflows_changed"] or facts.diff["dockerfiles_changed"]) and (
+            scan is None or scan["headline"].get("ci_image", {}).get("errors")
+        ):
             self.board.required_checks["ci_image"] = "unsupported"
             self.board.log(event="required_check", detector="ci_image", status="unsupported")
         for detector in REQUIRED_DETECTORS:

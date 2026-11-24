@@ -7,6 +7,10 @@ registries:
 internal_scopes: []
 images:
   require_digest: true
+  # Base images allowed without an `untrusted_image` finding (glob over registry/repository). Official Docker images,
+  # the sample app's own publisher, and well-known distroless/minimal image publishers.
+  trusted: ["docker.io/library/*", "docker.io/louislam/*", "gcr.io/distroless/*", "cgr.dev/chainguard/*",
+            "mcr.microsoft.com/*", "registry.access.redhat.com/*"]
 typosquat:
   max_distance: 2
 install_scripts:
@@ -24,3 +28,7 @@ sandbox:
     grype: docker.io/anchore/grype:v0.122.1@sha256:f51a9094a94d5842328a89f11175dfbec7ca7cf148c7fdd0030d1747cff7df7f
     osv-scanner: ghcr.io/google/osv-scanner:v2.7.1@sha256:bc10cae80da100d32572aea48cfc48e592be9adc4a8b0820fd5d2c2db71f9446
     zizmor: ghcr.io/zizmorcore/zizmor:1.33.1@sha256:e308cf5848d9660e463ad07280f5bc009d4c4ea3a5ed4f851a1e1b72b5828248
+    conftest: docker.io/openpolicyagent/conftest:v0.62.0@sha256:cb60729aeae09461ab150e8147a153236768a456af9ac6e602e70987562a2487
+# Policy-as-code (policies/*.rego, evaluated by Conftest/OPA in the sandbox). Lists the Rego rules read as data.guardian.
+policy:
+  license_denylist: [AGPL-3.0, AGPL-3.0-only, AGPL-3.0-or-later, SSPL-1.0]

@@ -43,6 +43,11 @@ def test_floor_survives_low_severity_and_combo_escalates():
     s = score_report(_report(sus=sus))
     assert all(f["level"] == "critical" for f in s["findings"])  # look-alike + install script = critical, despite "low"
     assert s["verdict"] == "block"
+    assert s["contextual"]["confidence_ahp"]["consistent"]
+    assert s["contextual"]["fix_ahp"]["consistent"]
+    assert all(f["confidence"]["band"] in {"high", "medium", "low"} for f in s["findings"])
+    assert {f["rank_stability"]["baseline_rank"] for f in s["findings"]} == {1, 2}
+    assert all(fix["approval_required"] and fix["forecast"] for f in s["findings"] for fix in f["fix_candidates"])
 
 
 def test_ssvc_dev_only_lowers_decision():

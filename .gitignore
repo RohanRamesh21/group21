@@ -2,6 +2,7 @@
 .cache/
 /sandbox/
 guardian-out/
+/out/
 __pycache__/
 *.pyc
 .env

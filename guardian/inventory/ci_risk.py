@@ -1,11 +1,15 @@
 """CI and container-image risk checks (deterministic).
 
-D8  base images referenced by tag only (no @sha256 digest): the tag can be repointed upstream.
+D8  base images referenced by tag only (no @sha256 digest): the tag can be repointed upstream; ':latest' or no tag
+    at all moves with every release (high).
+D8  untrusted_image: base image from a registry/publisher that is not on the policy allow-list (guardian.yaml
+    images.trusted); high when the registry itself is unknown, medium for an unknown publisher on a known registry.
 D9  workflow weaknesses found by zizmor (offline mode, in the sandbox: no network, workflows read-only).
 D10 third-party GitHub Actions not pinned to a full commit SHA.
 """
 from __future__ import annotations
 
+import fnmatch
 import json
 import re
 from pathlib import Path
@@ -13,14 +17,37 @@ from pathlib import Path
 ZIZMOR_LEVEL = {"High": "high", "Medium": "medium", "Low": "low", "Informational": "info", "Unknown": "info"}
 
 
-def image_findings(images: list[dict]) -> list[dict]:
+KNOWN_REGISTRIES = {"docker.io", "ghcr.io", "quay.io", "gcr.io", "mcr.microsoft.com", "public.ecr.aws", "registry.k8s.io",
+                    "cgr.dev", "registry.access.redhat.com"}
+
+
+def _trusted(image: dict, patterns: list[str]) -> bool:
+    full = f"{image['registry']}/{image['repository']}"
+    return any(fnmatch.fnmatch(full, p) for p in patterns)
+
+
+def image_findings(images: list[dict], policy: dict | None = None) -> list[dict]:
+    """D8. `policy` is guardian.yaml `images`: {trusted: [glob of registry/repository], ...}."""
+    patterns = list((policy or {}).get("trusted") or [])
     out = []
     for i in images:
+        if i.get("registry") == "unknown":  # unresolved build argument: cannot be judged statically
+            continue
+        if patterns and not _trusted(i, patterns):
+            known = i["registry"] in KNOWN_REGISTRIES
+            out.append({"detector": "D8", "type": "untrusted_image", "severity": "medium" if known else "high",
+                        "component": i["ref"], "file": i["dockerfile"], "line": i.get("line"),
+                        "summary": f"{i['ref']} comes from {'publisher ' + i['repository'].split('/')[0] + ' on ' if known else 'registry '}"
+                                   f"{i['registry']}, which is not on the trusted-image list: whoever publishes it controls what "
+                                   "your build runs"})
         if i.get("digest"):
             continue
-        out.append({"detector": "D8", "type": "image_not_pinned", "severity": "medium",
+        floating = i.get("tag") in (None, "latest")
+        out.append({"detector": "D8", "type": "image_not_pinned", "severity": "high" if floating else "medium",
                     "component": i["ref"], "file": i["dockerfile"], "line": i.get("line"),
-                    "summary": f"{i['ref']} is pulled by tag; pin it with @sha256 so the image cannot change underneath the build"})
+                    "summary": (f"{i['ref']} uses {'no tag (= latest)' if i.get('tag') is None else ':latest'}: it changes with every "
+                                "upstream release; pin it with @sha256" if floating else
+                                f"{i['ref']} is pulled by tag; pin it with @sha256 so the image cannot change underneath the build")})
     return out
 
 
@@ -73,10 +100,10 @@ def _drop_duplicate_unpinned(zizmor: list[dict], d10: list[dict]) -> list[dict]:
     return out
 
 
-def ci_image_scan(src_dir: Path, actions: list[dict], images: list[dict]) -> dict:
+def ci_image_scan(src_dir: Path, actions: list[dict], images: list[dict], image_policy: dict | None = None) -> dict:
     z, err = zizmor_findings(src_dir)
     d10 = action_findings(actions)
-    findings = image_findings(images) + d10 + _drop_duplicate_unpinned(z, d10)
+    findings = image_findings(images, image_policy) + d10 + _drop_duplicate_unpinned(z, d10)
     return {"findings": findings, "errors": {"zizmor": err} if err else {},
             "actions": {"total": len(actions), "pinned": sum(1 for a in actions if a.get("pinned_sha"))},
             "images": {"total": len(images), "pinned": sum(1 for i in images if i.get("digest"))}}

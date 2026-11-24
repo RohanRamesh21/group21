@@ -1,36 +1,41 @@
-import { Background, Controls, Handle, MarkerType, Position, ReactFlow, ReactFlowProvider, useReactFlow, type Edge, type Node, type NodeProps } from "@xyflow/react";
+import { Background, Controls, Handle, MarkerType, Position, ReactFlow, ReactFlowProvider, useReactFlow, type Edge, type Node, type NodeChangeset, type NodeProps } from "@xyflow/react";
 import { AnimatePresence, motion } from "motion/react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Cube, Lightning, MagnifyingGlass, Warning, X } from "@phosphor-icons/react";
 import type { Risk } from "../types";
-import { RISK, RiskTag, spring } from "../ui";
+import { CountUp, RISK, RiskTag, spring } from "../ui";
 
 export interface DNode { id: string; name: string; version: string; direct: boolean; runtime: boolean; dev: boolean; install: boolean; host: string;
   change: "added" | "updated" | null; severity: Risk | null; line?: number;
-  vulns: { id: string; severity: Risk; label: string; malicious: boolean; fixed: string[]; summary: string; sources: string[] }[];
+  vulns: { id: string; severity: Risk; label: string; malicious: boolean; fixed: string[]; summary: string; sources: string[]; reach?: string | null; reach_why?: string | null }[];
   signals: { type: string; severity: Risk; summary: string; hard: boolean }[] }
-export interface DGraph { app: string; commit: string; nodes: DNode[]; edges: { s: string; t: string; k: string }[]; headline: Record<string, any>;
+export interface DGraph { app: string; ref?: string; commit: string; nodes: DNode[]; edges: { s: string; t: string; k: string }[]; headline: Record<string, any>;
   ci: { detector: string; type: string; severity: Risk; component: string; file: string; line?: number; summary: string; label: string; url?: string; excerpt?: string }[];
   unique_links: number;
   ci_stats: { actions: { total: number; pinned: number }; images: { total: number; pinned: number } } }
 type Mode = "risk" | "pr" | "direct";
-type NData = { n?: DNode; app?: boolean; label: string; dim: boolean; onPath: boolean };
+// reveal: the graph has been measured and fitted, so nodes may appear; delay staggers them column by column while entering
+type NData = { n?: DNode; app?: boolean; label: string; dim: boolean; onPath: boolean; reveal: boolean; delay: number };
 
 const ORDER: Risk[] = ["info", "low", "medium", "high", "critical"];
+export const REACH: Record<string, string> = { imported: "used by app code", via_import: "used via a dependency", not_imported: "not imported",
+  dev_only: "dev only", unknown: "use unknown" };
 const COL = 270, ROW = 58, MAX_ROWS = 12; // long columns wrap into sub-columns so the graph stays readable
 
 function PkgNode({ data }: NodeProps<Node<NData>>) {
   const n = data.n;
   if (data.app) return (
-    <div className="flex items-center gap-2.5 rounded-xl border border-accent/50 bg-accent/15 px-4 py-3">
+    <motion.div initial={{ opacity: 0, scale: 0.7 }} animate={data.reveal ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.7 }} transition={{ type: "spring", stiffness: 320, damping: 20 }}
+      className="flex items-center gap-2.5 rounded-xl border border-accent/50 bg-accent/15 px-4 py-3 shadow-[0_0_40px_-10px_rgb(77_141_255/0.7)]">
       <Handle type="source" position={Position.Right} />
       <Cube size={18} weight="duotone" className="text-accent" />
       <div><div className="text-[13px] font-semibold">{data.label}</div><div className="text-[10.5px] text-muted">application root</div></div>
-    </div>);
+    </motion.div>);
   const tone = n?.severity ? RISK[n.severity].hex : "#5b616d";
   const hot = n?.severity === "critical";
   return (
-    <motion.div initial={{ opacity: 0, scale: 0.85 }} animate={{ opacity: data.dim ? 0.28 : 1, scale: 1 }} transition={spring}
+    <motion.div initial={{ opacity: 0, scale: 0.85, x: -12 }} animate={data.reveal ? { opacity: data.dim ? 0.28 : 1, scale: 1, x: 0 } : { opacity: 0, scale: 0.85, x: -12 }}
+      transition={{ ...spring, delay: data.delay }}
       className={`relative flex w-[230px] items-center gap-2 overflow-hidden rounded-lg border bg-raised py-1.5 pl-3 pr-2 ${hot && !data.dim ? "glow-crit" : ""} ${data.onPath ? "ring-2 ring-accent/70" : ""}`}
       style={{ borderColor: n?.severity ? `${tone}88` : "rgba(255,255,255,0.08)" }}>
       <Handle type="target" position={Position.Left} />
@@ -84,6 +89,14 @@ export function pathTo(id: string, parent: Map<string, string>) {
 
 function Inner({ g, mode, selected, setSelected, query }: { g: DGraph; mode: Mode; selected: string | null; setSelected: (s: string | null) => void; query: string }) {
   const { fitView } = useReactFlow();
+  // React Flow reports each batch of node measurements as "dimensions" changes. (In @xyflow/react 13 the
+  // useNodesInitialized flag only updates when the nodes prop changes, so it cannot trigger the first reveal here.)
+  const [measured, setMeasured] = useState(0);
+  const onNodesChange = useCallback((changes: NodeChangeset<Node<NData>>) => {
+    if (changes.getByType("dimensions").length) setMeasured((n) => n + 1);
+  }, []);
+  const [reveal, setReveal] = useState(false);
+  const [entering, setEntering] = useState(true);
   const byId = useMemo(() => new Map(g.nodes.map((n) => [n.id, n])), [g]);
   const tree = useMemo(() => bfs(g), [g]);
 
@@ -104,15 +117,18 @@ function Inner({ g, mode, selected, setSelected, query }: { g: DGraph; mode: Mod
     const cols = new Map<number, string[]>();
     for (const id of set) { const d = tree.depth.get(id) ?? 1; cols.set(d, [...(cols.get(d) ?? []), id]); }
     const rank = (id: string) => -ORDER.indexOf(byId.get(id)?.severity ?? "info") * 10 - (byId.get(id)?.change ? 100 : 0);
-    const nodes: Node<NData>[] = [{ id: "root", type: "p", position: { x: 0, y: 0 }, data: { app: true, label: g.app.replace("scenario/", "uptime-kuma | "), dim: false, onPath: false } }];
+    const nodes: Node<NData>[] = [{ id: "root", type: "p", position: { x: 0, y: 0 }, data: { app: true, label: g.app, dim: false, onPath: false, reveal, delay: 0 } }];
     let x = COL;
+    let col = 0;
     for (const d of [...cols.keys()].sort((a, b) => a - b)) {
+      col += 1;
       const ids = cols.get(d)!;
       ids.sort((a, b) => rank(a) - rank(b) || a.localeCompare(b));
       const sub = Math.ceil(ids.length / MAX_ROWS), rows = Math.min(ids.length, MAX_ROWS), x0 = x;
       x += sub * 250 + 90;
       ids.forEach((id, i) => nodes.push({ id, type: "p", position: { x: x0 + Math.floor(i / MAX_ROWS) * 250, y: ((i % MAX_ROWS) - (rows - 1) / 2) * ROW },
-        data: { n: byId.get(id), label: id, dim: !!selected && !onPath.has(id) && selected !== id && !(tree.kids.get(selected) ?? []).some((k) => k.t === id), onPath: onPath.has(id) || selected === id } }));
+        data: { n: byId.get(id), label: id, dim: !!selected && !onPath.has(id) && selected !== id && !(tree.kids.get(selected) ?? []).some((k) => k.t === id), onPath: onPath.has(id) || selected === id,
+          reveal, delay: entering ? Math.min(1.1, col * 0.12 + (i % MAX_ROWS) * 0.025) : 0 } }));
     }
     const edges: Edge[] = [];
     for (const id of set) {
@@ -125,18 +141,32 @@ function Inner({ g, mode, selected, setSelected, query }: { g: DGraph; mode: Mod
         markerEnd: { type: MarkerType.ArrowClosed, color: hot ? "#4d8dff" : tone } });
     }
     return { nodes, edges, shown: set.size };
-  }, [g, mode, selected, query, tree, byId]);
+  }, [g, mode, selected, query, tree, byId, reveal, entering]);
 
+  // First time every node has a size: fit instantly while hidden, then let the nodes fly in. Later (search results added or
+  // removed) the view glides to the new fit instead.
+  // The reveal happens once per mount; a ref (not the effect's cleanup) guards it, because this effect re-runs whenever
+  // React Flow hands out a new fitView and a cancelled frame would leave the graph hidden.
+  const revealed = useRef(false);
   useEffect(() => {
-    const fit = () => fitView({ padding: 0.1, duration: 450, maxZoom: 1.1 });
-    const a = setTimeout(fit, 120), b = setTimeout(fit, 650); // second pass after nodes are measured
-    return () => { clearTimeout(a); clearTimeout(b); };
-  }, [mode, query, nodes.length, fitView]);
+    if (!measured) return;
+    if (!revealed.current) {
+      revealed.current = true;
+      requestAnimationFrame(() => {
+        fitView({ padding: 0.12, maxZoom: 1.1, duration: 0 });
+        requestAnimationFrame(() => setReveal(true));
+      });
+      setTimeout(() => setEntering(false), 1800);
+      return;
+    }
+    const t = setTimeout(() => fitView({ padding: 0.12, maxZoom: 1.1, duration: 600 }), 60);
+    return () => clearTimeout(t);
+  }, [measured, nodes.length, fitView]);
 
   return (
     <>
-      <ReactFlow key={`${mode}-${query}`} nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView fitViewOptions={{ padding: 0.1, maxZoom: 1.1 }} minZoom={0.15} maxZoom={1.6} proOptions={{ hideAttribution: true }}
-        nodesDraggable={false} nodesConnectable={false} onNodeClick={(_, n) => setSelected(n.id === "root" ? null : n.id)} onPaneClick={() => setSelected(null)}>
+      <ReactFlow className={reveal ? "rf-reveal" : "rf-hidden"} nodes={nodes} edges={edges} nodeTypes={nodeTypes} fitView fitViewOptions={{ padding: 0.1, maxZoom: 1.1 }} minZoom={0.15} maxZoom={1.6} proOptions={{ hideAttribution: true }}
+        nodesDraggable={false} nodesConnectable={false} onNodesChange={onNodesChange} onNodeClick={(_, n) => setSelected(n.id === "root" ? null : n.id)} onPaneClick={() => setSelected(null)}>
         <Background gap={24} size={1} color="rgb(255 255 255 / 0.05)" />
         <Controls showInteractive={false} position="bottom-left" />
       </ReactFlow>
@@ -152,6 +182,8 @@ export function DepGraph({ project }: { project?: string | null } = {}) {
   const [mode, setMode] = useState<Mode>("risk");
   const [selected, setSelected] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [search, setSearch] = useState("");  // the query the graph uses: typing settles before the layout changes
+  useEffect(() => { const t = setTimeout(() => setSearch(query), 250); return () => clearTimeout(t); }, [query]);
   const tree = useMemo(() => (g ? bfs(g) : null), [g]);
   const sel = g && selected ? g.nodes.find((n) => n.id === selected) : null;
   const h = g?.headline;
@@ -165,17 +197,21 @@ export function DepGraph({ project }: { project?: string | null } = {}) {
   }, [g]);
 
   if (err) return <div className="panel p-6 text-sm text-muted">Dependency graph unavailable: <span className="text-crit">{err}</span></div>;
-  if (!g || !counts || !tree) return <div className="panel grid h-[640px] place-items-center text-sm text-muted">Loading dependency graph...</div>;
+  if (!g || !counts || !tree) return (
+    <div className="panel relative grid h-[640px] place-items-center overflow-hidden text-sm text-muted">
+      <div className="absolute inset-x-0 top-0 h-px overflow-hidden"><div className="scanbar h-px w-1/3 bg-gradient-to-r from-transparent via-accent to-transparent" /></div>
+      <div className="flex flex-col items-center gap-3"><Cube size={28} weight="duotone" className="animate-pulse text-accent" />Building the dependency graph…</div>
+    </div>);
 
   return (
     <section className="flex flex-col gap-4">
       <div className="panel grid grid-cols-2 md:grid-cols-7 md:divide-x divide-line">
-        {[["Packages", counts.total, "from package-lock.json"], ["Direct", counts.direct, "declared in package.json"], ["Runtime", counts.runtime, "ship to production"],
-          ["Links", g.edges.length, `${uniqueLinks.toLocaleString()} unique, match npm ls`], ["Vulnerable", counts.vulnerable, "OSV + Grype"], ["Critical", counts.critical, "incl. malicious"],
+        {[["Packages", counts.total, "from manifests and lockfiles"], ["Direct", counts.direct, "declared by the app"], ["Runtime", counts.runtime, "ship to production"],
+          ["Links", g.edges.length, `${uniqueLinks.toLocaleString()} unique parent → child pairs`], ["Vulnerable", counts.vulnerable, "OSV + Grype"], ["Critical", counts.critical, "incl. malicious"],
           ["Changed in PR", counts.added, `${h?.changes?.files?.length ?? 0} files touched`]].map(([l, v, s]) => (
           <div key={String(l)} className="px-4 py-3">
             <div className="text-[11px] text-muted">{l}</div>
-            <div className={`font-mono text-2xl ${l === "Critical" && Number(v) ? "text-crit" : ""}`}>{Number(v).toLocaleString()}</div>
+            <div className={`font-mono text-2xl ${l === "Critical" && Number(v) ? "text-crit" : ""}`}><CountUp value={Number(v)} /></div>
             <div className="text-[10.5px] text-faint">{s}</div>
           </div>))}
       </div>
@@ -203,7 +239,7 @@ export function DepGraph({ project }: { project?: string | null } = {}) {
             <span className="flex items-center gap-1"><Lightning size={11} weight="fill" className="text-high" />install script</span>
             <span className="flex items-center gap-1"><span className="rounded bg-accent/20 px-1 text-[9px] font-semibold text-accent">NEW</span>in PR</span>
           </div>
-          <div className="absolute inset-x-0 bottom-0 top-12"><ReactFlowProvider><Inner g={g} mode={mode} selected={selected} setSelected={setSelected} query={query} /></ReactFlowProvider></div>
+          <div className="absolute inset-x-0 bottom-0 top-12"><ReactFlowProvider><Inner key={mode} g={g} mode={mode} selected={selected} setSelected={setSelected} query={search} /></ReactFlowProvider></div>
         </div>
 
         <aside className="panel scroll-thin h-[680px] overflow-y-auto p-4">
@@ -224,12 +260,12 @@ export function DepGraph({ project }: { project?: string | null } = {}) {
                 <div>
                   <div className="mb-1 text-[11px] text-muted">How it gets into the app</div>
                   <ol className="flex flex-col gap-1 border-l border-accent/40 pl-3 font-mono text-[11px]">
-                    <li className="text-accent">uptime-kuma</li>
+                    <li className="text-accent">{g.app}</li>
                     {pathTo(sel.id, tree.parent).map((id) => { const n = g.nodes.find((x) => x.id === id); return <li key={id} className={id === sel.id ? "text-ink" : "text-muted"}>{n?.name}@{n?.version}</li>; })}
                   </ol>
                 </div>
                 <div className="text-[11px] text-muted">Resolved from <span className={`font-mono ${sel.host && !sel.host.includes("npmjs.org") && sel.host !== "localhost:4873" ? "text-crit" : "text-ink"}`}>{sel.host || "n/a"}</span>
-                  {sel.line ? <> | package-lock.json line <span className="font-mono text-ink">{sel.line}</span></> : null}</div>
+                  {sel.line ? <> | line <span className="font-mono text-ink">{sel.line}</span> of its manifest</> : null}</div>
                 {sel.signals.length > 0 && (
                   <div className="flex flex-col gap-1.5">
                     <div className="text-[11px] text-muted">Suspicious-change signals</div>
@@ -248,6 +284,7 @@ export function DepGraph({ project }: { project?: string | null } = {}) {
                       <div className="mt-0.5 text-ink/75">{v.summary || (v.malicious ? "Known malicious package" : "")}</div>
                       <div className="mt-1 flex gap-2 text-[10.5px] text-faint">
                         <span>{v.label?.replace("_", "-")}</span><span>{v.sources.join(" + ")}</span>{v.fixed.length > 0 && <span className="text-ok">fix: {v.fixed.join(", ")}</span>}
+                        {v.reach && <span title={v.reach_why ?? ""} className={v.reach === "imported" || v.reach === "via_import" ? "text-high" : "text-faint"}>{REACH[v.reach] ?? v.reach}</span>}
                       </div>
                     </div>))}
                 </div>
@@ -255,7 +292,7 @@ export function DepGraph({ project }: { project?: string | null } = {}) {
             ) : (
               <motion.div key="help" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-col gap-3 text-sm text-muted">
                 <div className="text-ink">Dependency graph</div>
-                <p className="text-[12.5px] leading-relaxed">Built from the lockfile at commit <span className="font-mono text-ink">{g.commit}</span>, with every package checked in OSV and Grype. No AI is involved in building it.</p>
+                <p className="text-[12.5px] leading-relaxed">Built from the manifests and lockfiles at commit <span className="font-mono text-ink">{g.commit}</span>, with every package checked in OSV and Grype. No AI is involved in building it.</p>
                 <p className="text-[12.5px] leading-relaxed"><b className="text-ink">Risk paths</b> shows how each vulnerable or changed package reaches the app. <b className="text-ink">This PR</b> shows only what the change added. Click any package for its path, source and advisories.</p>
                 <div className="mt-2 flex flex-col gap-1.5">
                   <div className="text-[11px]">Highest risk</div>

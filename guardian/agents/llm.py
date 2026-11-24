@@ -132,7 +132,10 @@ class OpenRouterBackend:
             time.sleep(2 * (attempt + 1))
         else:
             raise RuntimeError(f"OpenRouter error after retries: {last_err}")
-        data = r.json()
+        return self._parse(r.json())
+
+    @staticmethod
+    def _parse(data: dict) -> Turn:
         choice = data["choices"][0]
         msg = choice["message"]
         calls = []
@@ -150,6 +153,50 @@ class OpenRouterBackend:
         stop = {"content_filter": "refusal", "length": "length"}.get(choice.get("finish_reason"),
                                                                   "tool_use" if calls else "end_turn")
         return Turn(text=text, tool_calls=calls, stop_reason=stop, raw_content=raw or [{"type": "text", "text": ""}])
+
+
+class FreeModelBackend(OpenRouterBackend):
+    """FreeModel chat completions using the same tool and message format."""
+
+    URL = "https://freemodel.in/v1/chat/completions"
+    MODEL = "deepseek-v4.1-flash"
+
+    def __init__(self, timeout: int = 35):
+        import os
+
+        import requests
+
+        self.session = requests.Session()
+        self.key = os.environ["FM_API_KEY"]
+        model = os.getenv("GUARDIAN_MODEL", self.MODEL)
+        fallbacks = [m.strip() for m in os.getenv("GUARDIAN_FALLBACK_MODELS", "").split(",") if m.strip()]
+        self.models = list(dict.fromkeys([model, *fallbacks, self.MODEL]))
+        self.timeout = timeout
+        self.sticky: dict[str, str] = {}
+
+    def step(self, agent, system, messages, tools, effort):
+        import requests
+
+        models = list(dict.fromkeys([self.sticky.get(agent, self.models[0]), *self.models]))
+        body = {"messages": self._to_openai(system, messages), "tools": self._tools(tools),
+                "tool_choice": "auto", "max_tokens": 4096}
+        error = "no response"
+        for model in models:
+            try:
+                response = self.session.post(self.URL, json={**body, "model": model},
+                                             headers={"Authorization": f"Bearer {self.key}"},
+                                             timeout=self.timeout, allow_redirects=False)
+            except requests.RequestException as exc:
+                error = type(exc).__name__
+                continue
+            if response.ok:
+                turn = self._parse(response.json())
+                self.sticky[agent] = model
+                return turn
+            error = f"HTTP {response.status_code}"
+            if response.status_code not in {404, 429, 500, 502, 503, 504}:
+                break
+        raise RuntimeError(f"FreeModel API failed: {error}")
 
 
 class GeminiBackend(OpenRouterBackend):
