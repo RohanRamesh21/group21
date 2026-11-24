@@ -11,17 +11,37 @@ export interface Scored {
   ssvc: { exploitation: string; automatable: string; technical_impact: string; mission: string; rule: string } | null;
   contributions: Contribution[]; counterfactuals: { if: string; then: string }[];
   evidence: Record<string, any>;
+  // Contextual scoring (added by guardian/scoring/contextual): informational, they never change level or decision
+  confidence?: { value: number; band: "high" | "medium" | "low"; signals: Record<string, number | null>; missing: string[] };
+  rank_stability?: { baseline_rank: number; rank_p05: number; rank_p95: number; top5_share: number | null; draws: number; delta: number; seed: number };
+  reachability?: { tier: "dev_only" | "declared" | "imported" | "unknown"; evidence: string[]; via?: string | null; method: string;
+    estimated: boolean; note?: string; possibly_shipped?: boolean } | null;
+}
+export interface Fix {
+  id: string; finding: string; type: string; target: string | null; resolves: string[]; method: string; fix_score: number;
+  criteria: Record<string, number>; rollback: string; forecast: boolean; approval_required: boolean; checks_not_run: string[];
+  expected_risk_reduction: { component_share: number; share_of_total_index: number; findings_cleared: number; note: string };
+  compat: { risk: number; semver?: string | null; via_direct_parents?: string[]; reason?: string };
 }
 interface Scores {
   verdict: "block" | "review" | "allow"; reasons: string[]; counts: Record<string, Record<string, number>>; findings: Scored[];
   method: { ahp: { weights: Record<string, number>; consistency_ratio: number; consistent: boolean; lambda_max: number; matrix: number[][]; criteria: string[] };
     criteria_text: Record<string, string>; floors: Record<string, { level: string; decision: string; why: string }>; verdict_rule: string; epss_poc_threshold: number };
   data: { advisories: number; cves: number; epss_found: number; kev_matches: number; kev_catalog_size: number; errors: string[] };
+  fix_candidates?: Record<string, Fix[]>;
+  rank_stability_summary?: { draws: number; delta: number; seed: number; note: string };
+  contextual?: { version: string; not_checked: string[]; human_checks: string[]; confidence_ahp?: { consistency_ratio: number }; fix_ahp?: { consistency_ratio: number } };
 }
 interface Explanation { headline: string; sentences: { text: string; cites: string[]; status: "verified" | "inferred" }[];
   rejected: { text: string; reason: string }[]; model?: string; cached?: boolean; error?: string }
 
 const FACTOR: Record<string, string> = { exploitation: "Being attacked", impact: "Impact", exposure: "Exposure", introduced: "Introduced by PR", actionable: "Fix available" };
+const SIGNAL: Record<string, string> = { corroboration: "Sources agree", cvss_vector: "CVSS vector", exploit_data: "EPSS / KEV data",
+  reachability: "Reachability", fix_evidence: "Fix evidence", evidence_completeness: "Evidence complete" };
+const CONF_TONE: Record<string, string> = { high: "text-ok bg-ok/12 ring-ok/40", medium: "text-med bg-med/12 ring-med/40", low: "text-high bg-high/12 ring-high/40" };
+const TIER_TEXT: Record<string, string> = { imported: "Imported by first-party code", declared: "Declared, no import found", dev_only: "Dev-only (not shipped)", unknown: "Not determined" };
+const FIX_TEXT: Record<string, string> = { upgrade_to_fixed: "Upgrade to a fixed version", override_transitive: "Override the transitive version", remove_package: "Remove the package",
+  revert_change: "Revert the change", pin_action_sha: "Pin the action to a commit SHA", pin_image_digest: "Pin the image by digest", escalate: "Escalate for security review" };
 const DEC_TONE: Record<string, string> = { Act: "text-crit bg-crit/12 ring-crit/40", Attend: "text-high bg-high/12 ring-high/40",
   "Track*": "text-med bg-med/12 ring-med/40", Track: "text-ok bg-ok/12 ring-ok/40" };
 const VERDICT = {
@@ -83,6 +103,8 @@ export function RiskScores({ project, fullScan = false }: { project?: string | n
         <span>Floors for attacks · SSVC decision · AHP weights (consistency ratio <span className="font-mono text-ink">{ahp.consistency_ratio}</span> {ahp.consistent ? "✓ < 0.10" : "✗"})</span>
         <span>EPSS for {s.data.epss_found}/{s.data.cves} CVEs · KEV matches {s.data.kev_matches} (catalog {s.data.kev_catalog_size})</span>
         {s.data.errors.map((e) => <span key={e} className="text-high">{e}</span>)}
+        {s.contextual && <span>Contextual: confidence · reachability (estimated) · rank stability · fix candidates</span>}
+        {s.contextual?.not_checked.map((e) => <span key={e} className="text-high">Not checked: {e}</span>)}
       </button>
       <AnimatePresence>{showMethod && <Method s={s} />}</AnimatePresence>
 
@@ -104,7 +126,9 @@ export function RiskScores({ project, fullScan = false }: { project?: string | n
                   <Decision d={f.decision} />
                   <div className="min-w-0 flex-1">
                     <div className="truncate font-mono text-[12px]">{f.title}</div>
-                    <div className="truncate text-[11px] text-muted">{f.label === "introduced" ? "introduced by this PR" : "already present"} · {f.kind.replace("_", " ")}</div>
+                    <div className="truncate text-[11px] text-muted">{f.label === "introduced" ? "introduced by this PR" : "already present"} · {f.kind.replace("_", " ")}
+                      {f.confidence && <> · <span className={f.confidence.band === "low" ? "text-high" : ""}>{f.confidence.band} confidence</span></>}
+                      {f.rank_stability && <> · rank {f.rank_stability.baseline_rank} <span className="text-faint">({f.rank_stability.rank_p05}–{f.rank_stability.rank_p95})</span></>}</div>
                   </div>
                   <div className="w-16 shrink-0 text-right">
                     <div className="font-mono text-[13px]">{f.score.toFixed(1)}</div>
@@ -115,7 +139,7 @@ export function RiskScores({ project, fullScan = false }: { project?: string | n
             {!list.length && <li className="px-4 py-6 text-sm text-muted">Nothing here.</li>}
           </ul>
         </div>
-        <AnimatePresence mode="wait">{cur && <ScoreCard key={cur.id} f={cur} project={project} />}</AnimatePresence>
+        <AnimatePresence mode="wait">{cur && <ScoreCard key={cur.id} f={cur} project={project} fixes={s.fix_candidates?.[cur.id]} />}</AnimatePresence>
       </section>
     </div>
   );
@@ -150,7 +174,7 @@ function Method({ s }: { s: Scores }) {
     </motion.div>);
 }
 
-function ScoreCard({ f, project }: { f: Scored; project?: string | null }) {
+function ScoreCard({ f, project, fixes }: { f: Scored; project?: string | null; fixes?: Fix[] }) {
   const [ex, setEx] = useState<Explanation | null>(null);
   const [busy, setBusy] = useState(false);
   const ask = (force = false) => {
@@ -209,6 +233,9 @@ function ScoreCard({ f, project }: { f: Scored; project?: string | null }) {
             <li key={c.if} className="flex gap-2"><span className="text-accent">If</span><span className="text-muted">{c.if}</span><span className="text-faint">→</span><span>{c.then}</span></li>))}</ul>
         </div>)}
 
+      <Contextual f={f} />
+      {fixes && fixes.length > 0 && <Fixes fixes={fixes} />}
+
       <div>
         <div className="mb-1.5 text-[11px] uppercase tracking-wide text-faint">Evidence</div>
         <div className="flex flex-wrap gap-1.5 font-mono text-[11.5px]">
@@ -243,4 +270,58 @@ function ScoreCard({ f, project }: { f: Scored; project?: string | null }) {
         {!ex && !busy && <div className="mt-2 text-[12px] text-muted">The score above is computed by rules. Ask Gemini to explain it in plain English; each sentence is checked against the card.</div>}
       </div>
     </motion.div>);
+}
+
+function Contextual({ f }: { f: Scored }) {
+  const c = f.confidence, r = f.reachability, k = f.rank_stability;
+  if (!c && !r && !k) return null;
+  return (
+    <div className="grid gap-3 md:grid-cols-3">
+      {c && (
+        <div className="rounded-lg border border-line px-3 py-2.5">
+          <div className="mb-1.5 text-[11px] uppercase tracking-wide text-faint">Confidence</div>
+          <div className="flex items-center gap-2"><span className={`rounded-md px-1.5 py-0.5 font-mono text-[11px] ring-1 ring-inset ${CONF_TONE[c.band]}`}>{c.band}</span>
+            <span className="font-mono text-[13px]">{c.value.toFixed(2)}</span></div>
+          <ul className="mt-2 space-y-0.5 text-[11.5px]">{Object.entries(c.signals).filter(([, v]) => v !== null).map(([n, v]) => (
+            <li key={n} className="flex justify-between gap-2"><span className="text-muted">{SIGNAL[n] ?? n}</span>
+              <span className={`font-mono ${v === 1 ? "text-ok" : v === 0 ? "text-high" : "text-med"}`}>{v === 1 ? "yes" : v === 0 ? "no" : "partly"}</span></li>))}</ul>
+          {c.missing.length > 0 && <div className="mt-2 text-[11px] text-high">Missing: {c.missing.join("; ")}</div>}
+          <div className="mt-2 text-[10.5px] text-faint">Evidence quality, not severity. Never changes the level.</div>
+        </div>)}
+      {r && (
+        <div className="rounded-lg border border-line px-3 py-2.5">
+          <div className="mb-1.5 text-[11px] uppercase tracking-wide text-faint">Reachability <span className="normal-case text-med">· estimated</span></div>
+          <div className="text-[13px]">{TIER_TEXT[r.tier] ?? r.tier}</div>
+          {r.via && <div className="mt-1 text-[11.5px] text-muted">through <span className="font-mono text-ink">{r.via}</span></div>}
+          {r.evidence.length > 0 && <div className="mt-1.5 flex flex-wrap gap-1 font-mono text-[11px]">{r.evidence.slice(0, 3).map((e) => <span key={e} className="rounded bg-raised px-1.5 py-0.5">{e}</span>)}</div>}
+          {r.note && <div className="mt-1.5 text-[11.5px] text-high">{r.note}</div>}
+          <div className="mt-2 text-[10.5px] text-faint">{r.method}. Dynamic requires are missed, so "declared" means "none found", not "unused".</div>
+        </div>)}
+      {k && (
+        <div className="rounded-lg border border-line px-3 py-2.5">
+          <div className="mb-1.5 text-[11px] uppercase tracking-wide text-faint">Rank stability</div>
+          <div className="text-[13px]">Rank <span className="font-mono">{k.baseline_rank}</span> <span className="text-muted">· 90% range</span> <span className="font-mono">{k.rank_p05}–{k.rank_p95}</span></div>
+          {k.top5_share !== null && <div className="mt-1 text-[11.5px] text-muted">In the top 5 in <span className="font-mono text-ink">{Math.round(k.top5_share * 100)}%</span> of weight changes</div>}
+          <div className="mt-2 text-[10.5px] text-faint">{k.draws} draws, each AHP weight ±{Math.round(k.delta * 100)}%, seed {k.seed}. Only order within a level can move.</div>
+        </div>)}
+    </div>);
+}
+
+function Fixes({ fixes }: { fixes: Fix[] }) {
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center gap-2 text-[11px] uppercase tracking-wide text-faint">Recommended fixes <span className="normal-case text-med">· forecast, a human approves, the sandbox rescan verifies</span></div>
+      <ul className="space-y-2">{fixes.map((x, i) => (
+        <li key={x.id} className={`rounded-lg border px-3 py-2.5 ${i === 0 ? "border-ok/40 bg-ok/5" : "border-line"}`}>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0"><div className="text-[13px] font-medium">{i === 0 && <span className="mr-1.5 rounded bg-ok/15 px-1 py-0.5 text-[10px] text-ok">best ranked</span>}{FIX_TEXT[x.type] ?? x.type}{x.target && <span className="ml-1 font-mono text-accent">{x.target}</span>}</div>
+              <div className="mt-0.5 text-[11.5px] text-muted">clears {x.expected_risk_reduction.findings_cleared} finding(s) · {Math.round(x.expected_risk_reduction.component_share * 100)}% of this component's risk
+                {x.compat.semver ? ` · ${x.compat.semver} change` : ""} · compatibility risk {x.compat.risk}</div></div>
+            <span className="shrink-0 font-mono text-lg">{x.fix_score.toFixed(1)}</span>
+          </div>
+          <div className="mt-1.5 text-[11px] text-faint">Rollback: {x.rollback}{x.compat.via_direct_parents?.length ? ` · via ${x.compat.via_direct_parents.join(", ")}` : ""}
+            {x.compat.reason ? ` · ${x.compat.reason}` : ""} · not checked: {x.checks_not_run.join(", ").replace("_", " ")}</div>
+        </li>))}</ul>
+      <div className="mt-1 text-[11px] text-faint">Fix score 0–100 = AHP-weighted risk reduction, compatibility, footprint, rollback and evidence. Candidates are generated by rules; no AI proposes a version.</div>
+    </div>);
 }

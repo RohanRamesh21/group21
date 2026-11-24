@@ -70,6 +70,12 @@ def check(repo: Path, base: str, head: str, out: Path) -> dict:
     except Exception as e:  # registry offline etc.: report it, keep the rest of the check
         det_error = f"{type(e).__name__}: {e}"[:300]
 
+    try:  # CI drift hard signals (D11 SHA->tag, D12 history rewrite): git/JSON only, nothing is executed
+        from guardian.detectors.ci_drift import action_sha_to_tag, history_rewrite
+        suspicious += action_sha_to_tag(_load(db, "actions.json"), _load(dh, "actions.json")) + history_rewrite(repo, base, head)
+    except Exception as e:
+        det_error = ((det_error + "; ") if det_error else "") + f"ci_drift {type(e).__name__}: {e}"[:200]
+
     intro_v = [v for v in vulns if v["label"] == "introduced"]
     intro_c = [c for c in ci if c["label"] == "introduced"]
     headline = {
@@ -95,8 +101,10 @@ def check(repo: Path, base: str, head: str, out: Path) -> dict:
     path.write_text(json.dumps(report, indent=1))
     pointer = {"path": str(path)}
     try:  # explainable risk scoring (deterministic; EPSS/KEV cached, missing data stays "unknown")
+        from guardian.scoring.contextual.pipeline import enrich, reach_for_report
         from guardian.scoring.score import score_report
-        scores = score_report(report)
+        reach, reach_err = reach_for_report(report)  # contextual: static import scan of the head tree (estimated, never executes code)
+        scores = enrich(score_report(report, reach=reach), report, reach_error=reach_err)  # contextual: rank stability, confidence, fix candidates
         spath = out / f"scores-{rb['commit'][:8]}-{rh['commit'][:8]}.json"
         spath.write_text(json.dumps(scores, indent=1))
         pointer["scores"] = str(spath)
