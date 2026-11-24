@@ -1,3 +1,8 @@
+# READING GUIDE
+# Shared JSON model gateway for investigation, explanations, fix review and other callers.
+# Chooses configured providers, uses cached replies, reserves budget, sends the request and records usage.
+# Provider fallback is for configured quota/outage cases; the response metadata records which provider actually answered.
+#
 """Small JSON-chat client for the configured OpenAI-compatible provider (FreeModel: DeepSeek V4 Flash).
 
 Used for short structured outputs (explanations, fix-plan review). The key stays in .env and is never logged.
@@ -16,6 +21,7 @@ FREEMODEL_URL = "https://freemodel.in/v1/chat/completions"
 DEFAULT_MODEL = "deepseek-v4-flash-0731"
 
 
+# Decode the provider reply into JSON expected by callers rather than accepting free-form prose.
 def _parse(text: str) -> dict:
     m = re.search(r"```(?:json)?\s*(.*?)```", text, re.S)
     raw = m.group(1) if m else text
@@ -29,6 +35,7 @@ _EXHAUSTED: dict[str, float] = {}  # provider -> when it said its quota is used 
 EXHAUSTED_FOR = 3600
 
 
+# Build the ordered configured provider list; this does not make a network call.
 def _providers() -> list[dict]:
     """Main provider first (FreeModel), then the fallback (GUARDIAN_LLM_FALLBACK, default gemini when a Google key exists).
     Both speak the OpenAI chat-completions format; every call is budgeted, ledgered and cached the same way."""
@@ -57,6 +64,7 @@ class _Unavailable(RuntimeError):
     """The provider kept answering 429/5xx after retries: try the next provider/model."""
 
 
+# Handle one provider request with cache, token reservation, retries, usage recording and guaranteed release.
 def _call(p: dict, body: dict, session, run_id: str, purpose: str, cache: bool) -> tuple[dict, dict]:
     ck = llm_budget.cache_key(body)
     if cache and (hit := llm_budget.cache_get(ck)):
@@ -98,10 +106,12 @@ def _call(p: dict, body: dict, session, run_id: str, purpose: str, cache: bool) 
         else:
             raise _Unavailable(f"{p['name']} {body['model']}: unavailable ({last}) after retries")
     finally:
+        # Release the reservation even after an error; recorded usage is kept separately in the ledger.
         llm_budget.release(run_id, est)
     raise RuntimeError(f"{p['name']}: model call failed ({last})")
 
 
+# Public JSON-call entry point: choose providers and return both parsed data and actual provider/model metadata.
 def chat_json(prompt: str, *, system: str = "Answer with one JSON object only.", max_tokens: int = 2000, session=None,
               purpose: str = "chat", run_id: str = "adhoc", cache: bool = True, effort: str | None = None) -> tuple[dict, dict]:
     """One JSON call. Budget-checked before sending, recorded in the ledger after, cached by request hash.
@@ -142,5 +152,6 @@ def chat_json(prompt: str, *, system: str = "Answer with one JSON object only.",
     raise RuntimeError("AI providers unavailable: " + "; ".join(quota_errors) if quota_errors else (other or "model call failed"))
 
 
+# Expose ledger totals to the caller/dashboard; no model request is made.
 def usage_summary(run_id: str | None = None) -> dict:
     return llm_budget.summary(run_id)

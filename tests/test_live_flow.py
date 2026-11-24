@@ -89,7 +89,8 @@ def test_nightly_reports_only_newly_disclosed_findings_in_one_issue(tmp_path):
 def test_profile_is_chosen_by_repository():
     from guardian.validation.runner import profile_for
     assert profile_for("kirankishoreV-07/PIPELINE_CHECK") == "shiplog"
-    assert profile_for("someone/uptime-kuma") == "uptime-kuma"
+    # a repository no profile names gets the automatic npm profile, not another app's profile
+    assert profile_for("someone/uptime-kuma") == "generic-npm"
 
 
 def test_validation_status_mapping():

@@ -1,3 +1,8 @@
+# READING GUIDE
+# Code-enforced checks for the older agent loop: evidence references, risk floors, coverage and case resolution.
+# A rejected action is returned to the agent with a reason. Prompt instructions alone are not enforcement.
+# Its legacy verdict checks are separate from the normal scanner shared verdict in scoring/verdict.py.
+#
 """The constitution (AGENTIC_CORE §2): invariants enforced in code, outside any prompt.
 
 Every agent action that changes the board passes through these checks. A failed check is
@@ -9,6 +14,7 @@ from __future__ import annotations
 import re
 
 from guardian.agents.board import Board
+from guardian.ai import guard
 from guardian.agents.protocol import RISK_ORDER, AgentMessage
 from guardian.store.evidence import EvidenceStore
 
@@ -17,14 +23,17 @@ NAME_VERSION = re.compile(r"(@?[a-z0-9][a-z0-9._-]*(?:/[a-z0-9._-]+)?)@(\d+\.\d+
 ADVISORY_ID = re.compile(r"\b(CVE-\d{4}-\d{4,}|GHSA(?:-[23456789cfghjmpqrvwx]{4}){3}|MAL-\d{4}-\d+)\b", re.I)
 
 
+# A rejected agent action; tools catch it and return a reason instead of accepting the action.
 class ConstitutionError(ValueError):
     """Raised when an action violates an invariant. The message is shown to the agent."""
 
 
+# Load the actual stored text behind cited IDs before comparing generated identifiers or links.
 def _cited_text(store: EvidenceStore, ids: list[str]) -> str:
     return "\n".join(store.content(i) for i in ids if store.exists(i))
 
 
+# Validate evidence-backed message claims and restrict which findings the Skeptic may clear.
 def check_message(msg: AgentMessage, board: Board, store: EvidenceStore) -> None:
     """C1 (facts only from tools), C5 (no pasted content), C9 (explained downgrades)."""
     if msg.kind in NEEDS_EVIDENCE and not msg.evidence_ids:
@@ -48,6 +57,11 @@ def check_message(msg: AgentMessage, board: Board, store: EvidenceStore) -> None
                 raise ConstitutionError(f"C1: advisory '{adv}' does not appear in the cited evidence.")
         if "<untrusted-data" in msg.claim.lower():
             raise ConstitutionError("C5: do not paste untrusted content into messages; cite its evidence ID.")
+        # Output guard: claims are shown in the dashboard and reports, so exfiltration links, images/HTML, role tokens
+        # and approve/merge directives are refused (links are allowed only when they appear in the cited evidence).
+        unsafe = guard.check_output(msg.claim, evidence_text=_cited_text(store, msg.evidence_ids))
+        if unsafe:
+            raise ConstitutionError(f"C5: claim rejected by the output guard: {unsafe}. Write plain text and cite evidence IDs.")
 
     if msg.kind == "clear":
         if msg.sender != "skeptic":
@@ -59,6 +73,7 @@ def check_message(msg: AgentMessage, board: Board, store: EvidenceStore) -> None
             raise ConstitutionError(f"C2: {f.id} is a hard signal ({f.type}); it can never be cleared or lowered.")
 
 
+# Keep case risk at or above its strongest hard floor; such cases cannot simply be labelled benign.
 def check_resolution(board: Board, case_id: str, risk: str, verdict: str) -> None:
     """C2 floors: a case can never be resolved below the highest floor among its findings."""
     case = board.cases[case_id]
@@ -72,6 +87,7 @@ def check_resolution(board: Board, case_id: str, risk: str, verdict: str) -> Non
         raise ConstitutionError("C2: a case with a hard signal cannot be resolved as benign.")
 
 
+# Check cited evidence exists, verifies and relates to the requested cases.
 def check_citations(board: Board, store, case_ids: list[str], evidence_ids: list[str]) -> None:
     """T7 Gatekeeper: a verdict may only cite cases on this board and evidence that exists in this run's store,
     still matches its SHA-256, and belongs to one of the cited cases (its findings or its resolution)."""
@@ -98,6 +114,7 @@ def check_citations(board: Board, store, case_ids: list[str], evidence_ids: list
         raise ConstitutionError(f"T7: evidence {unrelated} is not linked to the cited cases {case_ids}")
 
 
+# Legacy-loop final gate: require investigation coverage, resolved cases and an appropriate risk-based decision.
 def check_verdict(board: Board, decision: str) -> None:
     """C3 coverage before verdict, plus C2 on the overall decision."""
     gaps = board.coverage_gaps()

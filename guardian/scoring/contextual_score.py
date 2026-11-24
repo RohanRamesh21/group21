@@ -1,3 +1,7 @@
+# READING GUIDE
+# Bridge from the main scanner into contextual scoring: real source reachability -> score_report -> enrichment.
+# Keeps older data-quality dimensions alongside contextual confidence and reports enrichment failures explicitly.
+#
 """Runs the contextual scoring (guardian/scoring/contextual, from the contextual-scoring branch) inside our engine.
 
 Order: reachability (static import scan of the head tree) -> score_report with the human-approved AHP weights (if any)
@@ -20,6 +24,7 @@ from guardian.scoring.contextual.pipeline import VERSION, enrich
 from guardian.scoring.score import score_report
 
 
+# Use first-party source files, not a manifest-only snapshot, to estimate import reachability.
 def _reach(report: dict, src: Path | None) -> tuple[dict, str | None]:
     """Reachability from the FULL first-party source tree. Our scan folder's src/ keeps only manifests, so the engine
     passes the exported head tree. With no source files at all the result is 'not computed', never 'declared'
@@ -34,6 +39,7 @@ def _reach(report: dict, src: Path | None) -> tuple[dict, str | None]:
         return {}, f"reachability failed ({type(e).__name__}: {e})"[:200]
 
 
+# Coordinate approved weights, baseline scoring and additive contextual enrichment.
 def score_with_context(report: dict, out: Path, src: Path | None = None) -> dict:
     reach, reach_err = _reach(report, src)
     aw, ainfo = active_weights(Path(out))

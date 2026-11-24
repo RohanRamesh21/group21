@@ -36,3 +36,14 @@ export function shortPurl(c: string) {
 }
 
 export const spring = { type: "spring" as const, stiffness: 260, damping: 28 };
+
+/** Links built from third-party data (advisory URLs) are clickable only when they are plain http(s) URLs: no
+ *  javascript:, data: or other schemes. Model-written text is never turned into links anywhere in the dashboard. */
+export function safeHref(u: unknown): string | undefined {
+  try {
+    const url = new URL(String(u ?? ""), window.location.origin);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.href : undefined;
+  } catch {
+    return undefined;
+  }
+}

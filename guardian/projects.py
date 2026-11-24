@@ -1,3 +1,7 @@
+# READING GUIDE
+# Project intake and background scan jobs: Git URL, ZIP upload or local sandbox -> repository copy -> universal engine.
+# Job files track progress; each project receives its own check output folder so scans do not share results.
+#
 """Scan any project the user brings (any language / package manager): a ZIP upload or a public Git URL.
 
 Safety rules (the analysed project is untrusted):
@@ -74,6 +78,7 @@ def _new(kind: str, label: str, extra: dict) -> str:
 
 
 # ---------------------------------------------------------------- ZIP
+# Reject unsafe archive paths/symlinks and oversized uploads before materializing source files.
 def safe_extract(zip_path: Path, dest: Path) -> int:
     with zipfile.ZipFile(zip_path) as z:
         infos = z.infolist()
@@ -112,6 +117,7 @@ def _git_snapshot(repo: Path, message: str):
                                "--no-verify", "-m", message], cwd=repo, check=True, env=GIT_ENV)
 
 
+# Start an uploaded-project job; extraction and scanning proceed in the background.
 def start_zip(upload: Path, filename: str) -> str:
     pid = _new("zip", filename, {})
     threading.Thread(target=_run_zip, args=(pid, upload), daemon=True).start()
@@ -148,6 +154,7 @@ def validate_git_url(url: str) -> str:
     return url.strip()
 
 
+# Validate intake, allocate a job and start repository acquisition in a background thread.
 def start_git(url: str, base: str | None, head: str | None) -> str:
     url = validate_git_url(url)
     pid = _new("git", url.removeprefix("https://"), {"url": url, "base": base or None, "head": head or None})
@@ -155,6 +162,7 @@ def start_git(url: str, base: str | None, head: str | None) -> str:
     return pid
 
 
+# Clone/fetch the requested project and references, then hand the repository to the scan engine.
 def _run_git(pid: str, url: str, base: str | None, head: str | None):
     try:
         repo = BASE / pid / "src"
@@ -241,6 +249,7 @@ def _run_local(pid: str, repo: Path, base: str, head: str):
 
 
 # ---------------------------------------------------------------- analysis (universal: any ecosystem)
+# Use the common engine for an acquired project and publish its summary/status.
 def _analyse(pid: str, repo: Path, base: str | None, head: str, label: str):
     from guardian.universal import check_any
 
@@ -313,6 +322,7 @@ def rescan(pid: str, background: bool = True) -> None:
         work()
 
 
+# Resolve the selected local project to its own saved check folder; None selects the default run.
 def out_dir(pid: str | None) -> Path:
     if not pid:
         return ROOT / "guardian-out" / "check"

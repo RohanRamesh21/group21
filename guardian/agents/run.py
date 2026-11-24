@@ -1,3 +1,7 @@
+# READING GUIDE
+# Assembly point for the older agent loop: select real/fixture facts, create Board and tools, choose model, run graph.
+# Persists the final Board, messages and audit. The normal CLI investigation instead calls ai/workflow.py unless --deep is used.
+#
 """Entry point for an agentic run.
 
 world="canned": Stage A fixed facts (works offline; used by the replay test).
@@ -21,6 +25,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_REPLAY = ROOT / "testbed" / "replays" / "s3_s9_agents.json"
 
 
+# Older-loop entry point: select evidence source and backend, wire callbacks, run LangGraph and save the Board.
 def run(out: Path, backend: str = "auto", replay: Path = DEFAULT_REPLAY, run_id: str = "RUN-12",
         world_kind: str = "canned", repo: Path = ROOT / "sandbox" / "uptime-kuma",
         base: str = "scenario/base", head: str = "scenario/s3-s9", pace: float = 0.0,
@@ -75,6 +80,7 @@ def run(out: Path, backend: str = "auto", replay: Path = DEFAULT_REPLAY, run_id:
     return board
 
 
+# Format audit events into a human-readable terminal trace without rerunning any agent.
 def timeline(board: Board) -> str:
     lines = []
     for e in board.audit:

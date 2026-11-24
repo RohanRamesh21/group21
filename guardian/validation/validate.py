@@ -1,3 +1,8 @@
+# READING GUIDE
+# Validation coordinator: check exact approval first, prepare baseline/candidate, run profiles, rescan and evaluate gate.
+# Tracks timings, optional generated tests and before/after results. The model never converts a failed stage into passed.
+# The source comparison uses the original base versus the repaired PR so the fix's own reverts are not treated as new attacks.
+#
 """Validate an approved fix plan: approval check → baseline + candidate runs → source and artifact rescans → gate.
 
 Order matters: the approval contract is checked first, and if it doesn't match exactly, nothing is executed.
@@ -33,6 +38,40 @@ def _group(f: dict) -> str:
     return "config_ci"
 
 
+SRC_EXT = (".js", ".cjs", ".mjs", ".ts", ".vue", ".jsx", ".tsx")
+SKIP_DIRS = {"node_modules", ".git", "dist", "build", ".guardian", ".guardian-tests"}
+
+
+# Estimate which upgraded dependencies are reached by project test imports for supplementary test selection.
+def test_exposure(tree: Path, packages: list[str]) -> dict:
+    """Which changed packages the app code and the test files import (static, by module name). Tests that pass say
+    nothing about a package no test reaches (Hejderup & Gousios, JSS 2022: tests detect ~47% of faults in direct and
+    ~35% in transitive dependencies), so the result names those packages instead of implying they were exercised."""
+    import os
+    import re
+    pats = {p: re.compile(r"""(?:require\(|import\(|from\s+|import\s+)['"]""" + re.escape(p) + r"""(?:/[^'"]*)?['"]""") for p in packages}
+    found = {p: {"app_files": 0, "test_files": 0} for p in packages}
+    for root, dirs, files in os.walk(tree):
+        dirs[:] = [d for d in dirs if d not in SKIP_DIRS]
+        rel = os.path.relpath(root, tree)
+        is_test = rel.split(os.sep)[0] in ("test", "tests", "__tests__") or "test" in rel.split(os.sep)
+        for f in files:
+            if not f.endswith(SRC_EXT):
+                continue
+            try:
+                text = open(os.path.join(root, f), encoding="utf-8", errors="ignore").read()
+            except OSError:
+                continue
+            for p, rx in pats.items():
+                if rx.search(text):
+                    found[p]["test_files" if is_test else "app_files"] += 1
+    for p, v in found.items():
+        v["verdict"] = ("imported by tests" if v["test_files"] else "used by the app, not imported by any test" if v["app_files"]
+                        else "not imported directly (transitive or unused): tests do not exercise it")
+    return found
+
+
+# Keep progress for each parallel lane so a later message does not hide another lane still running.
 def progress_update(progress: dict, msg: str) -> dict:
     """Fold one progress message into a per-lane view (both sandboxes and the rescan run at the same time, so the
     latest single message is not enough for the dashboard)."""
@@ -85,6 +124,7 @@ def _artifact_components(tree: Path, out: Path) -> tuple[set[str], str | None]:
     return {f"{c.get('name')}@{c.get('version')}" for c in doc.get("components", []) if c.get("type") == "library"}, None
 
 
+# Ask what the fixed PR still introduces relative to the original base, using the same scan engine.
 def _source_rescan(repo: Path, base_sha: str | None, head_sha: str, patch: Path, out: Path, app: str) -> dict:
     """Two-commit repo scanned by the same engine: BASE, then the candidate (PR head + approved patch).
     This asks the original question again: what does the PR still introduce once fixed? (Comparing PR head → candidate
@@ -112,7 +152,8 @@ def _source_rescan(repo: Path, base_sha: str | None, head_sha: str, patch: Path,
     return {"report": rep, "scores": scores, "complete": bool(rep["headline"].get("complete")) and bool(latest.get("scores"))}
 
 
-def validate(out: Path, profile: str = "uptime-kuma", log=print) -> dict:
+# Top-level validation sequence; the approval check precedes tree execution and container work.
+def validate(out: Path, profile: str = "uptime-kuma", log=print, chat=None) -> dict:
     out = Path(out)
     plan = json.loads((out / "fix-plan.json").read_text())
     prof, prof_sha, folder = vr.load_profile(profile)
@@ -123,6 +164,7 @@ def validate(out: Path, profile: str = "uptime-kuma", log=print) -> dict:
     try:
         if rec is None:
             raise ap.ApprovalInvalid("no approval has been given for this plan")
+        # This authorizes only the current commits, patch, policy and profile; changed inputs require a new approval.
         ap.check(rec, plan, policy_sha256=pol_sha, profile_sha256=prof_sha)
     except ap.ApprovalInvalid as e:
         result["gate"] = vr.gate(approval_ok=False, approval_error=str(e), baseline=[], candidate=[], targets_resolved=[],
@@ -159,7 +201,21 @@ def validate(out: Path, profile: str = "uptime-kuma", log=print) -> dict:
 
     # Independent work runs at the same time: two separate locked containers and the source-only rescan
     # (the rescan reads files, runs no project code). Nothing is shared between the sandboxes.
-    with ThreadPoolExecutor(max_workers=3) as pool:
+    changed = sorted({c["package"] for c in plan["candidates"] if c.get("package") and c["type"] != "escalate"})
+
+    def write_generated():  # AI test bodies for upgraded packages no project test reaches (checked by code)
+        from guardian import llm_client
+        from guardian.validation import gentests
+        exposure = test_exposure(cand_tree, changed) if changed else {}
+        items = gentests.needs_tests(plan, exposure)
+        if not items:
+            return exposure, []
+        log(f"validation: writing AI tests for {', '.join(i['package'] for i in items)}")
+        return exposure, gentests.write_tests([cand_tree], items, cand_tree, chat or llm_client.chat_json,
+                                              f"gt-{plan['patch']['patch_sha256'][:12]}")
+
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        f_gen = pool.submit(timed, "generate_tests", write_generated)
         f_base = pool.submit(timed, "baseline", vr.run_profile, base_tree, prof, folder, "baseline", log)
         f_cand = pool.submit(timed, "candidate", vr.run_profile, cand_tree, prof, folder, "candidate", log)
         f_rescan = pool.submit(timed, "rescan", rescan)
@@ -171,8 +227,19 @@ def validate(out: Path, profile: str = "uptime-kuma", log=print) -> dict:
         (b_art, b_err), (c_art, c_err) = f_b.result(), f_c.result()
         timings["sbom"] = round(time.time() - s, 1)
         rs = f_rescan.result()
+        try:
+            exposure, gen = f_gen.result()
+        except Exception as e:  # never blocks validation
+            exposure, gen = {}, [{"status": "error", "reason": f"{type(e).__name__}: {e}"[:200]}]
+    if any(g.get("status") == "written" for g in gen):
+        from guardian.validation import gentests
+        s = time.time()
+        gen = gentests.run_tests(prof, cand_tree, gen, log)
+        timings["generated_tests"] = round(time.time() - s, 1)
+    result["generated_tests"] = gen
     sbom_diff = {"added": sorted(c_art - b_art), "removed": sorted(b_art - c_art), "errors": [x for x in (b_err, c_err) if x]}
 
+    result["test_exposure"] = exposure  # honest coverage: which changed packages the project's tests reach
     timings["total"] = round(time.time() - t0, 1)
     result["timings"] = timings
     # still introduced by the fixed PR (versus base) = not corrected; pre-existing findings are not targets of this PR
@@ -204,7 +271,8 @@ def validate(out: Path, profile: str = "uptime-kuma", log=print) -> dict:
                              targets_resolved=[t for t in targets if t not in after_ids],
                              targets_remaining=[t for t in targets if t in after_ids], new_high=new_high,
                              rescans_complete=rs["complete"] and not sbom_diff["errors"], sbom_diff=sbom_diff,
-                             same_snapshot=db_before == db_after, evidence_ok=ap.verify_audit(out)[0])
+                             same_snapshot=db_before == db_after, evidence_ok=ap.verify_audit(out)[0],
+                             generated=[g for g in gen if g.get("status") == "regression"])
     result["finished"] = time.time()
     (out / "validation.json").write_text(json.dumps(result, indent=1))
     ap._audit(out, "validation", {"created": time.time(), "verified": result["gate"]["verified"],

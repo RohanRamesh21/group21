@@ -1,3 +1,7 @@
+# READING GUIDE
+# Rule-based remedy selection: group findings, look up advisory/registry data, choose supported actions or escalate.
+# Candidate risk reduction is a forecast. This file proposes changes; patch.py builds them and validation proves outcomes.
+#
 """Deterministic fix candidates (stage ⑧). No AI: agents may explain or challenge these, never invent versions.
 
 Each candidate covers a group of findings (all findings of one package, or one config file) and carries:
@@ -28,6 +32,8 @@ class Sources:
     """Data access, injected so tests use fixtures and production uses the real registry and OSV."""
     versions: Callable[[str], tuple[dict, dict | None]]      # package -> ({version: meta}, {url, sha256})
     advisory: Callable[[str], tuple[dict | None, dict | None]]  # advisory id -> (OSV record, {url, sha256})
+    vulns_of: Callable[[str, str], list[str] | None] | None = None  # (package, version) -> advisory ids (None: unknown)
+    exclude: dict | None = None  # {package: [versions]} that failed validation before (repair memory)
 
 
 def _sha(text: str) -> str:
@@ -61,8 +67,21 @@ def osv_advisory(vid: str) -> tuple[dict | None, dict | None]:
     return rec, {"url": f"https://api.osv.dev/v1/vulns/{vid}", "sha256": _sha(json.dumps(rec, sort_keys=True))}
 
 
-def live_sources() -> Sources:
-    return Sources(versions=npm_versions, advisory=osv_advisory)
+def osv_vulns_of(pkg: str, version: str) -> list[str] | None:
+    """Advisory ids OSV lists for this exact npm version (None when OSV can't be reached: the caller says so)."""
+    import urllib.request
+    try:
+        body = json.dumps({"package": {"name": pkg, "ecosystem": "npm"}, "version": version}).encode()
+        r = json.load(urllib.request.urlopen(urllib.request.Request("https://api.osv.dev/v1/query", body,
+                                                                    {"Content-Type": "application/json"}), timeout=30))
+        return [v["id"] for v in r.get("vulns", [])]
+    except Exception:  # noqa: BLE001
+        return None
+
+
+# Provide the live advisory/registry readers and any failed-version exclusions from repair memory.
+def live_sources(exclude: dict | None = None) -> Sources:
+    return Sources(versions=npm_versions, advisory=osv_advisory, vulns_of=osv_vulns_of, exclude=exclude)
 
 
 def _split(component: str) -> tuple[str, str]:
@@ -91,6 +110,7 @@ def _base(ctype: str, group: list[dict], **kw) -> dict:
     return c
 
 
+# Choose a supported package action from signals/advisories, or explicitly require a human decision.
 def _package_candidate(name: str, ver: str, group: list[dict], report: dict, src: Sources) -> dict:
     inv = {(p["name"], p.get("version")): p for p in report.get("inventory", [])}
     p = inv.get((name, ver), {})
@@ -131,17 +151,46 @@ def _package_candidate(name: str, ver: str, group: list[dict], report: dict, src
     versions, vs = src.versions(name)
     if vs:
         sources.append(vs)
-    target = smallest_safe(name, ver, versions, advisories) if versions else None
+    # The target must be clean itself: a version that escapes the PR's advisories can carry newer ones (PR #11:
+    # follow-redirects 1.16.0). Add those advisories and look again; versions that failed validation before are skipped.
+    skip = set((src.exclude or {}).get(name, []))
+    pool = {v: m for v, m in (versions or {}).items() if v not in skip}
+    target, checked, unknown = (smallest_safe(name, ver, pool, advisories) if pool else None), False, False
+    for _ in range(8):
+        if not target or src.vulns_of is None:
+            break
+        ids = src.vulns_of(name, target)
+        if ids is None:
+            unknown = True
+            break  # OSV unreachable: keep the target, the rescan still checks it
+        known = {a.get("id") for a in advisories}
+        new = [i for i in ids if i not in known]
+        if not ids:
+            checked = True
+            break
+        for i in new:
+            rec, s = src.advisory(i)
+            if rec:
+                advisories.append(rec)
+                sources.append(s)
+        if not new:  # its advisories are known but it still matches one: drop this version and look again
+            pool.pop(target, None)
+        target = smallest_safe(name, ver, pool, advisories)
+    if src.vulns_of is not None and target and not checked and not unknown:
+        target = None
     if not target:
         return _base("escalate", group, package=name, version=ver, sources=sources,
-                     rationale="no published version is outside every affected range of these advisories",
+                     rationale="no published version is free of known advisories"
+                               + (f" (skipping versions that failed validation: {', '.join(sorted(skip))})" if skip else ""),
                      rollback="none needed (no change applied)")
     direct = bool(p.get("direct", True))
     ctype = "upgrade_to_fixed" if direct else "override_transitive"
     j = jump(ver, target)
     return _base(ctype, group, package=name, **{"from": ver, "to": target}, semver_jump=j, sources=sources,
                  rationale=f"{target} is the smallest published version outside every affected range"
-                           + (" (same major version)" if j != "major" else " (requires a major upgrade)"),
+                           + (" and has no known advisories" if checked else "")
+                           + (" (same major version)" if j != "major" else " (requires a major upgrade)")
+                           + (f"; skipped after failed validation: {', '.join(sorted(skip))}" if skip else ""),
                  compatibility={"semver_jump": j, "note": {"patch": "bug-fix release; API should be unchanged",
                                                           "minor": "new features; existing API should still work",
                                                           "major": "breaking changes possible; review the changelog"}[j]},
@@ -149,6 +198,7 @@ def _package_candidate(name: str, ver: str, group: list[dict], report: dict, src
                  lock_changes=1 if direct else 2, rollback_ease=1 if direct else 2)
 
 
+# Group related findings so one remedy can address several warnings on a package or file.
 def generate(findings: list[dict], report: dict, src: Sources) -> list[dict]:
     groups: dict[tuple, list[dict]] = {}
     for f in findings:
@@ -177,6 +227,7 @@ def generate(findings: list[dict], report: dict, src: Sources) -> list[dict]:
     return order(out)
 
 
+# Order proposals by the stated deterministic criteria, not by an AI preference.
 def order(cands: list[dict]) -> list[dict]:
     """First difference wins: resolves the target, smaller semver jump, fewer lockfile changes, easier rollback."""
     return sorted(cands, key=lambda c: (not c.get("resolves_target"), JUMP_RANK.get(c.get("semver_jump"), 3),

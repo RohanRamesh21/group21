@@ -2,10 +2,16 @@
 
 The token is held privately and never logged or printed. GitHub commit statuses support only
 pending / success / failure / error, so REVIEW maps to failure ("needs human review").
+
+Text that may come from a model, a package or the PR itself (verdict reasons, incomplete reasons, validation reasons) is
+neutralised before it reaches GitHub: invisible characters removed, one line per item, no markdown images or raw HTML,
+no links except Guardian's own run URL, and the markdown escaping of _md. Status descriptions are plain text, <= 140 chars.
 """
 from __future__ import annotations
 
 import re
+
+from guardian.ai import guard
 
 API = "https://api.github.com"
 MARK = "<!-- guardian:comment -->"
@@ -30,7 +36,7 @@ def validation_status(v: dict) -> dict:
     # validate() records "executed": True; the report view uses "status": "executed". Accept both.
     if not (v.get("executed") or v.get("status") == "executed"):
         why = v.get("reason") or next(iter(g.get("reasons") or []), None) or v.get("status") or "not executed"
-        return {"state": "error", "context": "guardian/validation", "description": f"Validation not run: {why}"[:140]}
+        return {"state": "error", "context": "guardian/validation", "description": _status_text(f"Validation not run: {why}")}
     if g.get("verified"):
         vc = v.get("verdict_change") or {}
         b, a = vc.get("before") or {}, vc.get("after") or {}
@@ -38,9 +44,11 @@ def validation_status(v: dict) -> dict:
             ai = a.get("introduced") or {}
             desc = (f"Fix verified: {b['verdict'].upper()} → {a['verdict'].upper()}. Fixed PR adds "
                     f"{ai.get('vulnerabilities', 0)} vulnerabilities, {ai.get('malware_suspicious', 0)} malware; built, tested, rescanned")
-            return {"state": "success", "context": "guardian/validation", "description": desc[:140]}
+            return {"state": "success", "context": "guardian/validation", "description": _status_text(desc)}
         return {"state": "success", "context": "guardian/validation", "description": "Fix verified: built, tested and rescanned in isolation"}
-    return {"state": "failure", "context": "guardian/validation", "description": f"Fix not verified ({g.get('validation', 'failed')})"[:140]}
+    why = next(iter(g.get("reasons") or []), "")  # say WHY, not just "(passed)" when validation passed but the rescan did not
+    return {"state": "failure", "context": "guardian/validation",
+            "description": _status_text(f"Fix not verified: {why}" if why else f"Fix not verified ({g.get('validation', 'failed')})")}
 
 
 NIGHTLY_MARK = "<!-- guardian:nightly -->"
@@ -50,13 +58,42 @@ def _md(text: str) -> str:
     return re.sub(r"[<>`*_\[\]|]", lambda m: {"<": "&lt;", ">": "&gt;"}.get(m.group(0), "\\" + m.group(0)), str(text))
 
 
+BARE_LINK = re.compile(r"\bwww\.[^\s)\"'<>\]]+|(?<![\w:/])//[\w-]+(?:\.[\w-]+)+[^\s)\"'<>\]]*", re.I)  # www.x and //host
+
+
+def _status_text(text: str, limit: int = 140) -> str:
+    """Commit-status description: plain single-line text, invisible characters removed, capped."""
+    return " ".join(guard.clean(str(text)).split())[:limit]
+
+
+def _neutral(text: str, run_url: str | None = None, limit: int = 400) -> str:
+    """Model- or third-party-written text made safe for a PR comment: a single line, no images, no raw HTML, no links
+    except Guardian's own run URL (GitHub autolinks bare URLs, so foreign ones are removed), then markdown-escaped."""
+    t = " ".join(guard.clean(str(text or ""), limit).split())
+    t = re.sub(r"!\s*\[", "[", t)  # a markdown image becomes plain bracketed text (escaped by _md below)
+    own = (run_url or "").strip()
+    t = guard.URL.sub(lambda m: m.group(0) if own and m.group(0).rstrip(".,;:") == own else "(link removed)", t)
+    t = BARE_LINK.sub("(link removed)", t)
+    return _md(t)
+
+
+def _own_url(run_url: str | None) -> str | None:
+    """Guardian's run URL is the only link a comment carries; anything that is not a plain http(s) URL is dropped."""
+    u = (run_url or "").strip()
+    return u if re.fullmatch(r"https?://[^\s()<>\[\]\"'`]+", u) else None
+
+
 def comment_body(h: dict, run_url: str | None = None) -> str:
-    v = (h.get("verdict") or "incomplete").upper()
+    v = str(h.get("verdict") or "incomplete").upper()
+    if v not in ("BLOCK", "REVIEW", "ALLOW"):
+        v = "INCOMPLETE"
     icon = {"BLOCK": "🔴", "REVIEW": "🟡", "ALLOW": "🟢"}.get(v, "⚪")
+    run_url = _own_url(run_url)
+    sha = re.sub(r"[^0-9a-fA-F]", "", str(h.get("head_sha") or ""))[:12]
     lines = [MARK, f"### {icon} Guardian: {v}" + ("" if h.get("complete") else " · incomplete"),
-             f"Commit `{(h.get('head_sha') or '')[:12]}`", ""]
-    lines += [f"- {_md(r)}" for r in (h.get("verdict_reasons") or [])[:8]]
-    lines += [f"- ⚠️ {_md(r)}" for r in (h.get("incomplete_reasons") or [])[:5]]
+             f"Commit `{sha}`", ""]
+    lines += [f"- {_neutral(r, run_url)}" for r in (h.get("verdict_reasons") or [])[:8]]
+    lines += [f"- ⚠️ {_neutral(r, run_url)}" for r in (h.get("incomplete_reasons") or [])[:5]]
     if run_url:
         lines += ["", f"[Open the run with evidence]({run_url})"]
     lines += ["", "_Scan decision only. A fix is shown as verified only after human approval and validation "

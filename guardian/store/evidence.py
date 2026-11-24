@@ -1,3 +1,7 @@
+# READING GUIDE
+# Persistent evidence store: content blobs on disk plus a SQLite index of IDs, source locations and hashes.
+# Agents cite IDs instead of copying arbitrary content. Hash verification checks stored bytes, not whether the claim is semantically true.
+#
 """Content-addressed evidence store (SQLite index + blob files).
 
 The same content always gets the same evidence id, so re-running a scan is idempotent
@@ -30,6 +34,7 @@ CREATE TABLE IF NOT EXISTS evidence (
 """
 
 
+# Store stable evidence IDs with source metadata, content hashes and on-disk blobs.
 class EvidenceStore:
     def __init__(self, root: Path):
         self.root = Path(root)
@@ -41,6 +46,7 @@ class EvidenceStore:
         self.db.execute(_SCHEMA)
         self.db.commit()
 
+    # Persist content once by hash and index the evidence identity, including its source location.
     def add(
         self,
         content: str | bytes | dict | list,
@@ -105,6 +111,7 @@ class EvidenceStore:
             raise KeyError(eid)
         return Path(ev.blob_path).read_text(errors="replace")
 
+    # Compare stored bytes with their recorded digest; this detects changed evidence content.
     def verify(self, eid: str) -> bool:
         """True if the blob still matches its recorded hash."""
         ev = self.get(eid)

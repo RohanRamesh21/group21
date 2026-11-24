@@ -1,3 +1,7 @@
+# READING GUIDE
+# Loads local environment configuration and selects a provider for callers that use this helper.
+# Existing environment variables take precedence. Never include secret values in comments, logs or committed examples.
+#
 """Load settings from guardian/.env (git-ignored, mode 600). Secrets are never printed or logged."""
 from __future__ import annotations
 
@@ -7,6 +11,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
+# Load configuration without replacing values already set in the process environment.
 def load_env(path: Path = ROOT / ".env") -> None:
     if not path.exists():
         return
@@ -18,6 +23,7 @@ def load_env(path: Path = ROOT / ".env") -> None:
         os.environ.setdefault(key.strip(), value.strip())
 
 
+# Choose a configured backend; the demonstration fallback is explicit rather than a real scan result.
 def provider() -> str:
     load_env()
     if os.environ.get("GUARDIAN_LLM_PROVIDER"):

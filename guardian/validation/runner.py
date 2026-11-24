@@ -1,3 +1,8 @@
+# READING GUIDE
+# Container execution and validation policy helpers: load profile, enforce allowed hooks, run stages, clean up, evaluate gate.
+# Profiles define commands and required checks; commands execute in restricted containers, not the scanning process.
+# Native hook build reuse is keyed by version/integrity, image and command; cache reuse is not fresh execution.
+#
 """Validation worker (stage ⑩): run a declared profile on the baseline and on the approved candidate, in a
 disposable, isolated container, then decide "verified" with deterministic gates (GUARDIAN_FINAL_PLAN.md §12.4, §13).
 
@@ -22,10 +27,12 @@ import yaml
 
 PROFILES = Path(__file__).resolve().parent / "profiles"
 NETWORK = "guardian-validate"
+RETRY_STAGES = {"target_test", "unit", "integration"}  # test stages only
 REGISTRY_CONTAINER = "verdaccio"
 
 
 # ---------------------------------------------------------------- profile + hooks (pure)
+# Load declared build/test instructions and hash their profile files for approval binding.
 def load_profile(name: str) -> tuple[dict, str, Path]:
     if not re.fullmatch(r"[a-z0-9][a-z0-9-]*", name or ""):
         raise FileNotFoundError(f"unknown profile {name!r}")
@@ -40,6 +47,7 @@ def load_profile(name: str) -> tuple[dict, str, Path]:
     return yaml.safe_load(f.read_text()), h.hexdigest(), folder
 
 
+# Permit only profile-listed install hooks with matching package version and lockfile integrity.
 def hook_plan(allow: list[dict], lock: dict) -> list[dict]:
     """Which lifecycle hooks may run: only exact name + version + integrity matches of the profile's exceptions."""
     pkgs = lock.get("packages") or {}
@@ -68,6 +76,7 @@ def _hook_key(h: dict, image_ref: str) -> str:
     return hashlib.sha256(f"{h['name']}|{h['version']}|{h['integrity']}|{image_ref}|{h['cmd']}".encode()).hexdigest()[:32]
 
 
+# Run or reuse allowed native hook outputs; cache identity includes the relevant build inputs.
 def run_hooks(container: str, st: dict, lock: dict, tree: Path, image_ref: str, cache: Path | None = None) -> dict:
     """Run the profile's allow-listed lifecycle hooks; reuse a verified earlier build when every input is identical."""
     cache = Path(cache or HOOK_CACHE)
@@ -107,6 +116,7 @@ def run_hooks(container: str, st: dict, lock: dict, tree: Path, image_ref: str, 
             "detail": "\n".join(outs)[-4000:]}
 
 
+# Build the restricted container command, including non-root user, network and resource limits.
 def docker_run_args(prof: dict, name: str, tree: str, image_ref: str) -> list[str]:
     r = prof.get("resources") or {}
     args = ["docker", "run", "-d", "--name", name, "--network", prof.get("network", NETWORK),
@@ -120,10 +130,14 @@ def docker_run_args(prof: dict, name: str, tree: str, image_ref: str) -> list[st
 
 
 # ---------------------------------------------------------------- gate (pure)
+# Evaluate recorded checks, target resolution, regressions and completeness; the model does not set verified.
 def gate(*, approval_ok: bool, approval_error: str | None, baseline: list[dict], candidate: list[dict], targets_resolved: list[str],
          targets_remaining: list[str], new_high: list[str], rescans_complete: bool, sbom_diff: dict, same_snapshot: bool,
-         evidence_ok: bool) -> dict:
+         evidence_ok: bool, generated: list[dict] | None = None) -> dict:
     reasons, failed, incomplete = [], False, False
+    for g in generated or []:  # AI-written test that passed on the PR's version and fails on the fixed one
+        failed = True
+        reasons.append(f"AI-written behaviour test for {g.get('package')}: {g.get('reason')}")
     if not approval_ok:
         failed = True
         reasons.append(f"approval: {approval_error}")
@@ -212,12 +226,14 @@ def _exec(name: str, cmd: str, timeout: int) -> tuple[int, str, float]:
         return 124, f"timed out after {timeout}s", round(time.time() - t0, 1)
 
 
+# Execute declared stages in order inside one sandbox; required failure prevents later stages from running.
 def run_profile(tree: Path, prof: dict, folder: Path, label: str, log=print) -> dict:
     """Run every stage of the profile on `tree`. A failed required stage stops later stages (marked not_run)."""
     ensure_network()
     ref = image_digest(prof["image"])
     name = f"guardian-val-{label}-{uuid.uuid4().hex[:6]}"
-    shutil.copy(folder / "integration.cjs", tree / ".guardian-integration.cjs")
+    if (folder / "integration.cjs").exists():  # profiles without an integration script (e.g. generic-npm) skip it
+        shutil.copy(folder / "integration.cjs", tree / ".guardian-integration.cjs")
     started = _run(docker_run_args(prof, name, str(tree), ref))
     if started.returncode != 0:
         raise RuntimeError(f"could not start the worker: {started.stderr[-300:]}")
@@ -236,6 +252,14 @@ def run_profile(tree: Path, prof: dict, folder: Path, label: str, log=print) -> 
                 cmd = st.get("cmd") or f"node .guardian-integration.cjs"
                 log(f"[{label}] {st['id']}: {cmd[:90]}")
                 code, out, dur = _exec(name, cmd, st.get("timeout", 600))
+                if code != 0 and st["id"] in RETRY_STAGES:
+                    # one retry for test stages: flaky tests are a known threat to reproducible validation (BUMP,
+                    # SANER 2024). A pass on retry is labelled, never silent; install/build failures are not retried.
+                    log(f"[{label}] {st['id']}: retry once (exit {code})")
+                    first = code
+                    code, out2, dur2 = _exec(name, cmd, st.get("timeout", 600))
+                    rec.update(retried=True, first_exit=first, flaky=code == 0)
+                    out, dur = out2, round(dur + dur2, 1)
                 rec.update(status="passed" if code == 0 else "failed", exit=code, seconds=dur, command=cmd, output=out)
                 if st["id"] == "integration":
                     line = next((ln for ln in reversed(out.splitlines()) if ln.startswith("{")), "{}")
@@ -244,8 +268,8 @@ def run_profile(tree: Path, prof: dict, folder: Path, label: str, log=print) -> 
                     except ValueError:
                         rec["integration"] = {}
                 stages.append(rec)
-            if stages[-1]["status"] != "passed" and rec["required"]:
-                stop = True
+            if stages[-1]["status"] != "passed" and rec["required"] and st["id"] not in RETRY_STAGES:
+                stop = True  # install/hooks/build failed: later stages can't run; a failed TEST stage lets the rest run
     finally:
         _run(["docker", "rm", "-f", name])
     log(f"[{label}] finished")
@@ -253,6 +277,7 @@ def run_profile(tree: Path, prof: dict, folder: Path, label: str, log=print) -> 
 
 
 # ---------------------------------------------------------------- trees
+# Export a selected commit and optionally check/apply the exact approved patch into a disposable tree.
 def prepare_tree(repo: Path, sha: str, dest: Path, patch: Path | None = None, patch_sha256: str | None = None) -> Path:
     from guardian.remediation.patch import export_tree
     if dest.exists():
@@ -285,4 +310,4 @@ def profile_for(repo: str) -> str:
         doc = yaml.safe_load(f.read_text()) or {}
         if repo in (doc.get("repos") or []):
             return doc["name"]
-    return "uptime-kuma"
+    return "generic-npm" if repo else "uptime-kuma"  # any other repository: the automatic npm profile

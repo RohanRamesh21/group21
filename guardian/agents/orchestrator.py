@@ -1,3 +1,9 @@
+# READING GUIDE
+# Older LangGraph orchestration: Lead plans -> parallel task workers -> Skeptic challenges -> workers respond.
+# Routing reads the shared Board after each step; it does not let the model directly choose arbitrary code to run.
+# Read run() for execution, _build() for graph wiring, and route() for the next-step decision.
+# This is the optional deep/replay loop. Normal dashboard investigation is guardian/ai/workflow.py.
+#
 """LangGraph control loop (AGENTIC_CORE §4 and §8).
 
 lead -> (tasks?) workers [parallel via Send] -> (hypotheses?) skeptic -> (challenges?) respond
@@ -17,13 +23,16 @@ from guardian.agents.board import Board
 from guardian.agents.tools import ToolRegistry
 
 
+# LangGraph envelope: workers receive a task ID and share Board; done lists are merged with operator.add.
 class State(TypedDict, total=False):
     board: Board
     task_id: str
     done: Annotated[list, operator.add]
 
 
+# Coordinates the optional multi-turn loop. The Board carries business state between graph nodes.
 class Orchestrator:
+    # Create persistent Lead/Skeptic conversations, task-worker history and unread-message cursors.
     def __init__(self, board: Board, registry: ToolRegistry, backend, max_rounds: int = 30):
         self.board, self.registry, self.backend = board, registry, backend
         self.max_rounds = max_rounds
@@ -34,18 +43,22 @@ class Orchestrator:
         self.graph = self._build()
 
     # --- helpers -------------------------------------------------------------
+    # Read only new messages addressed to this role, using its cursor into the shared message list.
     def _unread(self, agent: str) -> list:
         msgs = [m for m in self.board.messages[self.seen[agent]:] if m.recipient == agent]
         return msgs
 
+    # Advance this role's cursor after collecting its messages to avoid rereading the same batch.
     def _mark_read(self, agent: str) -> None:
         self.seen[agent] = len(self.board.messages)
 
+    # Serialize protocol fields into the next agent brief without exposing internal run bookkeeping.
     @staticmethod
     def _fmt(msgs) -> str:
         return "\n".join(json.dumps(m.model_dump(exclude_none=True, exclude={"run_id"})) for m in msgs) or "(none)"
 
     # --- nodes ---------------------------------------------------------------
+    # Start or resume planning; new evidence and Board summaries let the Lead dispatch or resolve work.
     def lead_node(self, state: State) -> dict:
         self.board.rounds += 1
         news = self._unread("lead")
@@ -59,12 +72,15 @@ class Orchestrator:
         self.lead.run(text)
         return {}
 
+    # Routing node only: actual worker creation is described by fan_out(), not this empty body.
     def dispatch_node(self, state: State) -> dict:
         return {}
 
+    # Return one LangGraph Send per open task so independent workers can be scheduled in parallel.
     def fan_out(self, state: State):
         return [Send("worker", {"board": self.board, "task_id": t.id}) for t in self.board.open_tasks()]
 
+    # Run the assigned specialist with a task-specific conversation and explicit acceptance criteria.
     def worker_node(self, state: State) -> dict:
         task = self.board.tasks[state["task_id"]]
         task.status = "running"
@@ -77,6 +93,7 @@ class Orchestrator:
             task.status = "done" if result != "exhausted" else "exhausted"
         return {"done": [task.id]}
 
+    # Give new claims to the independent reviewer, which requests evidence or reports missed risks.
     def skeptic_node(self, state: State) -> dict:
         news = self._unread("skeptic")
         self._mark_read("skeptic")
@@ -84,6 +101,7 @@ class Orchestrator:
                          "\nChallenge, corroborate, dispute, clear (non-hard only) or report missed risks.")
         return {}
 
+    # Continue the relevant specialist's conversation when a Skeptic challenge needs an answer.
     def respond_node(self, state: State) -> dict:
         for role in ("hunter", "forensics"):
             news = self._unread(role)
@@ -96,8 +114,10 @@ class Orchestrator:
         return {}
 
     # --- routing -------------------------------------------------------------
+    # Stop on verdict/round limit; otherwise prioritize tasks, then review, replies and finally replanning.
     def route(self, state: State) -> str:
         b = self.board
+        # A round-limit stop is a safety bound, not evidence that every case reached a successful resolution.
         if b.verdict or b.rounds >= self.max_rounds:
             return END
         if b.open_tasks():
@@ -108,6 +128,7 @@ class Orchestrator:
             return "respond"
         return "lead"
 
+    # Declare graph nodes and conditional edges; compile the control flow once before execution.
     def _build(self):
         g = StateGraph(State)
         g.add_node("lead", self.lead_node)
@@ -119,10 +140,12 @@ class Orchestrator:
         targets = {"dispatch": "dispatch", "skeptic": "skeptic", "respond": "respond", "lead": "lead", END: END}
         for node in ("lead", "skeptic", "respond"):
             g.add_conditional_edges(node, self.route, targets)
+        # Send fan-out supplies different task IDs to workers; the other conditional edges choose the next review/planning node.
         g.add_conditional_edges("dispatch", self.fan_out, ["worker"])
         g.add_conditional_edges("worker", self.route, targets)
         return g.compile()
 
+    # Invoke the compiled graph with a recursion cap. Returning a Board is not itself proof a verdict was reached.
     def run(self) -> Board:
         self.graph.invoke({"board": self.board, "done": []}, {"recursion_limit": 200})
         return self.board

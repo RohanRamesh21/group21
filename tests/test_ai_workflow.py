@@ -70,7 +70,7 @@ def test_packet_groups_introduced_findings_into_cases_with_stored_evidence(run):
     lock = next(ev for ev in axois["evidence"] if ev["source"] == "lockfile_entry")
     assert "127.0.0.1:4873" in lock["content"] and "hasInstallScript" in lock["content"]
     texts = [ev["content"] for ev in axois["evidence"] if ev["source"] == "engine_finding"]
-    assert all("<untrusted-data>" in t for t in texts if "Ignore previous" in t)
+    assert all("<untrusted-data " in t for t in texts if "Ignore previous" in t)
 
 
 def test_packet_is_deterministic(run):
@@ -176,7 +176,7 @@ def test_packet_includes_the_file_an_install_hook_runs(run, tmp_path):
     (tb / "axois-1.0.0.tgz").write_bytes(buf.getvalue())
     axois = next(c for c in build_packets(run, tarballs=tb)["cases"] if c["component"] == "axois@1.0.0")
     hook = next(e for e in axois["evidence"] if e["source"] == "hook_file")
-    assert hook["path"] == "axois@1.0.0/setup.js" and "writeFileSync" in hook["content"] and "<untrusted-data>" in hook["content"]
+    assert hook["path"] == "axois@1.0.0/setup.js" and "writeFileSync" in hook["content"] and "<untrusted-data " in hook["content"]
     scripts = next(e for e in axois["evidence"] if e["source"] == "package_scripts")
     assert "postinstall" in scripts["content"] and '"test"' not in scripts["content"]
 

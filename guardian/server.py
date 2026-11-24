@@ -1,3 +1,8 @@
+# READING GUIDE
+# FastAPI coordination layer: dashboard actions call project, investigation, fix, approval, validation and report services.
+# Request models describe API input. Helpers resolve the selected run folder; business logic lives in the imported modules.
+# Several long operations run in background threads, with progress read by polling or server-sent events.
+#
 """Dashboard backend: starts agent runs in the background and streams the shared board over SSE.
 
 Run:  .venv/bin/uvicorn guardian.server:app --port 8765
@@ -211,6 +216,7 @@ def _profile_of(project: str | None, default: str = "uptime-kuma") -> str:
     return profile_for(run["repo"]) if run else default
 
 
+# Resolve a dashboard project ID into a local run or GitHub PR-run folder.
 def _check_dir(project: str | None) -> Path:
     from guardian import projects
     if project and project.startswith("gh-"):
@@ -367,6 +373,7 @@ class FixReq(BaseModel):
     include: list[str] = []
 
 
+# Create deterministic remedy candidates and a patch from this run's saved repository/commits.
 @app.post("/api/fix-plan")
 def fix_plan_create(req: FixReq):
     """Propose fixes for the latest run: deterministic candidates + one combined patch (nothing is applied)."""
@@ -420,6 +427,7 @@ class ApprovalReq(BaseModel):
     reviewed: bool = False  # the approver confirms they looked at the exact patch (required to approve)
 
 
+# Accept a persons explicit decision after the patch-review checks and bind it to the current contract.
 @app.post("/api/approval")
 def approval_create(req: ApprovalReq):
     """A person approves or rejects the current fix plan. Bound to base, head, patch hash, policy hash, profile hash."""
@@ -499,6 +507,42 @@ def risk_accept(req: RiskReq):
 class ValidateReq(BaseModel):
     project: str | None = None
     profile: str = "uptime-kuma"
+    force: bool = False  # run even when the readiness pre-check predicts failure (the gate still decides honestly)
+
+
+class RepairReq(BaseModel):
+    project: str | None = None
+
+
+# Request a new repair proposal after failure; a replacement patch still needs fresh approval.
+@app.post("/api/repair")
+def repair_start(req: RepairReq):
+    """Failed validation -> remember what failed -> recompute the fix without those versions (needs re-approval)."""
+    from guardian.remediation import repair
+    out = _check_dir(req.project)
+    if _VALIDATING.get(str(out)) == "running":
+        raise HTTPException(409, "validation is running")
+    if not (out / "validation.json").exists():
+        raise HTTPException(409, "no validation result to learn from yet")
+    try:
+        return repair.repair(out)
+    except Exception as e:  # recorded, never hidden
+        raise HTTPException(500, f"repair failed: {type(e).__name__}: {e}"[:300])
+
+
+@app.get("/api/repair")
+def repair_memory(project: str | None = None):
+    from guardian.remediation import repair
+    return {"memory": repair.load(_check_dir(project)), "max_attempts": repair.MAX_ATTEMPTS}
+
+
+@app.get("/api/validation/readiness")
+def validation_readiness(project: str | None = None):
+    """Can this fix pass validation? Static pre-check (no code runs): plan, merge base, profile, required packages,
+    approval, sandbox prerequisites. Shown before approving and before validating."""
+    from guardian.validation import readiness
+    run = _gh_run(project)
+    return readiness.check(_check_dir(project), run["repo"] if run else None, _profile_of(project))
 
 
 _VALIDATING: dict[str, str] = {}
@@ -511,6 +555,7 @@ class SessionStopped(Exception):
     pass
 
 
+# Start validation for the selected run; validation itself rechecks authorization before execution.
 @app.post("/api/validate")
 def validate_start(req: ValidateReq):
     """Run validation in the background (it takes minutes). Refuses to execute anything without a matching approval."""
@@ -521,6 +566,13 @@ def validate_start(req: ValidateReq):
     key = str(out)
     if _VALIDATING.get(key) == "running":
         raise HTTPException(409, "validation already running")
+    if not req.force:  # a run that cannot pass costs minutes and teaches nothing: say why before starting
+        from guardian.validation import readiness
+        run = _gh_run(req.project)
+        ready = readiness.check(out, run["repo"] if run else None, _profile_of(req.project))
+        blocking = [c for c in ready["checks"] if c["blocking"] and not c["ok"]]
+        if blocking:
+            raise HTTPException(409, "not ready to validate: " + "; ".join(f"{c['title']}: {c['detail']}" for c in blocking)[:600])
     _VALIDATING[key] = "running"
     stop_session_flags.pop(key, None)
 
@@ -579,6 +631,7 @@ class InvestigateReq(BaseModel):
     fix_review: bool = True  # then the Fixer: rules propose the patch (if none yet), the model explains and questions it
 
 
+# Start the current evidence-packet investigation for the selected run and record background progress.
 @app.post("/api/investigate")
 def investigate_start(req: InvestigateReq):
     """Budgeted AI investigation in the background: 1 call per case (parallel) + 1 Verifier call (+1 batched
@@ -616,6 +669,7 @@ def investigate_start(req: InvestigateReq):
     return {"status": "started"}
 
 
+# Run advisory AI review of an existing computed fix plan; this helper does not approve it.
 def _fixer(out: Path, emit) -> None:
     """Fixer step of the one-click run. Versions and the patch come from rules; the model only explains and questions."""
     import guardian.remediation.plan as plan_mod
@@ -665,6 +719,7 @@ def ai_usage(run_id: str | None = None):
     return llm_budget.summary(run_id)
 
 
+# Build the same combined run model used by reports so UI sections use consistent saved evidence.
 @app.get("/api/run")
 def run_view(project: str | None = None):
     """Everything the Run page shows, from the same builder as the Guardian report (one source of truth)."""
@@ -811,6 +866,7 @@ class StopReq(BaseModel):
     project: str | None = None
 
 
+# Request cancellation of active work; this is separate from approving, rejecting or deleting results.
 @app.post("/api/session/stop")
 def session_stop(req: StopReq):
     """Buddy 'Stop session': stop what is running for this run (scan, agents, validation). Nothing is approved,

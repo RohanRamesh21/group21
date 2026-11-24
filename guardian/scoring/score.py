@@ -1,3 +1,8 @@
+# READING GUIDE
+# Deterministic finding scoring: hard floors -> SSVC decision/level -> additive AHP priority contributions.
+# Priority orders findings; it is not an attack probability. The merge verdict is delegated to scoring/verdict.py.
+# AI can propose weights through advisor.py, but these calculations use code and only approved weight settings.
+#
 """Explainable risk scoring for a `guardian check` report. Deterministic: no AI computes or edits a score.
 An AI may only PROPOSE the AHP pairwise matrix (guardian/scoring/advisor.py); it takes effect after a code referee and a human approve it.
 
@@ -37,6 +42,7 @@ AHP_MATRIX = [
 RANDOM_INDEX = {1: 0.0, 2: 0.0, 3: 0.58, 4: 0.90, 5: 1.12, 6: 1.24, 7: 1.32}
 
 
+# Compute weights and consistency from a comparison matrix using power iteration, not an AI score.
 def ahp(matrix=AHP_MATRIX, criteria=None) -> dict:
     """Principal eigenvector by power iteration, lambda_max, consistency index and ratio (Saaty).
 
@@ -118,6 +124,7 @@ def mission(f: dict) -> str:
     return "essential" if f.get("direct") else "support"
 
 
+# Map exploitation, automatability, impact and importance through the project's decision table.
 def ssvc(expl: str, auto: str, impact: str, mis: str) -> tuple[str, str]:
     """Decision table adapted from CISA SSVC (deployer view). Returns (decision, rule text)."""
     a, t = auto == "yes", impact == "total"
@@ -141,6 +148,7 @@ def ssvc(expl: str, auto: str, impact: str, mis: str) -> tuple[str, str]:
     return "Track", "no sign of attack"
 
 
+# Keep per-factor points so the displayed priority can be explained as an additive calculation.
 def _contrib(factors: dict, w: dict | None = None) -> tuple[float, list]:
     w = w or W
     rows = [{"factor": k, "value": round(factors[k]["value"], 3), "weight": w[k],
@@ -155,6 +163,7 @@ def _decide(level_from_rules: str | None, decision: str) -> str:
     return lv
 
 
+# Score recorded findings and attach explanations/metadata before applying the shared verdict rule.
 def score_report(report: dict, reach: dict | None = None, weights: dict | None = None, matrix_info: dict | None = None) -> dict:
     """Score a check report. `reach` (optional, contextual scoring) maps a vulnerability key to a reachability record
     (guardian/scoring/contextual/reachability.py). It only ever changes CVE findings, never a hard-signal finding.

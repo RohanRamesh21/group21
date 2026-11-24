@@ -1,3 +1,7 @@
+# READING GUIDE
+# Fix coordinator: load saved findings, verify requested commits match the scan, generate candidates and build one patch.
+# The saved plan is a proposal. Generating it does not apply changes to the user's working repository.
+#
 """Fix plan for a finished run: candidates for the change's findings + one combined patch, bound to full commits.
 
 The plan is a proposal. Nothing is applied to the user's repository; approval (M5) binds to the patch hash.
@@ -32,6 +36,7 @@ def load_run(out_dir: Path) -> tuple[dict, dict]:
     return report, json.loads(Path(latest["scores"]).read_text())
 
 
+# Ensure findings belong to the requested commits before generating candidates and one reviewable patch.
 def propose(repo: Path, base: str | None, head: str, out_dir: Path, include: list[str] | tuple = (),
             sources: Sources | None = None) -> dict:
     repo, out_dir = Path(repo), Path(out_dir)

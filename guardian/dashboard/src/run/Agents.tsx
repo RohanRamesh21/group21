@@ -9,7 +9,7 @@ import { api, Badge, jsonPost, q, SectionHead, type Finding, type Sections, type
    Every status and number comes from /api/investigation(/events), /api/run and /api/ai/usage. Nothing is simulated. */
 
 type AgentId = "lead" | "investigator" | "verifier" | "fixer" | "gatekeeper" | "human";
-type State = "idle" | "queued" | "running" | "done" | "partial" | "failed" | "waiting";
+type State = "idle" | "queued" | "running" | "done" | "partial" | "failed" | "waiting" | "rules";
 type Ev = { agent: AgentId; state: string; [k: string]: any };
 type Usage = { calls: number; cached_calls: number; tokens: number; seconds: number };
 type UsageSummary = { run: Usage; month: Usage; budget: { run: number; month: number }; month_left: number };
@@ -27,7 +27,7 @@ const norm = (x?: string): State => x === "done" || x === "finished" ? "done" : 
   : x === "partial" || x === "budget_reached" ? "partial" : x === "failed" || x === "unavailable" ? "failed" : x === "skipped" ? "idle" : x ? "done" : "idle";
 
 function stateLabel(s: State) {
-  return { idle: "not run", queued: "queued", running: "working", done: "done", partial: "partial", failed: "failed", waiting: "needs you" }[s];
+  return { idle: "not run", queued: "queued", running: "working", done: "done", partial: "partial", failed: "failed", waiting: "needs you", rules: "rules only" }[s];
 }
 
 function Meter({ u }: { u: UsageSummary | null }) {
@@ -51,9 +51,9 @@ function Connector({ flow, done }: { flow: boolean; done: boolean }) {
     </div>);
 }
 
-const CASE_DOT: Record<string, string> = { done: "bg-ok", running: "bg-accent", partial: "bg-high", waiting: "bg-high", failed: "bg-crit", idle: "bg-white/25", queued: "bg-white/25" };
-const CASE_WORD: Record<string, string> = { done: "done", running: "working", partial: "partial", waiting: "waiting", failed: "failed", idle: "not investigated", queued: "queued" };
-const CASE_RANK: Record<string, number> = { running: 0, failed: 1, partial: 2, waiting: 2, queued: 3, idle: 3, done: 4 };
+const CASE_DOT: Record<string, string> = { rules: "bg-info/50", done: "bg-ok", running: "bg-accent", partial: "bg-high", waiting: "bg-high", failed: "bg-crit", idle: "bg-white/25", queued: "bg-white/25" };
+const CASE_WORD: Record<string, string> = { rules: "covered by rules (medium/low)", done: "investigated", running: "working", partial: "partial", waiting: "waiting", failed: "failed", idle: "not investigated", queued: "queued" };
+const CASE_RANK: Record<string, number> = { running: 0, failed: 1, partial: 2, waiting: 2, queued: 3, idle: 3, done: 4, rules: 5 };
 const shortName = (x: string) => (x.includes("/") ? `…/${x.split("/").pop()}` : x);
 
 /* Many cases (a large PR) must not turn the card into a wall of names: a status bar with counts, the cases that
@@ -154,15 +154,16 @@ function Detail({ id, s, inv, findings, onPick }: { id: AgentId; s: Sections; in
       <div>
       {tally([["malicious", cases.filter((c) => c.assessment === "malicious").length], ["vulnerable", cases.filter((c) => c.assessment === "vulnerable").length],
         ["risky config", cases.filter((c) => c.assessment === "risky_config").length], ["unclear", cases.filter((c) => c.assessment === "unclear").length],
-        ["benign", cases.filter((c) => c.assessment === "benign").length], ["not investigated (budget / limit)", cases.filter((c) => c.status !== "done").length]])}
-      <ul className="mt-3 grid gap-3 lg:grid-cols-2">{shown([...cases].sort((a, b) => (AR[a.assessment] ?? 5) - (AR[b.assessment] ?? 5) || sevRank(a) - sevRank(b))).map((c: any, i: number) => (
+        ["benign", cases.filter((c) => c.assessment === "benign").length], ["covered by rules (medium/low)", cases.filter((c) => c.status === "rules_only").length],
+        ["not examined", cases.filter((c) => c.status !== "done" && c.status !== "rules_only").length]])}
+      <ul className="mt-3 grid gap-3 lg:grid-cols-2">{shown([...cases].sort((a, b) => Number(a.status === "rules_only") - Number(b.status === "rules_only") || (AR[a.assessment] ?? 5) - (AR[b.assessment] ?? 5) || sevRank(a) - sevRank(b))).map((c: any, i: number) => (
         <motion.li key={c.case_id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ ...spring, delay: i * 0.06 }} className="rounded-xl bg-raised p-3.5">
           <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
             <span className="font-mono">{c.component}</span>
             {c.assessment && <span className={`rounded px-1.5 py-0.5 text-[10.5px] font-medium ${ASSESS[c.assessment] ?? ASSESS.unclear}`}>{c.assessment.replace("_", " ")}</span>}
             {c.confidence && <span className="text-[11px] text-faint">model confidence {c.confidence}</span>}
             {c.cached && <span className="text-[10.5px] text-faint" title="Same evidence as before: answered from cache, 0 tokens">cached</span>}
-            {c.status !== "done" && <span className="ml-auto text-[11px] text-high">{c.status.replace("_", " ")}</span>}
+            {c.status !== "done" && <span className={`ml-auto text-[11px] ${c.status === "rules_only" ? "text-faint" : "text-high"}`}>{c.status === "rules_only" ? "covered by rules" : c.status.replace("_", " ")}</span>}
           </div>
           {c.summary && <p className="mt-2 text-[12.5px] leading-relaxed">{c.summary}</p>}
           <ul className="mt-2 space-y-1.5 text-[12px] text-muted">{c.claims.map((cl: any, k: number) => <li key={k} className="leading-relaxed">• {cl.text}<EvChips ids={cl.evidence_ids} index={index} /></li>)}</ul>
@@ -302,7 +303,8 @@ export function Agents({ s, project, refresh, onPick }: { s: Sections; project: 
   const last = (a: AgentId) => [...(events ?? [])].reverse().find((e) => e.agent === a);
   const caseStates: { id: string; component: string; state: State }[] = live
     ? Object.values((events ?? []).filter((e) => e.agent === "investigator").reduce((m: Record<string, any>, e) => ({ ...m, [e.case]: { id: e.case, component: e.component, state: norm(e.state) } }), {}))
-    : (inv?.cases ?? []).map((c: any) => ({ id: c.case_id, component: c.component, state: norm(c.status === "not_investigated" ? "skipped" : c.status) }));
+    : (inv?.cases ?? []).map((c: any) => ({ id: c.case_id, component: c.component,
+        state: c.status === "rules_only" ? "rules" as State : norm(c.status === "not_investigated" ? "partial" : c.status) }));
   const savedFixer: State = rem.review?.status === "done" ? "done" : rem.review?.status === "unavailable" ? "failed" : rem.status !== "not_started" ? "partial" : "idle";
   const st: Record<AgentId, State> = live ? {
     lead: last("lead") ? "done" : "running",
@@ -313,7 +315,7 @@ export function Agents({ s, project, refresh, onPick }: { s: Sections; project: 
     human: last("human") ? "waiting" : "queued",
   } : {
     lead: inv?.cases ? "done" : "idle",
-    investigator: !inv?.cases ? "idle" : caseStates.every((c) => c.state === "done") ? "done" : "partial",
+    investigator: !inv?.cases ? "idle" : caseStates.every((c) => c.state === "done" || c.state === "rules") ? "done" : "partial",
     verifier: inv?.verifier ? norm(inv.verifier.status) : "idle",
     fixer: savedFixer,
     gatekeeper: inv?.cases ? "done" : "idle",

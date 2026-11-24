@@ -41,7 +41,8 @@ def test_validate_endpoint_refuses_without_approval(client, monkeypatch):
     from guardian.validation import runner
     c, out = client
     monkeypatch.setattr(runner, "run_profile", lambda *a, **k: pytest.fail("must not run"))
-    r = c.post("/api/validate", json={})
+    # force past the readiness pre-check: this test is about the approval gate inside validate() itself
+    r = c.post("/api/validate", json={"force": True})
     assert r.status_code == 200
     import time
     for _ in range(50):
@@ -50,3 +51,13 @@ def test_validate_endpoint_refuses_without_approval(client, monkeypatch):
         time.sleep(0.05)
     v = c.get("/api/validation").json()
     assert v["executed"] is False and v["gate"]["verified"] is False
+
+
+def test_validate_endpoint_explains_why_a_run_cannot_pass_before_starting(client, monkeypatch):
+    from guardian.validation import runner
+    c, out = client
+    monkeypatch.setattr(runner, "run_profile", lambda *a, **k: pytest.fail("must not run"))
+    r = c.post("/api/validate", json={})
+    assert r.status_code == 409 and "not ready to validate" in r.json()["detail"]
+    ready = c.get("/api/validation/readiness").json()
+    assert ready["ready"] is False and any(not x["ok"] for x in ready["checks"])

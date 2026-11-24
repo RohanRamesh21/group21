@@ -41,6 +41,20 @@ def git_fetch_pr(root: Path):
     return fetch
 
 
+def comparison_base(mirror: Path, base_sha: str | None, head_sha: str) -> str | None:
+    """The commit a PR is compared with: the merge base of the base branch and the PR head, as GitHub's "Files changed"
+    does. With the base branch's current tip instead, every commit that landed on the base after the PR branched off
+    looks introduced by the PR. Equal to the tip for an up-to-date branch; falls back to the given base if git can't tell."""
+    if not base_sha:
+        return base_sha
+    try:
+        r = subprocess.run(["git", "-C", str(mirror), "merge-base", base_sha, head_sha], capture_output=True, text=True, timeout=60)
+        mb = r.stdout.strip()
+        return mb if r.returncode == 0 and re.fullmatch(r"[0-9a-f]{40}", mb) else base_sha
+    except (OSError, subprocess.SubprocessError):
+        return base_sha
+
+
 class Service:
     def __init__(self, root: Path, *, fetch, engine, github: GitHub | None, identity_parts, run_url=None):
         self.root = Path(root)
@@ -90,8 +104,9 @@ class Service:
             return {"status": "stale", "run": run, "reason": "the PR moved after the event; the newer event starts a new run"}
         if stopped():
             return {"status": "cancelled", "run": self.queue.get(rid)}
-        self.events.append(rid, "scan_started", {"commit": actual})
-        rep = self.engine(mirror, e.get("base_sha"), e["head_sha"], self.root / "runs" / rid, e["repo"].split("/")[-1])
+        base = comparison_base(mirror, e.get("base_sha"), e["head_sha"])
+        self.events.append(rid, "scan_started", {"commit": actual, "comparison_base": base, "base_tip": e.get("base_sha")})
+        rep = self.engine(mirror, base, e["head_sha"], self.root / "runs" / rid, e["repo"].split("/")[-1])
         if stopped():  # stopped while the engine ran: its result is kept on disk, but no verdict is posted or acted on
             self.queue.finish(rid, {"stopped": True})
             return {"status": "cancelled", "run": self.queue.get(rid)}

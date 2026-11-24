@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  ArrowRight, CheckCircle, CircleNotch, Cube, Gavel, Hammer, LockKey, MagnifyingGlass, Package, Play, Plug, Pulse,
+  ArrowClockwise, ArrowRight, CheckCircle, Wrench, CircleNotch, Cube, Gavel, Hammer, LockKey, MagnifyingGlass, Package, Play, Plug, Pulse,
   ShieldCheck, Stack, Terminal, TestTube, Timer, WarningCircle, XCircle,
 } from "@phosphor-icons/react";
 import { spring } from "../ui";
-import { api, jsonPost, q, SectionHead, type Sections } from "./shared";
+import { api, Badge, jsonPost, q, SectionHead, type Sections } from "./shared";
 import { Verdict } from "./Shell";
 
 /* ------------------------------------------------------------------ model of a validation run --------------------
@@ -205,12 +205,38 @@ function LiveProgress({ prog, startedAt, log }: { prog: Prog; startedAt: number 
     </motion.div>);
 }
 
+type Check = { id: string; ok: boolean; blocking: boolean; title: string; detail: string; fix?: string };
+type Readiness = { ready: boolean; approved: boolean; checks: Check[] };
+
+/* Static pre-check (no code runs): would this fix pass at all? Shown before approving and before validating. */
+function ReadinessCard({ r }: { r: Readiness | null }) {
+  if (!r) return null;
+  const bad = r.checks.filter((c) => !c.ok);
+  return (
+    <div className={`rounded-xl p-4 ring-1 ${r.ready ? "bg-ok/5 ring-ok/25" : "bg-high/5 ring-high/30"}`}>
+      <div className="flex flex-wrap items-center gap-2 text-[13px] font-semibold">
+        {r.ready ? <CheckCircle className="text-ok" weight="fill" size={16} /> : <WarningCircle className="text-high" weight="fill" size={16} />}
+        {r.ready ? (r.approved ? "Ready to validate" : "Fix can pass validation: waiting for your approval") : "This fix cannot pass validation yet"}
+        <span className="font-normal text-faint">· pre-check, nothing executed</span>
+      </div>
+      <ul className="mt-2 grid gap-1 text-[12px] md:grid-cols-2">{r.checks.map((c) => (
+        <li key={c.id} className="flex items-start gap-1.5">
+          {c.ok ? <CheckCircle className="mt-0.5 shrink-0 text-ok" weight="fill" size={13} /> : c.blocking
+            ? <XCircle className="mt-0.5 shrink-0 text-crit" weight="fill" size={13} /> : <WarningCircle className="mt-0.5 shrink-0 text-high" weight="fill" size={13} />}
+          <span><span className={c.ok ? "text-muted" : "text-ink"}>{c.title}</span>{!c.ok && <span className="text-faint"> · {c.detail}</span>}
+            {!c.ok && c.fix && <span className="block text-[11.5px] text-accent">→ {c.fix}</span>}</span></li>))}</ul>
+      {bad.length === 0 && <p className="mt-1 text-[11.5px] text-faint">Every check passed.</p>}
+    </div>);
+}
+
 /* ------------------------------------------------------------------ validation panel --------------------------- */
 
 const finalStates = (side: any): Record<string, string> => Object.fromEntries((side?.stages ?? []).map((x: any) => [x.id, x.status]));
 const finalSecs = (side: any): Record<string, number> => Object.fromEntries((side?.stages ?? []).map((x: any) => [x.id, x.seconds]));
-const finalNotes = (side: any): Record<string, string> => Object.fromEntries((side?.stages ?? [])
-  .filter((x: any) => x.id === "hooks" && (x.hooks ?? []).some((h: any) => h.cache === "hit")).map((x: any) => [x.id, "reused verified build"]));
+const finalNotes = (side: any): Record<string, string> => Object.fromEntries([
+  ...(side?.stages ?? []).filter((x: any) => x.id === "hooks" && (x.hooks ?? []).some((h: any) => h.cache === "hit")).map((x: any) => [x.id, "reused verified build"]),
+  ...(side?.stages ?? []).filter((x: any) => x.flaky).map((x: any) => [x.id, "passed on retry (flaky)"]),
+]);
 
 function Validation({ project, s, refresh, onRunning }: { project: string | null; s: Sections; refresh: () => void; onRunning?: (r: boolean) => void }) {
   const [state, setState] = useState<{ status?: string; message?: string; progress?: Prog } | null>(null);
@@ -218,6 +244,16 @@ function Validation({ project, s, refresh, onRunning }: { project: string | null
   const [log, setLog] = useState<{ t: number; m: string }[]>([]);
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const timer = useRef<number | null>(null);
+  const [ready, setReady] = useState<Readiness | null>(null);
+  const [mem, setMem] = useState<any[]>([]);
+  const [rep, setRep] = useState<any>(null);
+  const [repBusy, setRepBusy] = useState(false);
+  const loadMem = useCallback(() => api(`/api/repair${q(project)}`).then((r) => setMem(r.memory ?? [])).catch(() => {}), [project]);
+  const repair = async () => {
+    setRepBusy(true); setErr(null);
+    try { const r = await api("/api/repair", jsonPost({ project })); setRep(r); await loadMem(); refreshRef.current(); }
+    catch (e) { setErr((e as Error).message); } finally { setRepBusy(false); }
+  };
   const refreshRef = useRef(refresh);
   refreshRef.current = refresh;
   const v = s.validation;
@@ -248,9 +284,15 @@ function Validation({ project, s, refresh, onRunning }: { project: string | null
     return () => { alive = false; if (timer.current) window.clearInterval(timer.current); };
   }, [project, poll, onStatus]);
 
-  const start = async () => {
+  useEffect(() => { // pre-check whenever the run's data changes (approval, recomputed fix, finished validation)
+    if (state?.status === "running") return;
+    api(`/api/validation/readiness${q(project)}`).then(setReady).catch(() => setReady(null));
+    loadMem();
+  }, [project, s.remediation?.status, s.remediation?.patch?.patch_sha256, v.finished, state?.status]);
+
+  const start = async (force = false) => {
     setErr(null); setLog([]); setStartedAt(Date.now());
-    try { await api("/api/validate", jsonPost({ project })); setState({ status: "running" }); poll(); }
+    try { await api("/api/validate", jsonPost({ project, force })); setState({ status: "running" }); poll(); }
     catch (e) { setErr((e as Error).message); }
   };
 
@@ -267,7 +309,6 @@ function Validation({ project, s, refresh, onRunning }: { project: string | null
         {g && !running && (
           <>
             <span className="text-[12px] text-faint">Last run {v.finished ? new Date(v.finished * 1000).toLocaleString() : ""}</span>
-            <button onClick={start} className="ml-auto rounded-md px-2.5 py-1 text-[12px] text-accent ring-1 ring-accent/40 transition hover:bg-accent/10 active:scale-[0.98]">Run validation again</button>
           </>)}
       </div>
 
@@ -277,12 +318,14 @@ function Validation({ project, s, refresh, onRunning }: { project: string | null
         <div className="mt-3 space-y-5">
           <p className="max-w-[70ch] text-[12.5px] text-muted">Two copies of the app go into locked Docker sandboxes <b className="text-ink">at the same time</b>: the target branch before this PR (the known-good baseline)
             and the pull request with your approved patch. Both are installed, built and tested while the fixed version is rescanned. Fixed rules decide “verified”.</p>
+          <ReadinessCard r={ready} />
           <PhaseRail states={[]} />
           <div className="flex flex-wrap items-center gap-3">
-            <button onClick={start} disabled={!approved}
+            <button onClick={() => start()} disabled={!approved || ready?.ready === false}
               title={!approved ? "A person must approve the fix first" : ""}
               className="flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-[13px] font-medium text-white shadow-[0_0_24px_-6px] shadow-accent/60 transition hover:brightness-110 active:scale-[0.98] disabled:opacity-40 disabled:shadow-none">
               <Play weight="fill" size={14} />Validate approved fix</button>
+            {ready?.ready === false && approved && <button onClick={() => start(true)} className="text-[11.5px] text-faint underline-offset-2 hover:text-ink hover:underline">run anyway</button>}
             <span className="text-[12px] text-faint">{approved ? "takes about 1.5–2 minutes" : "approve the fix in step 4 first"}</span>
           </div>
           <SandboxBadges />
@@ -297,7 +340,38 @@ function Validation({ project, s, refresh, onRunning }: { project: string | null
             <span className="rounded bg-raised px-2 py-1">validation: <b className={g.validation === "passed" ? "text-ok" : g.validation === "incomplete" ? "text-high" : "text-crit"}>{g.validation}</b></span>
             <span className={`rounded px-2 py-1 ${g.verified ? "bg-ok/10 ring-1 ring-ok/30" : "bg-raised"}`}>verified: <b className={g.verified ? "text-ok" : "text-crit"}>{g.verified ? "yes" : "no"}</b></span>
           </div>
-          {g.reasons?.length > 0 && <ul className="list-disc pl-5 text-[12px] text-muted">{g.reasons.map((r: string) => <li key={r}>{r}</li>)}</ul>}
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={() => start()} disabled={!approved || ready?.ready === false}
+              title={approved ? "Build, test and rescan the approved fix again" : "A valid approval is needed first"}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-[12.5px] font-medium transition active:scale-[0.98] disabled:opacity-40 ${g.verified ? "text-accent ring-1 ring-accent/40 hover:bg-accent/10" : "bg-accent text-white hover:brightness-110"}`}>
+              <ArrowClockwise size={14} weight="bold" />Run validation again</button>
+            {!g.verified && <button onClick={repair} disabled={repBusy} title="Remember what failed and recompute the fix without it (you approve the new patch)"
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] font-medium text-accent ring-1 ring-accent/40 transition hover:bg-accent/10 disabled:opacity-50">
+              <Wrench size={14} weight="bold" />{repBusy ? "Repairing…" : "Repair from this failure"}</button>}
+            {!g.verified && <a href="#fix" className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[12.5px] text-accent ring-1 ring-accent/40 transition hover:bg-accent/10">
+              Recompute or re-approve the fix <ArrowRight size={13} /></a>}
+            {!approved && <span className="text-[12px] text-high">The approval is no longer valid (the patch, commits, policy or profile changed): approve again in step 4.</span>}
+            {approved && !g.verified && <span className="text-[11.5px] text-faint">If the same patch failed, recompute it first: the rules may produce a better fix now.</span>}
+          </div>
+          {rep && (
+            <div className={`rounded-lg p-3 text-[12.5px] ring-1 ${rep.status === "repaired" ? "bg-ok/5 ring-ok/25" : "bg-high/5 ring-high/30"}`}>
+              {rep.status === "repaired" ? (<>
+                <b>Repaired fix ready (attempt {rep.attempt}).</b> {rep.changes?.length ? rep.changes.map((c: any) => `${c.package}: ${c.was} → ${c.now}`).join(" · ") : "the plan was recomputed"}
+                <span className="block text-[12px] text-muted">It is a new patch, so it needs your approval: <a href="#fix" className="text-accent hover:underline">review and approve in step 4</a>, then run validation again.</span>
+              </>) : <span><b>No automatic repair:</b> {rep.reason}</span>}
+            </div>)}
+          {mem.length > 0 && (
+            <div className="rounded-lg bg-canvas/50 p-3 text-[12px] ring-1 ring-line">
+              <div className="font-medium">Repair memory <span className="font-normal text-faint">· what earlier attempts taught the fixer</span></div>
+              <ol className="mt-1.5 space-y-1">{mem.map((a: any) => (
+                <li key={a.attempt} className="flex flex-wrap gap-x-2"><span className="text-faint">#{a.attempt}</span>
+                  <span className={a.verified ? "text-ok" : "text-crit"}>{a.verified ? "verified" : "not verified"}</span>
+                  <span className="text-muted">{Object.entries(a.failed_versions ?? {}).map(([p, x]: any) => `avoid ${p}@${x.versions.join(", ")} (${x.why[0]})`).join("; ") || (a.reasons ?? [])[0]}</span>
+                  {a.blame && <span className="text-faint">· {a.blame}</span>}</li>))}</ol>
+            </div>)}
+          {!g.verified && <ReadinessCard r={ready} />}
+          {g.reasons?.length > 0 && <ul className="list-disc pl-5 text-[12px] text-muted">{g.reasons.slice(0, 4).map((r: string) => <li key={r}>{r}</li>)}
+            {g.reasons.length > 4 && <li className="text-faint">+{g.reasons.length - 4} more (later stages could not run)</li>}</ul>}
           <PhaseRail states={executed ? PHASES.map(() => "done") : []} />
           {v.timings && (
             <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted"><Timer size={14} className="text-faint" />
@@ -308,6 +382,31 @@ function Validation({ project, s, refresh, onRunning }: { project: string | null
             <div className="grid gap-3 md:grid-cols-2">
               <Lane title="Baseline" sub="target branch before this PR" states={finalStates(v.baseline)} seconds={finalSecs(v.baseline)} notes={finalNotes(v.baseline)} />
               <Lane title="Fixed version" sub="pull request + approved patch" states={finalStates(v.candidate)} seconds={finalSecs(v.candidate)} notes={finalNotes(v.candidate)} />
+            </div>)}
+          {Array.isArray(v.generated_tests) && v.generated_tests.length > 0 && (
+            <div className="rounded-lg bg-accent/5 p-3 text-[12px] ring-1 ring-accent/20">
+              <div className="flex items-center gap-2 font-medium">AI-written behaviour tests <Badge kind="ai" />
+                <span className="font-normal text-faint">· for upgraded packages no project test reaches; checked on the PR's version first</span></div>
+              <ul className="mt-2 space-y-1.5">{v.generated_tests.map((t: any, i: number) => {
+                const tone = t.status === "passed" ? "text-ok" : t.status === "regression" ? "text-crit" : "text-high";
+                const n = (x: any) => (x?.tests ? `${x.tests[1]}/${x.tests[0]}` : "—");
+                return (
+                  <li key={i} className="rounded-md bg-canvas/50 px-2.5 py-1.5">
+                    <div className="flex flex-wrap items-center gap-2"><span className="font-mono text-ink">{t.package}</span>
+                      <span className="font-mono text-faint">{t.from} → {t.to}</span>
+                      <span className={`font-medium ${tone}`}>{t.status}</span>
+                      {t.pr_version && <span className="text-faint">PR version {n(t.pr_version)} · fixed version {n(t.fixed_version)}</span>}</div>
+                    <p className="text-[11.5px] text-muted">{t.reason}{t.covers?.length ? ` · covers: ${t.covers.join(", ")}` : ""}</p>
+                  </li>);
+              })}</ul>
+            </div>)}
+          {v.test_exposure && !v.test_exposure.error && Object.keys(v.test_exposure).length > 0 && (
+            <div className="rounded-lg bg-canvas/50 p-3 text-[12px] ring-1 ring-line">
+              <div className="font-medium">What the tests actually exercise <span className="font-normal text-faint">· changed packages, static import check</span></div>
+              <ul className="mt-1.5 grid gap-0.5 md:grid-cols-2">{Object.entries(v.test_exposure as Record<string, any>).map(([pkg, x]) => (
+                <li key={pkg} className="flex gap-2"><span className="font-mono text-ink">{pkg}</span>
+                  <span className={x.test_files ? "text-ok" : x.app_files ? "text-high" : "text-faint"}>{x.verdict}</span></li>))}</ul>
+              <p className="mt-1.5 text-[11px] text-faint">Passing tests prove only what they reach: research found tests detect about half of dependency faults (Hejderup & Gousios, 2022). Packages no test imports are verified by install, build and rescan only.</p>
             </div>)}
           {String(state?.status ?? "").startsWith("error") && <p role="alert" className="text-[12px] text-crit">{state?.status}</p>}
         </motion.div>)}

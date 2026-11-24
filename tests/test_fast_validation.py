@@ -146,3 +146,61 @@ def test_sandboxes_and_rescan_run_at_the_same_time(tmp_path, monkeypatch):
     assert res["baseline"]["container"] == "baseline" and res["candidate"]["container"] == "candidate"
     assert res["gate"]["validation"] == "passed"
     assert "timings" in res and res["timings"]["total"] > 0
+
+
+def _fake_profile_run(tmp_path, monkeypatch, results):
+    """run_profile with docker replaced: `results` maps stage id -> list of exit codes, consumed per call."""
+    calls = []
+    monkeypatch.setattr(vr, "ensure_network", lambda: None)
+    monkeypatch.setattr(vr, "image_digest", lambda image: "img@sha256:x")
+
+    class R:
+        returncode, stdout, stderr = 0, "", ""
+    monkeypatch.setattr(vr, "_run", lambda *a, **k: R())
+
+    def fake_exec(container, cmd, timeout):
+        sid = next(s["id"] for s in PROF["stages"] if (s.get("cmd") or "node .guardian-integration.cjs") == cmd)
+        calls.append(sid)
+        codes = results.get(sid, [0])
+        return (codes.pop(0) if len(codes) > 1 else codes[0]), "out", 1.0
+    monkeypatch.setattr(vr, "_exec", fake_exec)
+    tree = tmp_path / "tree"
+    tree.mkdir()
+    (tree / "package-lock.json").write_text("{}")
+    folder = tmp_path / "prof"
+    folder.mkdir()
+    (folder / "integration.cjs").write_text("")
+    return tree, folder, calls
+
+
+PROF = {"stages": [{"id": "install", "cmd": "npm ci"}, {"id": "build", "cmd": "npm run build"},
+                   {"id": "unit", "cmd": "node --test"}, {"id": "integration", "script": "integration.cjs"}],
+        "image": "node", "registry": "http://verdaccio:4873/"}
+
+
+def test_a_flaky_test_stage_passes_on_retry_and_says_so(tmp_path, monkeypatch):
+    tree, folder, calls = _fake_profile_run(tmp_path, monkeypatch, {"unit": [1, 0]})
+    res = vr.run_profile(tree, PROF, folder, "candidate", log=lambda m: None)
+    unit = next(s for s in res["stages"] if s["id"] == "unit")
+    assert unit["status"] == "passed" and unit["flaky"] is True and unit["first_exit"] == 1
+    assert calls.count("unit") == 2
+
+
+def test_a_real_test_failure_still_fails_after_one_retry(tmp_path, monkeypatch):
+    tree, folder, calls = _fake_profile_run(tmp_path, monkeypatch, {"unit": [1, 1]})
+    res = vr.run_profile(tree, PROF, folder, "candidate", log=lambda m: None)
+    unit = next(s for s in res["stages"] if s["id"] == "unit")
+    assert unit["status"] == "failed" and unit["flaky"] is False and calls.count("unit") == 2
+
+
+def test_install_and_build_failures_are_not_retried(tmp_path, monkeypatch):
+    tree, folder, calls = _fake_profile_run(tmp_path, monkeypatch, {"install": [1, 0]})
+    res = vr.run_profile(tree, PROF, folder, "candidate", log=lambda m: None)
+    assert res["stages"][0]["status"] == "failed" and calls.count("install") == 1
+
+
+def test_a_failed_test_stage_does_not_stop_the_later_stages(tmp_path, monkeypatch):
+    tree, folder, calls = _fake_profile_run(tmp_path, monkeypatch, {"unit": [1, 1]})
+    res = vr.run_profile(tree, PROF, folder, "baseline", log=lambda m: None)
+    by = {s["id"]: s["status"] for s in res["stages"]}
+    assert by["unit"] == "failed" and by["integration"] == "passed"  # both sides stay comparable

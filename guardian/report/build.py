@@ -1,3 +1,7 @@
+# READING GUIDE
+# Combines saved artifacts into one run model used by the dashboard and HTML/JSON reports.
+# Reads findings, AI investigation, fixes, approvals and validation; missing stages are represented rather than invented.
+#
 """Guardian report (GUARDIAN_FINAL_PLAN.md §14.4): one run folder → report.json (machines) + report.html (people).
 
 Everything comes from files the run produced (scan report, scores, fix plan, approvals, validation, audit log).
@@ -59,6 +63,7 @@ def _capability(h: dict, plan: dict | None, validation: dict | None) -> str:
     return "L2" if h.get("base_sha") else "L1"
 
 
+# Read this run's artifacts into sections shared by API/dashboard/report without rerunning an investigation.
 def build(out: Path) -> dict:
     out = Path(out)
     latest = json.loads((out / "latest.json").read_text())
@@ -109,7 +114,7 @@ def build(out: Path) -> dict:
         sections["remediation"] = {"status": "not_started", "reason": "no fix plan has been requested for this run"}
     if validation:
         sections["validation"] = {"status": "executed" if validation.get("executed") else "refused", **{
-            k: validation.get(k) for k in ("gate", "profile", "baseline", "candidate", "approval_id", "started", "finished", "timings")}}
+            k: validation.get(k) for k in ("gate", "profile", "baseline", "candidate", "approval_id", "started", "finished", "timings", "test_exposure", "generated_tests")}}
         sections["before_after"] = {"rescan": validation.get("rescan"), "sbom_diff": (validation.get("gate") or {}).get("sbom_diff"),
                                     "delta": validation.get("delta"), "verdict_change": validation.get("verdict_change")}
     else:
@@ -216,6 +221,7 @@ def to_html(rep: dict) -> str:
             f" · schema {_e(rep['schema_version'])} · machine-readable twin: report.json</p>{body}</body></html>")
 
 
+# Persist the combined JSON and escaped HTML representations for sharing or inspection.
 def write(out: Path) -> dict:
     rep = build(out)
     j, h = Path(out) / "report.json", Path(out) / "report.html"

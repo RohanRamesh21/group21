@@ -4,6 +4,7 @@
 
 Guardian analyses the supply-chain changes in a pull request, explains which risks matter with evidence, computes an exact fix, waits for a named person to approve it, then validates the fix by building, testing and rescanning in an isolated container. It reports what it checked and what it could not check.
 
+- **All docs, by question:** [`docs/README.md`](docs/README.md)
 - **Plan:** [`docs/GUARDIAN_FINAL_PLAN.md`](docs/GUARDIAN_FINAL_PLAN.md) · **Build log with evidence:** [`docs/PROGRESS.md`](docs/PROGRESS.md)
 - **Architecture:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · **Responsible AI & security:** [`docs/RESPONSIBLE_AI.md`](docs/RESPONSIBLE_AI.md) · **Known limitations:** [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md) · **Setup:** [`docs/SETUP.md`](docs/SETUP.md)
 

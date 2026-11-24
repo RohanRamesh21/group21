@@ -1,3 +1,7 @@
+# READING GUIDE
+# Version-range reasoning for the actual fix generator: compare versions with advisory ranges and choose an eligible target.
+# Receives version/advisory data from candidates.py; the AI never invents a target version here.
+#
 """Version logic for fix targets: npm-style semver ordering and OSV affected-range evaluation.
 
 A target is "safe" only if it is outside every affected range of every advisory being fixed. Advisories often list
@@ -48,6 +52,7 @@ def _in_events(ver: tuple, events: list[dict]) -> bool:
     return hit
 
 
+# Check whether one version lies inside an advisory range using the available version data.
 def affected(version: str, package: str, advisories: list[dict], ecosystem: str = "npm") -> bool:
     ver = parse(version)
     for adv in advisories:
@@ -72,6 +77,7 @@ def jump(old: str, new: str) -> str:
     return "patch"
 
 
+# Choose from eligible published versions outside the relevant affected ranges and exclusions.
 def smallest_safe(package: str, current: str, versions: dict[str, dict], advisories: list[dict]) -> str | None:
     """Smallest published version above `current` that no advisory affects. Same major first; no pre-releases
     (unless current is one) and no deprecated releases."""

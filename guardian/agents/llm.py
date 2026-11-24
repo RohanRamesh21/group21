@@ -1,3 +1,8 @@
+# READING GUIDE
+# Model adapters for tool-using agents: normalize provider replies into a Turn containing text and ToolCall objects.
+# This differs from llm_client.py, which handles the normal workflow JSON requests without a growing tool conversation.
+# ScriptedBackend replays recorded turns without an AI service; a replay is demonstration data, not a live investigation.
+#
 """Model back ends for the agents.
 
 ClaudeBackend  real agents on Claude Opus 5.5 (Messages API, manual tool loop so the
@@ -15,6 +20,7 @@ from typing import Protocol
 MODEL = "claude-opus-5-5"
 
 
+# Normalized model request: a tool name, call ID and argument object.
 @dataclass
 class ToolCall:
     id: str
@@ -22,6 +28,7 @@ class ToolCall:
     input: dict
 
 
+# Normalized assistant turn, including provider-formatted history and requested tool calls.
 @dataclass
 class Turn:
     text: str
@@ -30,10 +37,12 @@ class Turn:
     raw_content: list = field(default_factory=list)  # appended back unchanged (keeps thinking blocks intact)
 
 
+# Shared interface: one step consumes history and returns a Turn, regardless of provider.
 class Backend(Protocol):
     def step(self, agent: str, system: str, messages: list, tools: list[dict], effort: str) -> Turn: ...
 
 
+# Adapter for Anthropic-style model responses and tool turns.
 class ClaudeBackend:
     """Claude Opus 5.5: adaptive thinking is always on; depth is set with output_config.effort.
     No temperature (rejected by this model) and no forced tool_choice (rejected too)."""
@@ -61,6 +70,7 @@ class ClaudeBackend:
         return Turn(text=text, tool_calls=calls, stop_reason=resp.stop_reason, raw_content=resp.content)
 
 
+# Adapter that converts tools/messages to an OpenAI-compatible provider request.
 class OpenRouterBackend:
     """Claude Opus 5.5 through OpenRouter (OpenAI-style chat completions with tool calling).
 
@@ -157,6 +167,7 @@ class OpenRouterBackend:
         return Turn(text=text, tool_calls=calls, stop_reason=stop, raw_content=raw or [{"type": "text", "text": ""}])
 
 
+# Provider-specific request handling built on the compatible tool-call adapter.
 class FreeModelBackend(OpenRouterBackend):
     """DeepSeek V4 Flash through FreeModel's OpenAI-compatible endpoint (freemodel.in), reasoning_effort per agent."""
 
@@ -216,6 +227,7 @@ class FreeModelBackend(OpenRouterBackend):
         return self._parse_openai(data)
 
 
+# Provider specialization that reuses compatible tool-call handling.
 class DeepSeekBackend(FreeModelBackend):
     """DeepSeek's own API (OpenAI-compatible, tool calling), V4 Flash."""
 
@@ -226,6 +238,7 @@ class DeepSeekBackend(FreeModelBackend):
     LABEL = "DeepSeek"
 
 
+# Try the configured tool-capable backends in order when an eligible provider fails.
 class FallbackBackend:
     """Tries each back end in order; moves on only when a provider's quota is used up (HTTP 402) or it stays
     unavailable after retries (429/5xx). A provider that ran out is skipped for the rest of this run.
@@ -257,6 +270,7 @@ class FallbackBackend:
         raise last or RuntimeError("no AI back end available")
 
 
+# Translate tool conversations and provider-specific replies for Gemini.
 class GeminiBackend(OpenRouterBackend):
     """Google Gemini through its OpenAI-compatible endpoint (same message translation as OpenRouter).
 
@@ -374,6 +388,7 @@ class GeminiBackend(OpenRouterBackend):
         return Turn(text=text, tool_calls=calls, stop_reason=stop, raw_content=raw or [{"type": "text", "text": ""}])
 
 
+# Construct the configured live backend or fallback chain; credentials remain in configuration.
 def make_backend(provider: str):
     """One place that turns the configured provider name (guardian.config.provider()) into a model back end.
     DeepSeek / FreeModel / Gemini become a fallback chain: DeepSeek first when its key is set, then FreeModel, then Gemini."""
@@ -398,6 +413,7 @@ def make_backend(provider: str):
     raise RuntimeError(f"no LLM provider configured (got '{provider}'): set a key in guardian/.env or use a scripted/rule-based mode")
 
 
+# Serve prerecorded agent turns for deterministic demonstrations and tests.
 class ScriptedBackend:
     """Replays a script: {agent: [turn, ...]} where a turn is a list of [tool_name, input] pairs
     (empty list = the agent ends its turn). Inputs may contain placeholders resolved at runtime:
@@ -427,6 +443,7 @@ class ScriptedBackend:
 _PLACEHOLDER = re.compile(r"\{([ETFC]):([^}]+)\}")
 
 
+# Replace replay placeholders with IDs from this Board/world/store, not invented evidence.
 def make_resolver(board, world, store):
     def resolve_str(s: str) -> str:
         def sub(m):
@@ -456,5 +473,6 @@ def make_resolver(board, world, store):
     return resolve
 
 
+# Load the recorded replay data used by ScriptedBackend.
 def load_script(path: str) -> dict:
     return json.loads(open(path).read())
