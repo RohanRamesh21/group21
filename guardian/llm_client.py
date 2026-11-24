@@ -62,6 +62,13 @@ def chat_json(prompt: str, *, system: str = "Answer with one JSON object only.",
                     llm_budget.cache_put(ck, {"data": data, "usage": usage})
                 return data, {"model": model, "usage": usage, "cached": False}
             last = f"HTTP {r.status_code}"
+            if r.status_code == 402:  # the provider's plan is used up: name it, retrying won't help
+                try:
+                    err = r.json().get("error") or {}
+                except ValueError:
+                    err = {}
+                raise RuntimeError(f"AI quota used up at the model provider ({err.get('code', 'HTTP 402')}): "
+                                   f"{str(err.get('message', ''))[:160]}")
             if r.status_code not in (429, 500, 502, 503, 504):
                 break
             time.sleep(3 * (attempt + 1))

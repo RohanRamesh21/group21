@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -208,7 +209,26 @@ def prepare_tree(repo: Path, sha: str, dest: Path, patch: Path | None = None, pa
         if patch_sha256 and hashlib.sha256(data).hexdigest() != patch_sha256:
             raise RuntimeError("patch bytes do not match the approved hash")
         if data.strip():
-            r = subprocess.run(["git", "apply", "--whitespace=nowarn", "-"], input=data, cwd=dest, capture_output=True)
+            # The tree may sit inside another git repository (guardian-out/ is inside Guardian's own repo). There, `git
+            # apply` treats paths as relative to THAT repo and silently skips them while returning 0. Stop git from
+            # looking above the tree, then prove the patch is really in it (it must reverse cleanly).
+            env = {**os.environ, "GIT_CEILING_DIRECTORIES": str(Path(dest).resolve().parent)}
+            env.pop("GIT_DIR", None)
+            env.pop("GIT_WORK_TREE", None)
+            r = subprocess.run(["git", "apply", "--whitespace=nowarn", "-"], input=data, cwd=dest, capture_output=True, env=env)
             if r.returncode != 0:
                 raise RuntimeError(f"approved patch does not apply: {r.stderr.decode()[-300:]}")
+            v = subprocess.run(["git", "apply", "--reverse", "--check", "-"], input=data, cwd=dest, capture_output=True, env=env)
+            if v.returncode != 0:
+                raise RuntimeError(f"approved patch was not applied to the tree (reverse check failed): {v.stderr.decode()[-300:]}")
     return dest
+
+
+def profile_for(repo: str) -> str:
+    """Validation profile for a repository: the profile whose `repos:` list names it, else the default (uptime-kuma)."""
+    import yaml
+    for f in sorted((Path(__file__).parent / "profiles").glob("*/profile.yaml")):
+        doc = yaml.safe_load(f.read_text()) or {}
+        if repo in (doc.get("repos") or []):
+            return doc["name"]
+    return "uptime-kuma"

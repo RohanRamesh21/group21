@@ -8,6 +8,6 @@ export function useRunModel(project: string | null) {
   const load = useCallback(async () => {
     try { setErr(null); setModel(await api(`/api/run${q(project)}`)); } catch (e) { setModel(null); setErr((e as Error).message); }
   }, [project]);
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { setModel(null); load(); }, [load]);
   return { model, err, refresh: load };
 }

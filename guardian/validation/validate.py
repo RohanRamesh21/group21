@@ -5,6 +5,7 @@ Order matters: the approval contract is checked first, and if it doesn't match e
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 import time
 from pathlib import Path
@@ -40,18 +41,25 @@ def _artifact_components(tree: Path, out: Path) -> tuple[set[str], str | None]:
     return {f"{c.get('name')}@{c.get('version')}" for c in doc.get("components", []) if c.get("type") == "library"}, None
 
 
-def _source_rescan(repo: Path, head_sha: str, patch: Path, out: Path, app: str) -> dict:
-    """Two-commit repo (PR head, candidate) scanned by the same engine: 'fixed' = resolved, 'introduced' = new."""
+def _source_rescan(repo: Path, base_sha: str | None, head_sha: str, patch: Path, out: Path, app: str) -> dict:
+    """Two-commit repo scanned by the same engine: BASE, then the candidate (PR head + approved patch).
+    This asks the original question again: what does the PR still introduce once fixed? (Comparing PR head → candidate
+    instead would flag the fix's own reverts, e.g. restoring .npmrc, as new sensitive-file changes.)"""
     from guardian.universal import check_any
     work = out / "rescan-repo"
-    vr.prepare_tree(repo, head_sha, work)
     git = ["git", "-C", str(work), "-c", "user.name=guardian", "-c", "user.email=guardian@localhost"]
+    vr.prepare_tree(repo, base_sha or head_sha, work)
     subprocess.run(["git", "init", "-q", str(work)], check=True)
     subprocess.run(git + ["add", "-A"], check=True)
-    subprocess.run(git + ["commit", "-qm", "pr-head", "--no-verify"], check=True)
-    data = patch.read_bytes()
-    if data.strip():
-        subprocess.run(["git", "apply", "--whitespace=nowarn", "-"], input=data, cwd=work, check=True, capture_output=True)
+    subprocess.run(git + ["commit", "-qm", "base", "--no-verify"], check=True)
+    cand = out / "rescan-candidate"
+    vr.prepare_tree(repo, head_sha, cand, patch)  # PR head + approved patch (applied and verified)
+    for item in work.iterdir():  # replace the base files with the candidate files, keep .git
+        if item.name != ".git":
+            shutil.rmtree(item) if item.is_dir() and not item.is_symlink() else item.unlink()
+    for item in cand.iterdir():
+        shutil.move(str(item), str(work / item.name))
+    shutil.rmtree(cand, ignore_errors=True)
     subprocess.run(git + ["add", "-A"], check=True)
     subprocess.run(git + ["commit", "-qm", "candidate", "--no-verify", "--allow-empty"], check=True)
     rep = check_any(work, "HEAD~1", "HEAD", out / "rescan", app)
@@ -99,14 +107,15 @@ def validate(out: Path, profile: str = "uptime-kuma", log=print) -> dict:
     sbom_diff = {"added": sorted(c_art - b_art), "removed": sorted(b_art - c_art), "errors": [x for x in (b_err, c_err) if x]}
 
     log("validation: source rescan of the candidate (same engine, same advisory snapshot)")
-    rs = _source_rescan(repo, plan["head_sha"], patch, work, repo.name)
-    after_ids = {f["id"] for f in rs["scores"]["findings"] if f["label"] != "fixed"}
+    rs = _source_rescan(repo, plan.get("base_sha"), plan["head_sha"], patch, work, repo.name)
+    # still introduced by the fixed PR (versus base) = not corrected; pre-existing findings are not targets of this PR
+    after_ids = {f["id"] for f in rs["scores"]["findings"] if f["label"] == "introduced"}
     targets = sorted({fid for c in plan["candidates"] if c["type"] != "escalate" for fid in c["finding_ids"]})
     new_high = [f["title"] for f in rs["scores"]["findings"]
                 if f["label"] == "introduced" and (f["level"] in SEVERE or f.get("severity") in SEVERE)]
     db_after = _grype_db()
     result["rescan"] = {"verdict": rs["scores"].get("verdict"), "complete": rs["complete"],
-                        "resolved": sorted(f["id"] for f in rs["scores"]["findings"] if f["label"] == "fixed"),
+                        "resolved": sorted(t for t in targets if t not in after_ids),
                         "new": sorted(f["title"] for f in rs["scores"]["findings"] if f["label"] == "introduced"),
                         "advisory_snapshot": {"grype_db_before": db_before, "grype_db_after": db_after}}
     result["gate"] = vr.gate(approval_ok=True, approval_error=None, baseline=result["baseline"]["stages"],

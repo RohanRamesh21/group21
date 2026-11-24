@@ -259,3 +259,14 @@ def test_cli_fix_uses_the_run_report(monkeypatch, tmp_path, capsys):
         repo=str(repo), base=base, head=head, include=list(include)) or {"patch": {"patch_sha256": "f" * 64, "files": []}, "candidates": []})
     assert cli.main(["fix", "--out", str(out), "--include", "jsonata@2.2.0#GHSA-1"]) == 0
     assert seen == {"repo": "/x/repo", "base": "a" * 40, "head": "b" * 40, "include": ["jsonata@2.2.0#GHSA-1"]}
+
+
+def test_newly_added_vulnerable_dependency_is_upgraded_not_removed():
+    """Adding a dependency is a low signal, not an attack: the feature needs the package, so the fix is the safe version.
+    (Found live on the ShipLog demo: jsonata@2.2.0 added by a PR was being removed, which would break the feature.)"""
+    from guardian.remediation.candidates import generate
+    report = {**REPORT, "package_changes": {"added": ["jsonata@2.2.0"], "removed": [], "updated": []}}
+    fs = [_vf("jsonata", "2.2.0", "GHSA-66mm"), _sf("jsonata@2.2.0", "new_dependency", hard=False, level="low")]
+    c = generate(fs, report, _src())[0]
+    assert (c["type"], c["from"], c["to"]) == ("upgrade_to_fixed", "2.2.0", "2.2.1")
+    assert sorted(c["finding_ids"]) == sorted(f["id"] for f in fs)

@@ -1,0 +1,14 @@
+{
+  "name": "guardian-buddy",
+  "version": "1.0.0",
+  "description": "Guardian Buddy: desktop companion that pops up when a pull request is scanned and opens the Guardian dashboard",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "env -u ELECTRON_RUN_AS_NODE electron ."
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "45.4.1"
+  }
+}

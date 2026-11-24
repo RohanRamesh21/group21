@@ -1,7 +1,8 @@
 # Validation profile for Uptime Kuma (GUARDIAN_FINAL_PLAN.md §13.3). Versioned and hashed: the hash is bound into
 # every approval, so changing this file invalidates existing approvals.
 name: uptime-kuma
-version: 1
+version: 4
+repos: [kirankishoreV-07/uptime-kuma]   # the demo fork (default branch guardian-demo = upstream 2.5.12)
 image: node:20-bookworm          # resolved to a digest at run time and recorded
 workdir: /work
 user: "1000:1000"                # the image's unprivileged "node" user
@@ -9,6 +10,9 @@ resources: {cpus: "2", memory: "4g", pids: 1024}
 network: guardian-validate       # internal Docker network: only the local Verdaccio proxy is reachable
 registry: http://verdaccio:4873/
 env:
+  # every download goes to the sandbox registry, whatever host the lockfile names (localhost means the container
+  # itself in here). Safe: npm still checks each package against the lockfile's SHA-512 integrity.
+  npm_config_replace_registry_host: always
   UPTIME_KUMA_DB_TYPE: sqlite    # skip the interactive database-choice page; use a disposable SQLite file
   npm_config_nodedir: /usr/local # node headers ship in the image: native builds need no download
   npm_config_audit: "false"
@@ -39,16 +43,19 @@ stages:
   - id: unit
     required: true
     timeout: 600
+    # Two runs: the migration file filtered to its SQLite case (the suite name must not match the pattern, or every
+    # subtest runs), then the other unit files in full.
     cmd: >-
-      node --test --test-name-pattern="SQLite|^(?!.*(MariaDB|MySQL))"
-      test/backend-test/test-util.js test/backend-test/test-uptime-calculator.js
-      test/backend-test/test-monitor-response.js test/backend-test/test-response-cache.js
-      test/backend-test/test-status-page.js test/backend-test/test-migration.js
+      node --test --test-name-pattern="SQLite" test/backend-test/test-migration.js &&
+      node --test test/backend-test/test-util.js test/backend-test/test-monitor-response.js
+      test/backend-test/test-response-cache.js test/backend-test/test-status-page.js
   - id: integration
     required: true
     timeout: 240
     script: integration.cjs       # starts the server on a disposable data dir, sets up admin, logs in, adds a monitor, waits for a heartbeat
 excluded:
+  - tests: "test/backend-test/test-uptime-calculator.js"
+    reason: "memory stress test: runs out of JavaScript heap even at 3 GB inside the worker's 4 GB limit (measured 24 Nov 2026); upstream runs it on larger CI machines"
   - tests: "test/backend-test/test-migration.js (MariaDB/MySQL cases)"
     reason: "start database containers via testcontainers, which needs a Docker socket; the worker deliberately has none"
   - tests: "test-domain, test-globalping, test-docker, test-snmp, test-ntp, test-radius, test-system-service, test-pm2, monitors/*, notification-providers/*"

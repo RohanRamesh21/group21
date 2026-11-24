@@ -53,7 +53,7 @@ def verify_audit(out: Path) -> tuple[bool, int]:
 
 
 def decide(out: Path, plan: dict, decision: str, *, approver: str, reason: str, ttl_seconds: int, now: float | None = None,
-           policy_sha256: str, profile_sha256: str) -> dict:
+           policy_sha256: str, profile_sha256: str, reviewed: bool = False) -> dict:
     if decision not in ("approve", "reject"):
         raise ValueError("decision must be approve or reject")
     if not approver.strip() or not reason.strip():
@@ -61,7 +61,8 @@ def decide(out: Path, plan: dict, decision: str, *, approver: str, reason: str, 
     now = time.time() if now is None else now
     rec = {"id": "APR-" + uuid.uuid4().hex[:10], "decision": decision, "approver": approver.strip(), "reason": reason.strip(),
            "created": now, "expires": now + ttl_seconds, "base_sha": plan.get("base_sha"), "head_sha": plan["head_sha"],
-           "patch_sha256": plan["patch"]["patch_sha256"], "policy_sha256": policy_sha256, "profile_sha256": profile_sha256}
+           "patch_sha256": plan["patch"]["patch_sha256"], "policy_sha256": policy_sha256, "profile_sha256": profile_sha256,
+           "reviewed_patch": bool(reviewed)}
     d = Path(out) / "approvals"
     d.mkdir(parents=True, exist_ok=True)
     (d / f"{rec['id']}.json").write_text(json.dumps(rec, indent=1))

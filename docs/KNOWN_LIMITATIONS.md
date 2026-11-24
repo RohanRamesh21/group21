@@ -7,13 +7,14 @@ Stated plainly, so nothing is claimed beyond what the tests and recorded runs sh
 |---|---|---|
 | AI investigation | Live and measured (about 16K tokens, 3 calls, 43 s on the scenario). One Investigator call per case plus one Verifier call; no follow-up tool round, so an Investigator's "open questions" are left for the human. Cases are capped at 6 per run (the rest are shown as "not investigated"). | — |
 | AI token use | FreeModel free tier: 1M tokens/month, shared with anything else using the key. Guardian's own caps: 25K/run, 300K/30 days (ledger in `.cache/llm_usage.jsonl`). The ledger only counts calls made after it was added (the earlier 598K isn't in it). | — |
-| Live validation on Uptime Kuma | Runner, profile, gate and refusal paths tested; the end-to-end container run hasn't completed | `node:20-bookworm` image (download in progress) |
+| Live validation | Docker works; the ShipLog profile passed an isolated infrastructure run. A full approved-fix validation (baseline vs candidate) runs after a person approves on the dashboard | Your approval |
 | Docker image build of the app + image SBOM | Not in the profile yet; the "resulting artifact" is the installed dependency tree + build output scanned with Syft | Restricted builder stage |
-| GitHub PR trigger live | Workflow, submit script, service, statuses, comments, polling tested with fakes | Fork, `GUARDIAN_GITHUB_TOKEN`, self-hosted runner |
+| GitHub PR trigger live | Live on `kirankishoreV-07/PIPELINE_CHECK`: runner online, real PR scanned. Statuses/comments wait for the token's "Commit statuses: write" permission. Dashboard links in PR comments point to `127.0.0.1`, so they open only on the demo machine | Token permission |
 | Dashboard visual check | Type-check and build pass; API verified over HTTP | Browser review |
 | Stretch goals S1–S6 | S4 dependency confusion and S2-style patch generation exist; others not built | Time after the core |
 | Deep mode (old agent loop) | Kept behind `--deep`. Its constitution verdict rule is still its own (stricter than the shared verdict); the default workflow copies the shared rules verdict. | Align or retire |
-| Guardian Buddy, MCP server | Not built | After the core |
+| Guardian Buddy | Built (Electron, macOS-tested); click-through on transparent areas isn't implemented | — |
+| MCP server | Not built | After the core |
 
 ## Scope limits
 - The full fix-and-validate loop targets **npm**. Python, GitHub Actions, Dockerfiles, browser extensions and CDN scripts reach scan + compare (L1/L2). Java/Go/Rust discovery goes through Syft but is untested.

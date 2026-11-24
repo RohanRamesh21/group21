@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self'; script-src 'self'; img-src 'self' data:">
+<title>Guardian Buddy</title>
+<link rel="stylesheet" href="pet.css">
+</head>
+<body data-kind="connecting">
+  <div class="wrap">
+    <section class="bubble" aria-live="polite">
+      <div class="who"><span id="pr"></span><span id="title"></span></div>
+      <div id="text">Connecting to Guardian…</div>
+      <div id="agent" class="agentline"></div>
+      <ul id="reasons"></ul>
+      <div id="warning"></div>
+      <div class="actions">
+        <button id="open" class="primary">Open dashboard</button>
+        <button id="dismiss">Dismiss</button>
+      </div>
+    </section>
+    <!-- Original character: a shield-shaped robot with a visor. Drawn for Guardian; not based on any existing mascot. -->
+    <svg id="robot" viewBox="0 0 120 140" role="img" aria-label="Guardian Buddy">
+      <defs>
+        <linearGradient id="body" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" class="c1"/><stop offset="1" class="c2"/>
+        </linearGradient>
+        <clipPath id="visorClip"><rect x="30" y="44" width="60" height="30" rx="15"/></clipPath>
+      </defs>
+      <g class="bob">
+        <line x1="60" y1="22" x2="60" y2="8" class="antenna"/>
+        <circle cx="60" cy="7" r="5" class="lamp"/>
+        <path class="shield" d="M60 20 C78 26 92 26 100 24 L100 64 C100 96 82 116 60 128 C38 116 20 96 20 64 L20 24 C28 26 42 26 60 20 Z"/>
+        <path class="rim" d="M60 28 C75 33 86 33 92 32 L92 64 C92 91 77 108 60 118 C43 108 28 91 28 64 L28 32 C34 33 45 33 60 28 Z"/>
+        <rect x="30" y="44" width="60" height="30" rx="15" class="visor"/>
+        <g clip-path="url(#visorClip)"><rect class="beam" x="20" y="44" width="10" height="30"/></g>
+        <g class="eyes"><ellipse cx="47" cy="59" rx="5" ry="6" class="eye"/><ellipse cx="73" cy="59" rx="5" ry="6" class="eye"/></g>
+        <path class="happy" d="M41 61 Q47 53 53 61 M67 61 Q73 53 79 61"/>
+        <path class="mouth" d="M50 90 Q60 96 70 90"/>
+        <g class="mag"><circle cx="92" cy="96" r="11"/><line x1="100" y1="104" x2="110" y2="114"/></g>
+        <g class="orbit">
+          <circle r="4" class="o lead"/><circle r="4" class="o inv"/><circle r="4" class="o ver"/><circle r="4" class="o fix"/>
+        </g>
+      </g>
+      <ellipse cx="60" cy="136" rx="26" ry="3.5" class="shadow"/>
+    </svg>
+  </div>
+  <script src="pet.js"></script>
+</body>
+</html>

@@ -35,7 +35,7 @@ GUARDIAN_MODEL=deepseek-v4-flash-0731
 GUARDIAN_EFFORT=medium          # agents; explanations use GUARDIAN_EXPLAIN_EFFORT (default low)
 GUARDIAN_RUN_TOKEN_BUDGET=25000  # per investigation run (default)
 GUARDIAN_MONTH_TOKEN_BUDGET=300000  # rolling 30 days (default)
-GUARDIAN_GITHUB_TOKEN=...     # optional: post statuses/comments on PRs (fine-grained, one repo)
+GUARDIAN_GITHUB_TOKEN=...     # fine-grained, demo repo only: Commit statuses RW, Pull requests RW, Issues RW, Contents R
 ```
 Never commit `.env`. Tokens are never logged.
 
@@ -43,8 +43,15 @@ Never commit `.env`. Tokens are never logged.
 1. Fork the sample app on GitHub; copy `ci/github/guardian.yml` to `.github/workflows/`.
 2. Repository settings → Actions → "Require approval for all outside collaborators".
 3. Register a self-hosted runner with label `guardian-demo`, running as a separate low-privilege user.
-4. Install the submit script: `sudo install -m 755 guardian/trigger/submit.py /opt/guardian/bin/guardian-submit` (with the venv's Python on its shebang).
+4. Install the submit script outside the repository: `~/.guardian/bin/guardian-submit` (this file with the venv's Python on its shebang; the workflow calls `$HOME/.guardian/bin/guardian-submit`).
 5. Start the server (`uvicorn guardian.server:app --port 8765`) and open a PR.
+
+## Always-on services and scheduled jobs (macOS)
+```bash
+scripts/install-services.sh     # server, Buddy, 02:00 advisory refresh, 10-min missed-PR watchdog (LaunchAgents, no sudo)
+scripts/uninstall-services.sh
+```
+Logs go to `~/Library/Logs/guardian/`. Buddy can also be started by hand: `cd buddy && npm start`.
 
 ## Run the tests
 ```bash

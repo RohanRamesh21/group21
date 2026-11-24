@@ -1,0 +1,32 @@
+# Validation profile for ShipLog (github.com/kirankishoreV-07/PIPELINE_CHECK). Versioned and hashed: the hash is bound
+# into every approval, so changing this file invalidates existing approvals.
+name: shiplog
+version: 2
+repos: [kirankishoreV-07/PIPELINE_CHECK]
+image: node:20-bookworm-slim     # resolved to a digest at run time and recorded
+workdir: /work
+user: "1000:1000"                # the image's unprivileged "node" user
+resources: {cpus: "2", memory: "2g", pids: 512}
+network: guardian-validate       # internal Docker network: only the local Verdaccio proxy is reachable
+registry: http://verdaccio:4873/
+env:
+  # every download goes to the sandbox registry, whatever host the lockfile names (localhost means the container
+  # itself in here). Safe: npm still checks each package against the lockfile's SHA-512 integrity.
+  npm_config_replace_registry_host: always
+  npm_config_audit: "false"
+  npm_config_fund: "false"
+  npm_config_update_notifier: "false"
+stages:
+  - id: install
+    required: true
+    timeout: 600
+    cmd: npm ci --ignore-scripts
+  - id: unit
+    required: true
+    timeout: 300
+    cmd: npm test
+  - id: integration
+    required: true
+    timeout: 120
+    script: integration.cjs       # starts the real server, checks health, lists pipelines, records a run, rejects bad input
+excluded: []

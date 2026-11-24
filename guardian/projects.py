@@ -262,6 +262,57 @@ def _analyse(pid: str, repo: Path, base: str | None, head: str, label: str):
         pass
 
 
+def is_outdated(out: Path) -> bool:
+    """A scan saved by an older Guardian version (before the one-engine report format with commit SHAs and stages)."""
+    try:
+        h = json.loads(Path(json.loads((Path(out) / "latest.json").read_text())["path"]).read_text())["headline"]
+    except Exception:
+        return False
+    return "head_sha" not in h
+
+
+def rescan(pid: str, background: bool = True) -> None:
+    """Re-run a saved scan with the current engine, on the SAME commits it scanned before (taken from its old report),
+    using the repository copy already on disk. The old results are kept next to it, never deleted."""
+    j = get(pid)
+    if not j:
+        raise KeyError(pid)
+    out = BASE / pid / "check"
+    old = json.loads(Path(json.loads((out / "latest.json").read_text())["path"]).read_text())["headline"] if (out / "latest.json").exists() else {}
+    if j["kind"] == "local":
+        repo = _sandbox_repo(j["label"].split("/", 1)[1])
+        base, head, label = j.get("base"), j.get("head"), repo.name
+    else:
+        src = BASE / pid / "src"
+        tops = [p for p in src.iterdir() if p.is_dir() and (p / ".git").exists()] if src.exists() else []
+        repo = src if (src / ".git").exists() else (tops[0] if len(tops) == 1 else None)
+        if repo is None:
+            raise RuntimeError("the repository copy of this scan is gone: start a new scan")
+        resolve = lambda ref: subprocess.run(SAFE_GIT + ["rev-parse", "--verify", "-q", f"{ref}^{{commit}}"], cwd=repo, env=GIT_ENV,  # noqa: E731
+                                             capture_output=True, text=True).stdout.strip() or None
+        head = resolve(old.get("head_commit") or "HEAD") or "HEAD"
+        b = old.get("base_commit")
+        base = resolve(b) if b and b != old.get("head_commit") else None
+        label = old.get("app") or j["label"].rstrip("/").rsplit("/", 1)[-1].removesuffix(".git")
+    if out.exists():
+        out.rename(BASE / pid / f"check-outdated-{time.strftime('%Y%m%d-%H%M%S')}")
+    _job(pid, status="running", message="rescanning with the current engine", steps=[], rescanned=time.time())
+    _step(pid, f"Rescan with the current engine: same commits ({(base or 'none')[:12]} -> {head[:12]})")
+
+    def work():
+        try:
+            if j["kind"] == "local":
+                _run_local(pid, repo, base, head)
+            else:
+                _analyse(pid, repo, base, head, label)
+        except Exception as e:
+            _job(pid, status="error", message=f"{type(e).__name__}: {e}"[:400])
+    if background:
+        threading.Thread(target=work, daemon=True).start()
+    else:
+        work()
+
+
 def out_dir(pid: str | None) -> Path:
     if not pid:
         return ROOT / "guardian-out" / "check"

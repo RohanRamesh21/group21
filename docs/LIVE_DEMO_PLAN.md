@@ -123,3 +123,70 @@ That's why the local `launchd` jobs exist ([GitHub Actions limits](https://docs.
 - Tokens stay in `.env` and are never logged.
 - Nothing is pushed or created on GitHub without your OK.
 - Recorded data is never shown as live.
+
+---
+
+## 9. Status: built and running (24 Nov 2026)
+
+| Part | State | Evidence |
+|---|---|---|
+| ShipLog app on `main` | ✅ | 7 tests pass; CI workflow; Dockerfile |
+| `guardian.yml` (`pull_request_target`, no checkout, `permissions: {}`) + `guardian-nightly.yml` | ✅ | Lint test `test_workflow_template_uses_pull_request_target_without_checkout` |
+| Self-hosted runner `guardian-mac` (label `guardian-demo`) as a login service | ✅ online | Download checked against the published SHA-256 before extraction |
+| Fork-PR approval for all external contributors; `main` requires `guardian/scan`, enforced for admins | ✅ | Set via the GitHub API |
+| Real PR #1 (smoke test) | ✅ | GitHub Actions → runner → Guardian → ALLOW; run visible in the dashboard |
+| Statuses + comment on GitHub | ⏳ | **Token lacks "Commit statuses: write"** (GitHub answered 403). Guardian now reports this as a visible `github_post` event instead of failing silently |
+| Dashboard live mode (PR runs in the picker, `?run=` links, toasts, follow new PRs) | ✅ | |
+| Auto agents for BLOCK/REVIEW PR runs, events to Buddy | ✅ | Test `test_auto_agents_emit_trigger_events_for_buddy` |
+| Buddy (Electron) | ✅ running | Pops on a new PR; scanning / agents (4 orbiting agent dots) / block / review / approval / validating / verified / offline; click or "Open dashboard" grows into the dashboard on that run |
+| Validation profile `shiplog` | ✅ | Isolated container: install, unit, integration all passed (infrastructure smoke run) |
+| Demo branches A/B/C | ✅ pushed | Local dry run: A ALLOW · B REVIEW (jsonata critical advisories) · C BLOCK (untrusted source, look-alike + install script, `.npmrc` redirect; no advisory database knows `dotenvv`) |
+| Scheduled jobs | ✅ | launchd: server + Buddy always on; intel refresh 02:00; missed-PR watchdog every 10 min; GitHub nightly 02:30 IST |
+
+**Bugs found by running it for real (all fixed test-first):**
+- `new_dependency` was treated as a hard supply-chain signal, so a newly added *vulnerable* package was **removed** instead of **upgraded**, which would have broken PR B's feature.
+- GitHub post failures were silent.
+- `launchd` can't run bash scripts in `~/Documents` (macOS privacy protection), so the refresh job is now a Python module.
+- VS Code's `ELECTRON_RUN_AS_NODE=1` made Electron start as plain Node; the Buddy start script clears it.
+
+## 10. Demo runbook
+1. Services are already running (`launchctl list | grep com.guardian`). Buddy sits in the bottom-right corner; the tray shows "🛡 Guardian".
+2. Open a PR from a demo branch:
+   - `gh pr create -R kirankishoreV-07/PIPELINE_CHECK --head demo/a-duration-chart --title "feat: show how long ago each pipeline last ran" --body "…"`
+   - or use the GitHub web UI.
+3. Within seconds Buddy pops up and scans. Then ALLOW (green) or REVIEW/BLOCK. For REVIEW/BLOCK, the 4 agents start by themselves (Buddy shows their dots).
+4. Click **Open dashboard**: the dashboard grows out of Buddy on that PR's run. Then Investigate → Fix & approve (your name + reason) → Validate.
+5. GitHub shows `guardian/scan` (and `guardian/validation` after validation) plus one comment, once the token has status permission.
+6. Reset for another rehearsal: close the PR and rerun `python testbed/injector/build_shiplog_demo.py --push`. Same evidence gives cached agent answers (0 tokens).
+
+Service scripts: `scripts/install-services.sh`, `scripts/uninstall-services.sh`. Logs: `~/Library/Logs/guardian/`.
+
+## 11. Second repository: the Uptime Kuma fork (24 Nov 2026)
+
+`github.com/kirankishoreV-07/uptime-kuma`. The fork's `master` is upstream **3.0.0-beta.2**: Node ≥ 26, rewritten TypeScript tests, new auth, and it already ships `jsonata@2.2.0`. So the demo uses a **`guardian-demo` branch at upstream tag 2.5.12** (`5aa5dec4`, the version the brief and our validation profile use), set as the fork's default branch. `master` is untouched, and the default branch can be switched back at any time.
+
+| Part | State |
+|---|---|
+| `guardian-demo` = 2.5.12 + `guardian.yml` + `guardian-nightly.yml` + `GUARDIAN_DEMO.md` | ✅ default branch |
+| Uptime Kuma's own 21 workflows | disabled in the fork (files kept, so their CI findings stay realistic) |
+| Issues | enabled (nightly report) |
+| Runner `guardian-mac-kuma` (label `guardian-demo`), checksum-verified, login service | ✅ online |
+| Fork-PR approval for all external contributors; `guardian-demo` requires `guardian/scan`, enforced for admins | ✅ |
+| Validation profile | `uptime-kuma` (now names the fork in `repos:`); `node:20-bookworm` pulled |
+| Missed-PR watchdog | watches both repositories |
+
+Demo branches (built by `testbed/injector/build_kuma_demo.py`; local dry run, about 20 s each):
+
+| Branch | Change | Guardian |
+|---|---|---|
+| `kuma/a-docs-wording` | one line in SECURITY.md | ALLOW |
+| `kuma/b-pin-lodash` | pins lodash back to 4.17.20 | REVIEW: GHSA-35jh (CVE-2021-23337 command injection) and GHSA-r5fr (high). Computed fix: upgrade to **4.18.1** (also removes the 5 duplicate nested copies) |
+| `kuma/c-fix-typo` | adds the `dotenvv` look-alike from the local registry and **swaps the project's 14-day release-age gate for a registry redirect** | BLOCK: untrusted source, look-alike + install script, `.npmrc` redirect |
+
+Found while building:
+- Uptime Kuma's own `min-release-age=14` refused the brand-new fixture: a real defence. The attack therefore has to remove it, which Guardian flags.
+- A failed builder run left an edit that leaked into the benign branch. The builder now resets to a clean tree before each branch.
+
+**External PR:** a second GitHub account forks `kirankishoreV-07/uptime-kuma`, then opens a PR from one of these branches (or its own change) into `guardian-demo`. GitHub holds the workflow until you click **Approve and run** (Actions tab). Then the runner hands it to Guardian and Buddy pops. Guardian's scan never runs PR code. If you don't approve, the 10-minute watchdog still scans the PR (read-only).
+
+**Token:** add `kirankishoreV-07/uptime-kuma` to the fine-grained token's repository access, with the same three permissions.

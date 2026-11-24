@@ -144,3 +144,92 @@ def test_validate_with_stale_approval_runs_nothing(tmp_path, monkeypatch):
     monkeypatch.setattr(vr, "run_profile", lambda *a, **k: pytest.fail("must not execute anything"))
     res = vv.validate(out)
     assert res["gate"]["verified"] is False and any("patch changed" in r for r in res["gate"]["reasons"])
+
+
+def test_patch_is_really_applied_even_when_the_tree_sits_inside_another_git_repo(tmp_path):
+    """Found live: validation trees live under guardian-out/, inside Guardian's own git repo. `git apply` run there
+    silently skipped every path and returned 0, so the 'candidate' was the unpatched PR. Applying must ignore any
+    surrounding repo and prove the patch is in the tree."""
+    import hashlib
+    import subprocess
+    from guardian.validation.runner import prepare_tree
+    src = tmp_path / "src"
+    src.mkdir()
+    subprocess.run(["git", "init", "-q", str(src)], check=True)
+    (src / ".npmrc").write_text("legacy-peer-deps=true\nregistry=http://127.0.0.1:4873/\n")
+    g = ["git", "-C", str(src), "-c", "user.name=t", "-c", "user.email=t@t"]
+    subprocess.run(g + ["add", "-A"], check=True)
+    subprocess.run(g + ["commit", "-qm", "head"], check=True)
+    sha = subprocess.run(g + ["rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    patch = tmp_path / "fix.patch"
+    patch.write_text("diff --git a/.npmrc b/.npmrc\n--- a/.npmrc\n+++ b/.npmrc\n@@ -1,2 +1 @@\n legacy-peer-deps=true\n"
+                     "-registry=http://127.0.0.1:4873/\n")
+    outer = tmp_path / "outer"  # an unrelated repo around the destination, like guardian-out/ inside guardian/
+    outer.mkdir()
+    subprocess.run(["git", "init", "-q", str(outer)], check=True)
+    dest = prepare_tree(src, sha, outer / "out" / "validation" / "candidate", patch, hashlib.sha256(patch.read_bytes()).hexdigest())
+    assert (dest / ".npmrc").read_text() == "legacy-peer-deps=true\n"
+
+
+def test_a_patch_that_does_not_change_the_tree_is_refused(tmp_path, monkeypatch):
+    import hashlib
+    import subprocess
+
+    import pytest
+
+    from guardian.validation import runner
+    src = tmp_path / "src"
+    src.mkdir()
+    subprocess.run(["git", "init", "-q", str(src)], check=True)
+    (src / "a.txt").write_text("one\n")
+    g = ["git", "-C", str(src), "-c", "user.name=t", "-c", "user.email=t@t"]
+    subprocess.run(g + ["add", "-A"], check=True)
+    subprocess.run(g + ["commit", "-qm", "head"], check=True)
+    sha = subprocess.run(g + ["rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    patch = tmp_path / "p.patch"
+    patch.write_text("diff --git a/a.txt b/a.txt\n--- a/a.txt\n+++ b/a.txt\n@@ -1 +1 @@\n-one\n+two\n")
+    real = subprocess.run
+
+    def silent_apply(cmd, *a, **k):  # simulate git apply that "succeeds" without touching anything
+        if cmd[:2] == ["git", "apply"] and "--check" not in cmd:
+            return subprocess.CompletedProcess(cmd, 0, b"", b"")
+        return real(cmd, *a, **k)
+    monkeypatch.setattr(runner.subprocess, "run", silent_apply)
+    with pytest.raises(RuntimeError, match="not applied"):
+        runner.prepare_tree(src, sha, tmp_path / "dest", patch, hashlib.sha256(patch.read_bytes()).hexdigest())
+
+
+def test_rescan_compares_base_with_the_fixed_version_not_the_pr_head(tmp_path, monkeypatch):
+    """Found live: comparing PR head → fixed version flagged the revert of .npmrc itself as a 'sensitive file change'
+    still present. The question is the original one: after the fix, what does this PR still introduce versus base?"""
+    import hashlib
+    import json
+    import subprocess
+
+    from guardian.validation import validate as v
+    src = tmp_path / "src"
+    src.mkdir()
+    g = ["git", "-C", str(src), "-c", "user.name=t", "-c", "user.email=t@t"]
+    subprocess.run(["git", "init", "-q", str(src)], check=True)
+    (src / ".npmrc").write_text("legacy-peer-deps=true\n")
+    subprocess.run(g + ["add", "-A"], check=True)
+    subprocess.run(g + ["commit", "-qm", "base"], check=True)
+    base = subprocess.run(g + ["rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    (src / ".npmrc").write_text("legacy-peer-deps=true\nregistry=http://127.0.0.1:4873/\n")
+    subprocess.run(g + ["commit", "-qam", "head"], check=True)
+    head = subprocess.run(g + ["rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+    patch = tmp_path / "fix.patch"
+    patch.write_text("diff --git a/.npmrc b/.npmrc\n--- a/.npmrc\n+++ b/.npmrc\n@@ -1,2 +1 @@\n legacy-peer-deps=true\n"
+                     "-registry=http://127.0.0.1:4873/\n")
+    seen = {}
+
+    def fake_check_any(work, b, h, out, app):
+        show = lambda ref: subprocess.run(["git", "-C", str(work), "show", f"{ref}:.npmrc"], capture_output=True, text=True).stdout  # noqa: E731
+        seen.update(before=show(b), after=show(h))
+        (out).mkdir(parents=True, exist_ok=True)
+        (out / "latest.json").write_text(json.dumps({"path": "x"}))
+        return {"headline": {"complete": True}}
+    monkeypatch.setattr("guardian.universal.check_any", fake_check_any)
+    v._source_rescan(src, base, head, patch, tmp_path / "work", "app")
+    assert seen["before"] == "legacy-peer-deps=true\n"   # base, not the PR head
+    assert seen["after"] == "legacy-peer-deps=true\n"    # PR head + approved patch

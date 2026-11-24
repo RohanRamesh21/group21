@@ -4,6 +4,7 @@ import { spring } from "../ui";
 import { q, st, type Sections, type Step, type StepId } from "./shared";
 
 type Job = { id: string; label: string };
+export type PrRun = { project: string; repo: string; pr: number; title: string; status: string; verdict: string | null; head_sha: string };
 
 export function Verdict({ verdict, complete, size = "md" }: { verdict?: string | null; complete?: boolean; size?: "md" | "xl" }) {
   const v = (verdict ?? "none").toLowerCase();
@@ -18,8 +19,8 @@ export function Verdict({ verdict, complete, size = "md" }: { verdict?: string |
     </motion.span>);
 }
 
-export function Header({ s, project, setProject, jobs, view, setView }: {
-  s?: Sections; project: string | null; setProject: (p: string | null) => void; jobs: Job[];
+export function Header({ s, project, setProject, jobs, prRuns, view, setView }: {
+  s?: Sections; project: string | null; setProject: (p: string | null) => void; jobs: Job[]; prRuns: PrRun[];
   view: string; setView: (v: "scan" | "replay") => void;
 }) {
   return (
@@ -34,8 +35,13 @@ export function Header({ s, project, setProject, jobs, view, setView }: {
       <label className="flex items-center gap-2 rounded-lg bg-surface px-2.5 py-1.5 text-[12px] text-muted ring-1 ring-line">
         <span className="sr-only">Run</span>
         <select value={project ?? ""} onChange={(e) => setProject(e.target.value || null)} className="max-w-[260px] bg-transparent text-[12.5px] text-ink outline-none">
-          <option value="">Uptime Kuma · scenario PR</option>
-          {jobs.map((j) => <option key={j.id} value={j.id}>{j.label} · {j.id}</option>)}
+          {prRuns.length > 0 && <optgroup label="Pull requests (GitHub)">
+            {prRuns.filter((r) => r.status !== "superseded").map((r) => <option key={r.project} value={r.project}>{r.repo.split("/")[1]} #{r.pr} · {r.title.slice(0, 48) || r.head_sha.slice(0, 8)}{r.verdict ? ` · ${r.verdict.toUpperCase()}` : r.status === "running" ? " · scanning" : ""}</option>)}
+          </optgroup>}
+          <optgroup label="Local runs">
+            <option value="">Uptime Kuma · scenario PR</option>
+            {jobs.map((j) => <option key={j.id} value={j.id}>{j.label} · {j.id}</option>)}
+          </optgroup>
         </select>
       </label>
       {s && <span className="hidden font-mono text-[11.5px] text-faint lg:inline">{s.run.base_sha?.slice(0, 8) ?? "—"} → {s.run.head_sha?.slice(0, 8)}</span>}

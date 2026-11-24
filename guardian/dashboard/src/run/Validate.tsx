@@ -39,6 +39,12 @@ function Validation({ project, s, refresh }: { project: string | null; s: Sectio
         </div>)}
       {g && (
         <div className="mt-2">
+          <div className="mb-2 flex flex-wrap items-center gap-3 text-[12px] text-muted">
+            <span>Last run {v.finished ? new Date(v.finished * 1000).toLocaleString() : ""}</span>
+            <button onClick={start} disabled={state?.status === "running"} className="rounded-md px-2.5 py-1 text-accent ring-1 ring-accent/40 transition hover:bg-accent/10 active:scale-[0.98] disabled:opacity-40">
+              {state?.status === "running" ? "Validating…" : "Run validation again"}</button>
+            {state?.status === "running" && <span className="text-accent">{state.message ?? "starting"}</span>}
+          </div>
           <div className="flex flex-wrap gap-2 text-[12px]">
             <span className="rounded bg-raised px-2 py-1">target: <b className={g.target === "corrected" ? "text-ok" : "text-crit"}>{g.target}</b></span>
             <span className="rounded bg-raised px-2 py-1">validation: <b className={g.validation === "passed" ? "text-ok" : g.validation === "incomplete" ? "text-high" : "text-crit"}>{g.validation}</b></span>

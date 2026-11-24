@@ -8,3 +8,4 @@ __pycache__/
 guardian/dashboard/node_modules/
 guardian/dashboard/dist/
 guardian.egg-info/
+buddy/node_modules/

@@ -17,7 +17,7 @@ from guardian.remediation.versions import jump, smallest_safe
 ROOT = Path(__file__).resolve().parents[2]
 REG_CACHE = ROOT / ".cache" / "registry"
 HARD_TYPES = {"typosquat", "untrusted_source", "lockfile_tamper", "new_install_script", "install_script", "malicious",
-              "unresolvable_dependency", "new_dependency"}
+              "unresolvable_dependency"}  # new_dependency is informational, not hard
 CONFIG_TYPES = {"source_change", "sensitive_file_change", "extra_index_url", "modified_lockfile"}
 JUMP_RANK = {"patch": 0, "minor": 1, "major": 2, None: 3}
 

@@ -19,7 +19,7 @@ def client(monkeypatch, tmp_path):
 
 def test_approval_endpoint_binds_policy_and_profile_hashes(client):
     c, out = client
-    r = c.post("/api/approval", json={"decision": "approve", "approver": "kiran", "reason": "reviewed the diff"})
+    r = c.post("/api/approval", json={"decision": "approve", "approver": "kiran", "reason": "reviewed the diff", "reviewed": True})
     assert r.status_code == 200
     rec = r.json()
     assert rec["patch_sha256"] == "c" * 64 and len(rec["policy_sha256"]) == 64 and len(rec["profile_sha256"]) == 64

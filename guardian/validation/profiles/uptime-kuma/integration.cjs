@@ -28,15 +28,27 @@ function emit(socket, event, ...args) {
     server.stderr.on("data", (d) => { log += d; });
     let socket;
     try {
+        // Uptime Kuma first serves a temporary MIGRATION server on the same port, then the real server takes over.
+        // A socket opened against the migration server never gets an answer to "setup", so wait for the real one.
+        const plain = () => log.replace(/\u001b\[[0-9;]*m/g, "");
         let up = false;
-        for (let i = 0; i < 90 && !up; i++) {
-            try { const r = await fetch(`${URL}/api/entry-page`); up = r.ok; if (up) record("server_started", true, `entry-page ${r.status} ${JSON.stringify(await r.json())}`); } catch { /* not yet */ }
+        for (let i = 0; i < 120 && !up; i++) {
+            if (/\[SERVER\][^\n]*Listening on/.test(plain())) {
+                try { const r = await fetch(`${URL}/api/entry-page`); up = r.ok; if (up) record("server_started", true, `real server ready; entry-page ${r.status} ${JSON.stringify(await r.json())}`); } catch { /* not yet */ }
+            }
             if (!up) await sleep(1000);
         }
-        if (!up) throw new Error("server did not answer /api/entry-page within 90s");
+        if (!up) throw new Error("the real server (after migration) was not ready within 120s");
 
         socket = io(URL, { transports: ["websocket"], reconnection: false });
+        // The server attaches its socket handlers only after its async connection work (sendInfo); it signals a fresh
+        // install by emitting "setup" right before attaching them. Sending "setup" earlier is silently lost.
+        const readyForSetup = new Promise((res, rej) => {
+            const t = setTimeout(() => rej(new Error("server never asked for setup within 30s")), 30000);
+            socket.once("setup", () => { clearTimeout(t); res(); });
+        });
         await new Promise((res, rej) => { socket.once("connect", res); socket.once("connect_error", rej); });
+        await readyForSetup;
         const user = "guardian-check";
         const pass = "Gk-" + Math.random().toString(36).slice(2) + "-Z9q";
         let r = await emit(socket, "setup", user, pass);

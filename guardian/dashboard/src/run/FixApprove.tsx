@@ -1,5 +1,5 @@
 import { motion } from "motion/react";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { GitDiff } from "@phosphor-icons/react";
 import { api, Badge, jsonPost, q, SectionHead, type Sections } from "./shared";
 
@@ -12,18 +12,12 @@ function FixPlan({ project, s, refresh }: { project: string | null; s: Sections;
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [diff, setDiff] = useState<string | null>(null);
-  const [who, setWho] = useState("");
-  const [why, setWhy] = useState("");
   const propose = async () => {
     setBusy(true); setErr(null);
     try { await api("/api/fix-plan", jsonPost({ project, include: [] })); refresh(); } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   };
-  const decide = async (decision: "approve" | "reject") => {
-    if (!who.trim() || !why.trim()) { setErr("Enter your name and a reason before deciding."); return; }
-    setBusy(true); setErr(null);
-    try { await api("/api/approval", jsonPost({ project, decision, approver: who, reason: why })); refresh(); } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
-  };
-  const showDiff = async () => { if (diff !== null) { setDiff(null); return; } const p = await api(`/api/fix-plan${q(project)}`); setDiff(p.patch_text || "(empty patch)"); };
+  const [seenPatch, setSeenPatch] = useState(false);
+  const showDiff = async () => { if (diff !== null) { setDiff(null); return; } const p = await api(`/api/fix-plan${q(project)}`); setDiff(p.patch_text || "(empty patch)"); setSeenPatch(true); };
   return (
     <section className="panel p-4" aria-labelledby="fix-h">
       <header className="flex items-baseline justify-between">
@@ -54,21 +48,73 @@ function FixPlan({ project, s, refresh }: { project: string | null; s: Sections;
         {diff !== null && <pre className="scroll-thin mt-2 max-h-72 overflow-auto rounded-lg bg-canvas p-3 font-mono text-[11px] leading-relaxed">{diff.split("\n").map((l, i) => <div key={i} className={l.startsWith("+") && !l.startsWith("+++") ? "text-ok" : l.startsWith("-") && !l.startsWith("---") ? "text-crit" : "text-muted"}>{l || " "}</div>)}</pre>}
         <FixReview project={project} review={rem.review} refresh={refresh} names={Object.fromEntries((rem.candidates as Candidate[]).map((c) => [c.id, c.package ?? c.file ?? c.id]))} />
         {rem.review?.status !== "done" && rem.pending?.length > 0 && <p className="mt-2 text-[11px] text-faint">Pending: {rem.pending.join("; ")}</p>}
-        <div className="mt-4 border-t border-line pt-4">
-          <h3 className="mb-2 flex items-center gap-2 text-[12.5px] font-semibold">Your decision <Badge kind="human" /><span className="font-normal text-faint">bound to patch {rem.patch?.patch_sha256?.slice(0, 12)}</span></h3>
-        {rem.approval ? (
-          <p className="flex items-center gap-2 text-[12.5px]"><Badge kind="human" /> {rem.approval.decision === "approve" ? "Approved" : "Rejected"} by <b>{rem.approval.approver}</b>: “{rem.approval.reason}”</p>
-        ) : (
-          <div className="grid gap-2 sm:grid-cols-[160px_minmax(0,1fr)_auto_auto]">
-            <input aria-label="Your name" value={who} onChange={(e) => setWho(e.target.value)} placeholder="Your name" className="rounded-md bg-canvas px-2.5 py-1.5 text-[12.5px] outline-none ring-1 ring-line focus:ring-accent" />
-            <input aria-label="Reason" value={why} onChange={(e) => setWhy(e.target.value)} placeholder="Why you approve or reject" className="rounded-md bg-canvas px-2.5 py-1.5 text-[12.5px] outline-none ring-1 ring-line focus:ring-accent" />
-            <button disabled={busy} onClick={() => decide("approve")} className="rounded-md bg-ok/90 px-3 py-1.5 text-[12.5px] font-medium text-canvas transition hover:bg-ok active:scale-[0.98] disabled:opacity-50">Approve</button>
-            <button disabled={busy} onClick={() => decide("reject")} className="rounded-md px-3 py-1.5 text-[12.5px] text-crit ring-1 ring-crit/40 transition hover:bg-crit/10 active:scale-[0.98] disabled:opacity-50">Reject</button>
-          </div>)}
-        </div>
+        <ApprovalPanel project={project} seenPatch={seenPatch} openPatch={() => { if (diff === null) showDiff(); }} refresh={refresh} />
       </>)}
       {err && <p role="alert" className="mt-2 text-[12px] text-crit">{err}</p>}
     </section>);
+}
+
+type ApprovalView = { contract: Record<string, string | null>; approval: any; valid: boolean; reason: string | null; audit_ok: boolean; audit_entries: number };
+
+/* Human approval: shows exactly what is being signed, the live validity of the latest decision, and the form.
+   The server enforces the same rules (name, reason, reviewed patch for approve; any change invalidates). */
+function ApprovalPanel({ project, seenPatch, openPatch, refresh }: { project: string | null; seenPatch: boolean; openPatch: () => void; refresh: () => void }) {
+  const [v, setV] = useState<ApprovalView | null>(null);
+  const [who, setWho] = useState("");
+  const [why, setWhy] = useState("");
+  const [hours, setHours] = useState(24);
+  const [reviewed, setReviewed] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const load = useCallback(() => api(`/api/approval${q(project)}`).then(setV).catch((e) => setErr((e as Error).message)), [project]);
+  useEffect(() => { load(); }, [load]);
+  const decide = async (decision: "approve" | "reject") => {
+    if (!who.trim() || !why.trim()) { setErr("Enter your name and a reason before deciding."); return; }
+    if (decision === "approve" && !reviewed) { setErr("Open the patch and confirm you reviewed it before approving."); return; }
+    setBusy(true); setErr(null);
+    try { await api("/api/approval", jsonPost({ project, decision, approver: who, reason: why, hours, reviewed: decision === "approve" ? reviewed : false })); await load(); refresh(); }
+    catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
+  };
+  if (!v) return <div className="mt-4 h-24 animate-pulse rounded-lg bg-raised" />;
+  const a = v.approval, k = v.contract;
+  const short = (x?: string | null) => (x ? x.slice(0, 12) : "—");
+  return (
+    <div className="mt-4 border-t border-line pt-4">
+      <h3 className="mb-2 flex items-center gap-2 text-[12.5px] font-semibold">Your decision <Badge kind="human" /></h3>
+      {a && (
+        <div className={`mb-3 rounded-lg p-3 text-[12.5px] ring-1 ${v.valid ? "bg-ok/8 ring-ok/30" : "bg-high/8 ring-high/30"}`}>
+          <p><b>{a.decision === "approve" ? "Approved" : "Rejected"}</b> by <b>{a.approver}</b>: “{a.reason}”
+            <span className="ml-2 text-[11px] text-faint">{new Date(a.created * 1000).toLocaleString()} · expires {new Date(a.expires * 1000).toLocaleString()}{a.reviewed_patch ? " · patch reviewed" : ""}</span></p>
+          <p className={`mt-1 text-[12px] ${v.valid ? "text-ok" : "text-high"}`}>{v.valid ? "Valid: authorises validation of exactly this patch." : `Not valid: ${v.reason}`}</p>
+        </div>)}
+      <dl className="mb-3 grid grid-cols-[110px_minmax(0,1fr)] gap-x-3 gap-y-0.5 rounded-lg bg-canvas/60 p-3 font-mono text-[11px] ring-1 ring-line">
+        <dt className="font-sans text-faint">You sign</dt><dd className="font-sans text-muted">these exact values; any change makes the approval invalid</dd>
+        <dt className="text-faint">base commit</dt><dd>{short(k.base_sha)}</dd>
+        <dt className="text-faint">head commit</dt><dd>{short(k.head_sha)}</dd>
+        <dt className="text-faint">patch SHA-256</dt><dd>{short(k.patch_sha256)}</dd>
+        <dt className="text-faint">policy</dt><dd>{short(k.policy_sha256)}</dd>
+        <dt className="text-faint">validation profile</dt><dd>{k.profile} · {short(k.profile_sha256)}</dd>
+        <dt className="font-sans text-faint">audit log</dt><dd className={v.audit_ok ? "text-ok" : "text-crit"}>{v.audit_ok ? `hash chain intact · ${v.audit_entries} entries` : "hash chain BROKEN"}</dd>
+      </dl>
+      {!v.valid && (<>
+        <div className="grid gap-2 sm:grid-cols-[160px_minmax(0,1fr)_120px]">
+          <input aria-label="Your name" value={who} onChange={(e) => setWho(e.target.value)} placeholder="Your name" className="rounded-md bg-canvas px-2.5 py-1.5 text-[12.5px] outline-none ring-1 ring-line focus:ring-accent" />
+          <input aria-label="Reason" value={why} onChange={(e) => setWhy(e.target.value)} placeholder="Why you approve or reject" className="rounded-md bg-canvas px-2.5 py-1.5 text-[12.5px] outline-none ring-1 ring-line focus:ring-accent" />
+          <select aria-label="Approval lasts" value={hours} onChange={(e) => setHours(Number(e.target.value))} className="rounded-md bg-canvas px-2 py-1.5 text-[12px] ring-1 ring-line">
+            <option value={1}>valid 1 hour</option><option value={8}>valid 8 hours</option><option value={24}>valid 24 hours</option><option value={72}>valid 3 days</option>
+          </select>
+        </div>
+        <label className="mt-2 flex items-center gap-2 text-[12px] text-muted">
+          <input type="checkbox" checked={reviewed} disabled={!seenPatch} onChange={(e) => setReviewed(e.target.checked)} className="accent-[var(--color-accent)]" />
+          I reviewed the exact patch above
+          {!seenPatch && <button onClick={openPatch} className="text-accent hover:underline">(open the patch first)</button>}
+        </label>
+        <div className="mt-2 flex gap-2">
+          <button disabled={busy || !reviewed} onClick={() => decide("approve")} className="rounded-md bg-ok/90 px-3 py-1.5 text-[12.5px] font-medium text-canvas transition hover:bg-ok active:scale-[0.98] disabled:opacity-40">Approve</button>
+          <button disabled={busy} onClick={() => decide("reject")} className="rounded-md px-3 py-1.5 text-[12.5px] text-crit ring-1 ring-crit/40 transition hover:bg-crit/10 active:scale-[0.98] disabled:opacity-50">Reject</button>
+        </div></>)}
+      {err && <p role="alert" className="mt-2 text-[12px] text-crit">{err}</p>}
+    </div>);
 }
 
 function FixReview({ project, review, refresh, names }: { project: string | null; review: any; refresh: () => void; names: Record<string, string> }) {

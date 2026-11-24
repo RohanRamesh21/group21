@@ -14,11 +14,13 @@ import { Detect } from "./run/Detect";
 import { Discover } from "./run/Discover";
 import { FixApprove } from "./run/FixApprove";
 import { Report } from "./run/Report";
-import { Header, Journey } from "./run/Shell";
+import { Header, Journey, type PrRun } from "./run/Shell";
+import { LiveToasts } from "./run/LiveToasts";
 import { Summary } from "./run/Summary";
 import { Validate } from "./run/Validate";
 import { api, journey, type StepId } from "./run/shared";
 import { useRunModel } from "./run/useRunModel";
+import { OutdatedRun } from "./run/OutdatedRun";
 import { useMeta, useRun } from "./useRun";
 
 type View = StepId | "scan" | "replay";
@@ -45,7 +47,15 @@ function Replay() {
 }
 
 export default function App() {
-  const [project, setProject] = useState<string | null>(null);
+  const [project, setProject] = useState<string | null>(() => new URLSearchParams(window.location.search).get("run"));
+  const [prRuns, setPrRuns] = useState<PrRun[]>([]);
+  const loadPrRuns = () => api("/api/pr-runs").then(setPrRuns).catch(() => undefined);
+  useEffect(() => { loadPrRuns(); }, []);
+  useEffect(() => {  // keep ?run= in the address bar, so a PR comment link or Buddy can open the same run
+    const u = new URL(window.location.href);
+    if (project) u.searchParams.set("run", project); else u.searchParams.delete("run");
+    window.history.replaceState(null, "", u.toString());
+  }, [project]);
   const VIEWS: View[] = ["summary", "discover", "detect", "investigate", "fix", "validate", "report", "scan", "replay"];
   const fromHash = () => (VIEWS.find((v) => v === window.location.hash.slice(1)) ?? "summary") as View;
   const [view, setView] = useState<View>(fromHash);
@@ -63,10 +73,14 @@ export default function App() {
     <MotionConfig reducedMotion="user">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-accent focus:px-3 focus:py-1.5">Skip to content</a>
       <div className="relative z-10 mx-auto flex min-h-[100dvh] max-w-[1560px] flex-col">
-        <Header s={s} project={project} setProject={(p) => { setProject(p); setView("summary"); }} jobs={jobs} view={view} setView={setView} />
+        <Header s={s} project={project} setProject={(p) => { setProject(p); setView("summary"); }} jobs={jobs} prRuns={prRuns} view={view} setView={setView} />
+        <LiveToasts project={project} onRunsChanged={loadPrRuns} onCurrentChanged={refresh}
+          onOpen={(p, v) => { setProject(p); setView(v ?? "summary"); }} />
         {s && <Journey steps={steps} active={isStep ? view : ""} onPick={setView} />}
         <main id="main" className="flex-1 px-6 pb-10 pt-5">
-          {isStep && err && <div role="alert" className="panel p-8 text-[13px] text-muted">{err === "no run yet" ? "No run yet. Use “Scan a project”, or run `guardian check` in the terminal." : `Could not load the run: ${err}`}</div>}
+          {isStep && err && (err.startsWith("outdated")
+            ? <OutdatedRun project={project} message={err} onDone={() => { loadPrRuns(); refresh(); }} />
+            : <div role="alert" className="panel p-8 text-[13px] text-muted">{err === "no run yet" ? "No run yet. Use “Scan a project”, or run `guardian check` in the terminal." : `Could not load the run: ${err}`}</div>)}
           {isStep && !s && !err && <div className="panel h-48 animate-pulse" aria-busy="true" />}
           <AnimatePresence mode="wait">
             <motion.div key={view + (project ?? "")} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}>

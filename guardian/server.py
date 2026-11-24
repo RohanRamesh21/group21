@@ -184,8 +184,27 @@ def evidence(run_id: str, eid: str):
 _DEP_CACHE: dict = {}
 
 
+def _gh_run(project: str | None) -> dict | None:
+    """A PR run from the GitHub trigger ("gh-<run id>"), or None."""
+    import re as _re
+    if not project or not project.startswith("gh-") or not _re.fullmatch(r"gh-\d{8}-\d{6}-[0-9a-f]{6}", project):
+        return None
+    return _trigger_service().queue.get(project[3:])
+
+
+def _profile_of(project: str | None, default: str = "uptime-kuma") -> str:
+    """Validation profile bound into approvals and used by validation: per repository for PR runs."""
+    from guardian.validation.runner import profile_for
+    run = _gh_run(project)
+    return profile_for(run["repo"]) if run else default
+
+
 def _check_dir(project: str | None) -> Path:
     from guardian import projects
+    if project and project.startswith("gh-"):
+        if not _gh_run(project):
+            raise HTTPException(404, f"unknown PR run {project}")
+        return _trigger_service().root / "runs" / project[3:]
     try:
         return projects.out_dir(project)
     except KeyError:
@@ -384,6 +403,7 @@ class ApprovalReq(BaseModel):
     approver: str
     reason: str
     hours: float = 24
+    reviewed: bool = False  # the approver confirms they looked at the exact patch (required to approve)
 
 
 @app.post("/api/approval")
@@ -396,11 +416,51 @@ def approval_create(req: ApprovalReq):
     f = out / "fix-plan.json"
     if not f.exists():
         raise HTTPException(404, "no fix plan to approve")
+    if req.decision == "approve" and not req.reviewed:
+        raise HTTPException(400, "review the patch first, then confirm you reviewed it")
+    if not 1 / 60 <= req.hours <= 24 * 7:
+        raise HTTPException(400, "an approval lasts between 1 minute and 7 days")
     try:
-        return ap.decide(out, json.loads(f.read_text()), req.decision, approver=req.approver, reason=req.reason,
-                         ttl_seconds=int(req.hours * 3600), policy_sha256=policy_sha256(), profile_sha256=load_profile("uptime-kuma")[1])
+        return ap.decide(out, json.loads(f.read_text()), req.decision, approver=req.approver, reason=req.reason, reviewed=req.reviewed,
+                         ttl_seconds=int(req.hours * 3600), policy_sha256=policy_sha256(),
+                         profile_sha256=load_profile(_profile_of(req.project))[1])
     except ValueError as e:
         raise HTTPException(400, str(e))
+    finally:
+        _gh_event(req.project, "decision_recorded", {"decision": req.decision, "approver": req.approver[:80]})
+
+
+@app.get("/api/approval")
+def approval_view(project: str | None = None):
+    """What an approval binds (shown BEFORE anyone signs), the latest decision, and whether it still authorises the
+    current plan: any change to commits, patch, policy or profile, or expiry, makes it invalid."""
+    from guardian import approval as ap
+    from guardian.validation.runner import load_profile
+    from guardian.validation.validate import policy_sha256
+    out = _check_dir(project)
+    f = out / "fix-plan.json"
+    if not f.exists():
+        raise HTTPException(404, "no fix plan yet")
+    plan = json.loads(f.read_text())
+    profile = _profile_of(project)
+    contract = {"base_sha": plan.get("base_sha"), "head_sha": plan["head_sha"], "patch_sha256": plan["patch"]["patch_sha256"],
+                "policy_sha256": policy_sha256(), "profile": profile, "profile_sha256": load_profile(profile)[1]}
+    rec = ap.latest_approval(out)
+    valid, reason = False, "no decision yet: a named person must approve or reject"
+    if rec:
+        try:
+            ap.check(rec, plan, policy_sha256=contract["policy_sha256"], profile_sha256=contract["profile_sha256"])
+            valid, reason = True, None
+        except ap.ApprovalInvalid as e:
+            reason = str(e)
+    audit_ok, entries = ap.verify_audit(out)
+    return {"contract": contract, "approval": rec, "valid": valid, "reason": reason, "audit_ok": audit_ok, "audit_entries": entries}
+
+
+@app.get("/api/risk-acceptance")
+def risk_list(project: str | None = None):
+    from guardian import approval as ap
+    return ap.accepted_risks(_check_dir(project))
 
 
 class RiskReq(BaseModel):
@@ -442,12 +502,17 @@ def validate_start(req: ValidateReq):
         raise HTTPException(409, "validation already running")
     _VALIDATING[key] = "running"
 
+    profile = _profile_of(req.project, req.profile)
+    _gh_event(req.project, "validation_started", {"profile": profile})
+
     def work():
         try:
-            validate(out, req.profile, log=lambda m: _VALIDATING.__setitem__(key + ":msg", m))
+            res = validate(out, profile, log=lambda m: _VALIDATING.__setitem__(key + ":msg", m))
             _VALIDATING[key] = "done"
+            _gh_validation_status(req.project, res if isinstance(res, dict) else json.loads((out / "validation.json").read_text()))
         except Exception as e:  # recorded, never hidden
             _VALIDATING[key] = f"error: {type(e).__name__}: {e}"[:300]
+            _gh_event(req.project, "validation_finished", {"status": "error", "error": _VALIDATING[key]})
     threading.Thread(target=work, daemon=True).start()
     return {"status": "started"}
 
@@ -559,10 +624,26 @@ def ai_usage(run_id: str | None = None):
 def run_view(project: str | None = None):
     """Everything the Run page shows, from the same builder as the Guardian report (one source of truth)."""
     from guardian.report.build import build
+    from guardian import projects
     out = _check_dir(project)
     if not (out / "latest.json").exists():
         raise HTTPException(404, "no run yet")
+    if projects.is_outdated(out):
+        raise HTTPException(409, "outdated: this scan was made by an older Guardian version. Rescan it to use the current engine.")
     return build(out)
+
+
+@app.post("/api/projects/{pid}/rescan")
+def project_rescan(pid: str):
+    """Re-run a saved scan with the current engine on the same commits (old results are kept)."""
+    from guardian import projects
+    if not projects.get(pid):
+        raise HTTPException(404, "unknown project")
+    try:
+        projects.rescan(pid)
+    except (RuntimeError, ValueError) as e:
+        raise HTTPException(409, str(e))
+    return {"status": "started", "project": pid}
 
 
 @app.get("/api/report")
@@ -581,12 +662,14 @@ class GitHubEvent(BaseModel):
     head_sha: str
     base_sha: str | None = None
     draft: bool = False
+    title: str = ""
     wait: bool = True
 
     def model_post_init(self, _ctx) -> None:
         import re as _re
         if not _re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", self.repo) or not _re.fullmatch(r"[0-9a-f]{40}", self.head_sha) \
-                or (self.base_sha and not _re.fullmatch(r"[0-9a-f]{40}", self.base_sha)) or self.pr < 1:
+                or (self.base_sha and not _re.fullmatch(r"[0-9a-f]{40}", self.base_sha)) or len(self.title) > 200 \
+                or (self.pr < 1 and not (self.action == "nightly" and self.pr == 0)):
             raise ValueError("malformed PR event")
 
 
@@ -612,9 +695,69 @@ def _trigger_service():
             db = sp.run(["grype", "db", "status"], capture_output=True, text=True).stdout.strip().splitlines()
             return {"policy_sha256": file_sha256(ROOT / "guardian.yaml"), "profile_sha256": load_profile("uptime-kuma")[1],
                     "intel": next((x for x in db if "Built" in x), "unknown").strip()}
-        _TRIGGER["svc"] = Service(root, fetch=git_fetch_pr(root), engine=universal.check_any,
-                                  github=GitHub(token) if token else None, identity_parts=parts)
+        svc = Service(root, fetch=git_fetch_pr(root), engine=universal.check_any,
+                      github=GitHub(token) if token else None, identity_parts=parts)
+        if os.environ.get("GUARDIAN_AUTO_AGENTS", "1") != "0":
+            svc.after_scan = lambda rid, out, h, e: _auto_agents(svc, rid, out, h, e)
+        _TRIGGER["svc"] = svc
     return _TRIGGER["svc"]
+
+
+def _auto_agents(svc, rid: str, out: Path, h: dict, e: dict, background: bool = True) -> None:
+    """BLOCK/REVIEW PR runs: the 4 agents start by themselves (budgeted, cached). Their progress goes to the trigger
+    event stream, so Buddy and the dashboard follow it live. ALLOW runs spend no tokens."""
+    from guardian.ai import workflow
+    st = _INVESTIGATING.setdefault(str(out), {"status": "running", "events": []})
+    st.update(status="running", events=[])
+
+    def emit(ev: dict) -> None:
+        st["events"].append(ev)
+        svc.events.append(rid, "agent", {**ev, "project": f"gh-{rid}", "pr": e.get("pr"), "repo": e.get("repo")})
+
+    def work():
+        svc.events.append(rid, "agents_started", {"project": f"gh-{rid}", "pr": e.get("pr"), "repo": e.get("repo"), "verdict": h.get("verdict")})
+        try:
+            res = workflow.investigate(out, on_event=emit)
+            _fixer(out, emit)
+            st["status"] = "finished"
+            svc.events.append(rid, "agents_finished", {"project": f"gh-{rid}", "pr": e.get("pr"), "status": res.get("status"),
+                                                       "tokens": (res.get("usage") or {}).get("run", {}).get("tokens")})
+            svc.events.append(rid, "approval_needed", {"project": f"gh-{rid}", "pr": e.get("pr"), "repo": e.get("repo")})
+        except Exception as ex:  # recorded, never hidden; the scan verdict stands on its own
+            st["status"] = f"error: {type(ex).__name__}: {ex}"[:300]
+            svc.events.append(rid, "agents_finished", {"project": f"gh-{rid}", "pr": e.get("pr"), "status": "error", "error": st["status"]})
+    if background:
+        threading.Thread(target=work, daemon=True, name=f"agents-{rid}").start()
+    else:
+        work()
+
+
+def _gh_event(project: str | None, kind: str, data: dict) -> None:
+    run = _gh_run(project)
+    if run:
+        _trigger_service().events.append(run["id"], kind, {**data, "project": project, "pr": run["pr"], "repo": run["repo"]})
+
+
+def _gh_validation_status(project: str | None, res: dict) -> None:
+    """Validation result of a PR run → the separate guardian/validation status on the PR's head commit + an event."""
+    from guardian.trigger.github import validation_status
+    run = _gh_run(project)
+    if not run:
+        return
+    svc = _trigger_service()
+    st = validation_status(res)
+    posted = svc._post(lambda: svc.github.set_status(run["repo"], run["head_sha"], st, svc.run_url(run["id"])))
+    _gh_event(project, "validation_finished", {"state": st["state"], "description": st["description"], "github": posted})
+
+
+@app.get("/api/pr-runs")
+def pr_runs():
+    """PR runs from the GitHub trigger, newest first, for the run selector (titles are untrusted text, shown escaped)."""
+    svc = _trigger_service()
+    rows = [{"project": f"gh-{r['id']}", "repo": r["repo"], "pr": r["pr"], "title": r.get("title", ""), "status": r["status"],
+             "verdict": (r.get("result") or {}).get("verdict"), "head_sha": r["head_sha"], "created": r["created"]}
+            for r in svc.queue.runs.values()]
+    return sorted(rows, key=lambda r: r["created"], reverse=True)
 
 
 @app.post("/api/github/event")

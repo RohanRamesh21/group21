@@ -24,6 +24,19 @@ def status_for(h: dict, context: str = "guardian/scan") -> dict:
     return {"state": state, "context": context, "description": desc[:140]}
 
 
+def validation_status(v: dict) -> dict:
+    """Result of validating an approved fix, as the separate guardian/validation status."""
+    g = v.get("gate") or {}
+    if v.get("status") != "executed":
+        return {"state": "error", "context": "guardian/validation", "description": f"Validation not run: {v.get('reason') or v.get('status')}"[:140]}
+    if g.get("verified"):
+        return {"state": "success", "context": "guardian/validation", "description": "Fix verified: built, tested and rescanned in isolation"}
+    return {"state": "failure", "context": "guardian/validation", "description": f"Fix not verified ({g.get('validation', 'failed')})"[:140]}
+
+
+NIGHTLY_MARK = "<!-- guardian:nightly -->"
+
+
 def _md(text: str) -> str:
     return re.sub(r"[<>`*_\[\]|]", lambda m: {"<": "&lt;", ">": "&gt;"}.get(m.group(0), "\\" + m.group(0)), str(text))
 
@@ -40,6 +53,13 @@ def comment_body(h: dict, run_url: str | None = None) -> str:
     lines += ["", "_Scan decision only. A fix is shown as verified only after human approval and validation "
                   "(status `guardian/validation`)._"]
     return "\n".join(lines)
+
+
+def _why(data, headers: dict) -> str:
+    """GitHub's reason and the permission it expects (never the token)."""
+    msg = data.get("message") if isinstance(data, dict) else None
+    need = {k.lower(): v for k, v in (headers or {}).items()}.get("x-accepted-github-permissions")
+    return (f": {msg}" if msg else "") + (f" (needs: {need})" if need else "")
 
 
 class GitHub:
@@ -71,17 +91,32 @@ class GitHub:
     def open_pulls(self, repo: str) -> list[dict]:
         return self._pages(f"{API}/repos/{repo}/pulls?state=open&per_page=100")
 
+    def statuses(self, repo: str, sha: str) -> list[dict]:
+        return self._pages(f"{API}/repos/{repo}/commits/{sha}/statuses?per_page=100")
+
     def set_status(self, repo: str, sha: str, status: dict, target_url: str | None = None) -> None:
         body = {**status, **({"target_url": target_url} if target_url else {})}
-        code, _, _ = self._req("POST", f"{API}/repos/{repo}/statuses/{sha}", json=body)
+        code, data, headers = self._req("POST", f"{API}/repos/{repo}/statuses/{sha}", json=body)
         if code not in (200, 201):
-            raise RuntimeError(f"status update failed with {code}")
+            raise RuntimeError(f"status update failed with {code}{_why(data, headers)}")
 
     def upsert_comment(self, repo: str, pr: int, body: str) -> None:
         existing = [c for c in self._pages(f"{API}/repos/{repo}/issues/{pr}/comments?per_page=100") if MARK in (c.get("body") or "")]
         if existing:
-            code, _, _ = self._req("PATCH", f"{API}/repos/{repo}/issues/comments/{existing[0]['id']}", json={"body": body})
+            code, data, headers = self._req("PATCH", f"{API}/repos/{repo}/issues/comments/{existing[0]['id']}", json={"body": body})
         else:
-            code, _, _ = self._req("POST", f"{API}/repos/{repo}/issues/{pr}/comments", json={"body": body})
+            code, data, headers = self._req("POST", f"{API}/repos/{repo}/issues/{pr}/comments", json={"body": body})
         if code not in (200, 201):
-            raise RuntimeError(f"comment update failed with {code}")
+            raise RuntimeError(f"comment update failed with {code}{_why(data, headers)}")
+
+    def upsert_issue(self, repo: str, title: str, body: str) -> None:
+        """One open nightly issue per repository, updated in place (no duplicate alerts)."""
+        issues = [i for i in self._pages(f"{API}/repos/{repo}/issues?state=open&per_page=100")
+                  if NIGHTLY_MARK in (i.get("body") or "") and "pull_request" not in i]
+        body = NIGHTLY_MARK + "\n" + body
+        if issues:
+            code, _, _ = self._req("PATCH", f"{API}/repos/{repo}/issues/{issues[0]['number']}", json={"title": title, "body": body})
+        else:
+            code, _, _ = self._req("POST", f"{API}/repos/{repo}/issues", json={"title": title, "body": body})
+        if code not in (200, 201):
+            raise RuntimeError(f"issue update failed with {code}")
