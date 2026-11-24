@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  ArrowRight, CheckCircle, CircleNotch, Cube, Gavel, Hammer, LockKey, MagnifyingGlass, Package, Play, Plug, Pulse,
+  ArrowClockwise, ArrowRight, CheckCircle, CircleNotch, Cube, Gavel, Hammer, LockKey, MagnifyingGlass, Package, Play, Plug, Pulse,
   ShieldCheck, Stack, Terminal, TestTube, Timer, WarningCircle, XCircle,
 } from "@phosphor-icons/react";
 import { spring } from "../ui";
@@ -267,7 +267,6 @@ function Validation({ project, s, refresh, onRunning }: { project: string | null
         {g && !running && (
           <>
             <span className="text-[12px] text-faint">Last run {v.finished ? new Date(v.finished * 1000).toLocaleString() : ""}</span>
-            <button onClick={start} className="ml-auto rounded-md px-2.5 py-1 text-[12px] text-accent ring-1 ring-accent/40 transition hover:bg-accent/10 active:scale-[0.98]">Run validation again</button>
           </>)}
       </div>
 
@@ -297,7 +296,18 @@ function Validation({ project, s, refresh, onRunning }: { project: string | null
             <span className="rounded bg-raised px-2 py-1">validation: <b className={g.validation === "passed" ? "text-ok" : g.validation === "incomplete" ? "text-high" : "text-crit"}>{g.validation}</b></span>
             <span className={`rounded px-2 py-1 ${g.verified ? "bg-ok/10 ring-1 ring-ok/30" : "bg-raised"}`}>verified: <b className={g.verified ? "text-ok" : "text-crit"}>{g.verified ? "yes" : "no"}</b></span>
           </div>
-          {g.reasons?.length > 0 && <ul className="list-disc pl-5 text-[12px] text-muted">{g.reasons.map((r: string) => <li key={r}>{r}</li>)}</ul>}
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={start} disabled={!approved}
+              title={approved ? "Build, test and rescan the approved fix again" : "A valid approval is needed first"}
+              className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-[12.5px] font-medium transition active:scale-[0.98] disabled:opacity-40 ${g.verified ? "text-accent ring-1 ring-accent/40 hover:bg-accent/10" : "bg-accent text-white hover:brightness-110"}`}>
+              <ArrowClockwise size={14} weight="bold" />Run validation again</button>
+            {!g.verified && <a href="#fix" className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[12.5px] text-accent ring-1 ring-accent/40 transition hover:bg-accent/10">
+              Recompute or re-approve the fix <ArrowRight size={13} /></a>}
+            {!approved && <span className="text-[12px] text-high">The approval is no longer valid (the patch, commits, policy or profile changed): approve again in step 4.</span>}
+            {approved && !g.verified && <span className="text-[11.5px] text-faint">If the same patch failed, recompute it first: the rules may produce a better fix now.</span>}
+          </div>
+          {g.reasons?.length > 0 && <ul className="list-disc pl-5 text-[12px] text-muted">{g.reasons.slice(0, 4).map((r: string) => <li key={r}>{r}</li>)}
+            {g.reasons.length > 4 && <li className="text-faint">+{g.reasons.length - 4} more (later stages could not run)</li>}</ul>}
           <PhaseRail states={executed ? PHASES.map(() => "done") : []} />
           {v.timings && (
             <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-muted"><Timer size={14} className="text-faint" />

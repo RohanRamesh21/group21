@@ -2,7 +2,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowSquareOut, CheckCircle, Info, Scales, ShieldWarning, Sparkle, Warning } from "@phosphor-icons/react";
 import type { Risk } from "../types";
-import { RISK, RiskTag, spring } from "../ui";
+import { RISK, RiskTag, safeHref, spring } from "../ui";
 
 interface Contribution { factor: string; value: number; weight: number; points: number; why: string }
 export interface Scored {
@@ -212,7 +212,7 @@ function ScoreCard({ f, project }: { f: Scored; project?: string | null }) {
       <div>
         <div className="mb-1.5 text-[11px] uppercase tracking-wide text-faint">Evidence</div>
         <div className="flex flex-wrap gap-1.5 font-mono text-[11.5px]">
-          {ev.url && <a href={ev.url} target="_blank" rel="noreferrer" className="flex items-center gap-1 rounded-md bg-raised px-2 py-1 text-accent hover:underline">{ev.advisory}<ArrowSquareOut size={12} /></a>}
+          {safeHref(ev.url) && <a href={safeHref(ev.url)} target="_blank" rel="noreferrer" className="flex items-center gap-1 rounded-md bg-raised px-2 py-1 text-accent hover:underline">{ev.advisory}<ArrowSquareOut size={12} /></a>}
           {ev.cve && <span className="rounded-md bg-raised px-2 py-1">{ev.cve}</span>}
           {ev.epss && <span className="rounded-md bg-raised px-2 py-1">EPSS {Number(ev.epss.epss).toFixed(3)} · pct {Number(ev.epss.percentile).toFixed(2)} · {ev.epss.date}</span>}
           {ev.kev && <span className="rounded-md bg-crit/15 px-2 py-1 text-crit">CISA KEV since {ev.kev.date_added}</span>}

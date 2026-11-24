@@ -110,13 +110,24 @@ function FixPlan({ project, s, refresh }: { project: string | null; s: Sections;
     try { await api("/api/fix-plan", jsonPost({ project, include: [] })); refresh(); } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
   };
   const [seenPatch, setSeenPatch] = useState(false);
+  const [confirmRe, setConfirmRe] = useState(false);
   const showDiff = async () => { if (diff !== null) { setDiff(null); return; } const p = await api(`/api/fix-plan${q(project)}`); setDiff(p.patch_text || "(empty patch)"); setSeenPatch(true); };
   const files: string[] = rem.patch?.files ?? [];
   return (
     <section className="panel p-4" aria-labelledby="fix-h">
       <header className="flex items-baseline justify-between">
         <h2 id="fix-h" className="text-[13px] font-semibold">Recommended fix <span className="font-normal text-faint">· {rem.candidates?.length ?? 0} item(s), one patch</span></h2>
-        {rem.status !== "not_started" && <span className="font-mono text-[11px] text-faint" title="SHA-256 of the exact patch you approve">patch {rem.patch?.patch_sha256?.slice(0, 12)}</span>}
+        {rem.status !== "not_started" && (
+          <span className="flex items-center gap-3">
+            {confirmRe ? (
+              <span className="flex items-center gap-2 text-[11.5px] text-high">A new patch needs a new approval.
+                <button disabled={busy} onClick={() => { setConfirmRe(false); propose(); }} className="rounded-md bg-accent px-2 py-0.5 font-medium text-white disabled:opacity-50">{busy ? "Recomputing…" : "Recompute"}</button>
+                <button onClick={() => setConfirmRe(false)} className="text-faint hover:text-ink">cancel</button></span>
+            ) : (
+              <button onClick={() => setConfirmRe(true)} title="Compute the fix again with the current rules (e.g. after a failed validation)"
+                className="rounded-md px-2 py-0.5 text-[11.5px] text-accent ring-1 ring-accent/40 transition hover:bg-accent/10">Recompute the fix</button>)}
+            <span className="font-mono text-[11px] text-faint" title="SHA-256 of the exact patch you approve">patch {rem.patch?.patch_sha256?.slice(0, 12)}</span>
+          </span>)}
       </header>
       {rem.status === "not_started" ? (
         <div className="mt-3">

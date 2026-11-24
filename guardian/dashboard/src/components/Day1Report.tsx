@@ -2,7 +2,7 @@ import { motion } from "motion/react";
 import { useEffect, useState } from "react";
 import { ArrowRight, CaretDown, CheckCircle, DownloadSimple, MinusCircle, WarningCircle } from "@phosphor-icons/react";
 import type { Risk } from "../types";
-import { RiskTag, spring } from "../ui";
+import { RiskTag, safeHref, spring } from "../ui";
 
 interface Step { n: number; title: string; status: "done" | "nothing_found" | "error"; facts: string[]; note?: string | null; [k: string]: any }
 interface Day1 { question: string; chain: string[]; repo: string; head_commit: string; base_commit: string; compare: boolean; mode: string; verdict?: string; steps: Step[] }
@@ -162,7 +162,7 @@ function Step5({ s }: { s: Step }) {
       {e.path?.length > 0 && <div><span className="text-faint">Path:</span> <Path p={e.path} /></div>}
       {e.where && <div><span className="text-faint">Evidence:</span> <span className="font-mono text-[11.5px]">{e.where}</span></div>}
       {Object.keys(e.proof).length > 0 && <div className="flex flex-wrap gap-1.5">{Object.entries(e.proof).map(([k, v]) => (
-        k === "url" ? <a key={k} href={String(v)} target="_blank" rel="noreferrer" className="rounded bg-surface px-1.5 py-0.5 text-[11px] hover:text-accent">advisory ↗</a> :
+        k === "url" && safeHref(v) ? <a key={k} href={safeHref(v)} target="_blank" rel="noreferrer" className="rounded bg-surface px-1.5 py-0.5 text-[11px] hover:text-accent">advisory ↗</a> :
           <span key={k} className="rounded bg-surface px-1.5 py-0.5 font-mono text-[11px]">{k}: {String(v)}</span>))}</div>}
       <div className="text-[11.5px] text-faint">Why this level: {e.floor ? `hard floor (${e.floor})` : e.why.join(" · ")}</div>
     </div>))}</div>);

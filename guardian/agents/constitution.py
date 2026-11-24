@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 
 from guardian.agents.board import Board
+from guardian.ai import guard
 from guardian.agents.protocol import RISK_ORDER, AgentMessage
 from guardian.store.evidence import EvidenceStore
 
@@ -48,6 +49,11 @@ def check_message(msg: AgentMessage, board: Board, store: EvidenceStore) -> None
                 raise ConstitutionError(f"C1: advisory '{adv}' does not appear in the cited evidence.")
         if "<untrusted-data" in msg.claim.lower():
             raise ConstitutionError("C5: do not paste untrusted content into messages; cite its evidence ID.")
+        # Output guard: claims are shown in the dashboard and reports, so exfiltration links, images/HTML, role tokens
+        # and approve/merge directives are refused (links are allowed only when they appear in the cited evidence).
+        unsafe = guard.check_output(msg.claim, evidence_text=_cited_text(store, msg.evidence_ids))
+        if unsafe:
+            raise ConstitutionError(f"C5: claim rejected by the output guard: {unsafe}. Write plain text and cite evidence IDs.")
 
     if msg.kind == "clear":
         if msg.sender != "skeptic":
