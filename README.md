@@ -8,6 +8,12 @@ Guardian analyses the supply-chain changes in a pull request, explains which ris
 - **Plan:** [`docs/GUARDIAN_FINAL_PLAN.md`](docs/GUARDIAN_FINAL_PLAN.md) · **Build log with evidence:** [`docs/PROGRESS.md`](docs/PROGRESS.md)
 - **Architecture:** [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) · **Responsible AI & security:** [`docs/RESPONSIBLE_AI.md`](docs/RESPONSIBLE_AI.md) · **Known limitations:** [`docs/KNOWN_LIMITATIONS.md`](docs/KNOWN_LIMITATIONS.md) · **Setup:** [`docs/SETUP.md`](docs/SETUP.md)
 
+## Architecture
+
+![Guardian architecture: triggers → discover & detect → contextual risk → agent workflow → human approval → isolated validation → developer outputs, all backed by an SQLite evidence and audit store](docs/architecture_diagram.jpeg)
+
+A pull request or nightly scan is analysed by rule-based scanners and detectors, then scored. Four agent roles review the evidence: Lead, Investigator, Verifier and Fixer. Gatekeeper code checks every AI output, and AI cannot override the rules verdict. A named person approves the exact patch, and the patch is validated in an isolated container. Every step writes to a hash-linked evidence and audit store. More detail: [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+
 ## What works today
 
 | Step | Command | Status |
@@ -36,6 +42,10 @@ Then review the patch on the Run page and approve it yourself (name + reason), a
 2. **Fixes are computed** from advisory ranges and the npm registry; agents may explain them, never invent versions.
 3. **A person approves** an exact patch hash; any change invalidates the approval.
 4. **Validation decides by exit codes and scan diffs**; "verified" only when every required stage passed.
+
+![Scoring workflow: intelligence & detection inputs → deterministic scoring engine (hard-signal floors → CISA SSVC → AHP priority) → adaptive scoring & enrichment → remediation & upgrade safety](docs/scoring_workflow_diagram.jpeg)
+
+Hard-signal floors (malware, tampering, install hooks) come first and are absolute. The CISA SSVC flowchart then decides **ACT / ATTEND / TRACK**, and AHP orders findings within each decision. An AI advisor can propose AHP weights, but a Python referee bounds them and a person must approve them. A second AHP model ranks fix candidates. Full method: [`docs/SCORING.md`](docs/SCORING.md).
 
 ## Sample application
 Uptime Kuma 2.5.12 (MIT), pinned commit `5aa5dec4`, in `sandbox/uptime-kuma`. The attack scenario (`scenario/s3-s9`: look-alike `axois`, `.npmrc` redirect, tampered lockfile) exists **only locally**; its package is harmless (writes a marker file) and lives only in the local Verdaccio registry.
