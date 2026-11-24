@@ -46,7 +46,9 @@ def validation_status(v: dict) -> dict:
                     f"{ai.get('vulnerabilities', 0)} vulnerabilities, {ai.get('malware_suspicious', 0)} malware; built, tested, rescanned")
             return {"state": "success", "context": "guardian/validation", "description": _status_text(desc)}
         return {"state": "success", "context": "guardian/validation", "description": "Fix verified: built, tested and rescanned in isolation"}
-    return {"state": "failure", "context": "guardian/validation", "description": _status_text(f"Fix not verified ({g.get('validation', 'failed')})")}
+    why = next(iter(g.get("reasons") or []), "")  # say WHY, not just "(passed)" when validation passed but the rescan did not
+    return {"state": "failure", "context": "guardian/validation",
+            "description": _status_text(f"Fix not verified: {why}" if why else f"Fix not verified ({g.get('validation', 'failed')})")}
 
 
 NIGHTLY_MARK = "<!-- guardian:nightly -->"

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
-  ArrowClockwise, ArrowRight, CheckCircle, CircleNotch, Cube, Gavel, Hammer, LockKey, MagnifyingGlass, Package, Play, Plug, Pulse,
+  ArrowClockwise, ArrowRight, CheckCircle, Wrench, CircleNotch, Cube, Gavel, Hammer, LockKey, MagnifyingGlass, Package, Play, Plug, Pulse,
   ShieldCheck, Stack, Terminal, TestTube, Timer, WarningCircle, XCircle,
 } from "@phosphor-icons/react";
 import { spring } from "../ui";
@@ -245,6 +245,15 @@ function Validation({ project, s, refresh, onRunning }: { project: string | null
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const timer = useRef<number | null>(null);
   const [ready, setReady] = useState<Readiness | null>(null);
+  const [mem, setMem] = useState<any[]>([]);
+  const [rep, setRep] = useState<any>(null);
+  const [repBusy, setRepBusy] = useState(false);
+  const loadMem = useCallback(() => api(`/api/repair${q(project)}`).then((r) => setMem(r.memory ?? [])).catch(() => {}), [project]);
+  const repair = async () => {
+    setRepBusy(true); setErr(null);
+    try { const r = await api("/api/repair", jsonPost({ project })); setRep(r); await loadMem(); refreshRef.current(); }
+    catch (e) { setErr((e as Error).message); } finally { setRepBusy(false); }
+  };
   const refreshRef = useRef(refresh);
   refreshRef.current = refresh;
   const v = s.validation;
@@ -278,6 +287,7 @@ function Validation({ project, s, refresh, onRunning }: { project: string | null
   useEffect(() => { // pre-check whenever the run's data changes (approval, recomputed fix, finished validation)
     if (state?.status === "running") return;
     api(`/api/validation/readiness${q(project)}`).then(setReady).catch(() => setReady(null));
+    loadMem();
   }, [project, s.remediation?.status, s.remediation?.patch?.patch_sha256, v.finished, state?.status]);
 
   const start = async (force = false) => {
@@ -335,11 +345,30 @@ function Validation({ project, s, refresh, onRunning }: { project: string | null
               title={approved ? "Build, test and rescan the approved fix again" : "A valid approval is needed first"}
               className={`inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-[12.5px] font-medium transition active:scale-[0.98] disabled:opacity-40 ${g.verified ? "text-accent ring-1 ring-accent/40 hover:bg-accent/10" : "bg-accent text-white hover:brightness-110"}`}>
               <ArrowClockwise size={14} weight="bold" />Run validation again</button>
+            {!g.verified && <button onClick={repair} disabled={repBusy} title="Remember what failed and recompute the fix without it (you approve the new patch)"
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12.5px] font-medium text-accent ring-1 ring-accent/40 transition hover:bg-accent/10 disabled:opacity-50">
+              <Wrench size={14} weight="bold" />{repBusy ? "Repairing…" : "Repair from this failure"}</button>}
             {!g.verified && <a href="#fix" className="inline-flex items-center gap-1 rounded-lg px-3 py-1.5 text-[12.5px] text-accent ring-1 ring-accent/40 transition hover:bg-accent/10">
               Recompute or re-approve the fix <ArrowRight size={13} /></a>}
             {!approved && <span className="text-[12px] text-high">The approval is no longer valid (the patch, commits, policy or profile changed): approve again in step 4.</span>}
             {approved && !g.verified && <span className="text-[11.5px] text-faint">If the same patch failed, recompute it first: the rules may produce a better fix now.</span>}
           </div>
+          {rep && (
+            <div className={`rounded-lg p-3 text-[12.5px] ring-1 ${rep.status === "repaired" ? "bg-ok/5 ring-ok/25" : "bg-high/5 ring-high/30"}`}>
+              {rep.status === "repaired" ? (<>
+                <b>Repaired fix ready (attempt {rep.attempt}).</b> {rep.changes?.length ? rep.changes.map((c: any) => `${c.package}: ${c.was} → ${c.now}`).join(" · ") : "the plan was recomputed"}
+                <span className="block text-[12px] text-muted">It is a new patch, so it needs your approval: <a href="#fix" className="text-accent hover:underline">review and approve in step 4</a>, then run validation again.</span>
+              </>) : <span><b>No automatic repair:</b> {rep.reason}</span>}
+            </div>)}
+          {mem.length > 0 && (
+            <div className="rounded-lg bg-canvas/50 p-3 text-[12px] ring-1 ring-line">
+              <div className="font-medium">Repair memory <span className="font-normal text-faint">· what earlier attempts taught the fixer</span></div>
+              <ol className="mt-1.5 space-y-1">{mem.map((a: any) => (
+                <li key={a.attempt} className="flex flex-wrap gap-x-2"><span className="text-faint">#{a.attempt}</span>
+                  <span className={a.verified ? "text-ok" : "text-crit"}>{a.verified ? "verified" : "not verified"}</span>
+                  <span className="text-muted">{Object.entries(a.failed_versions ?? {}).map(([p, x]: any) => `avoid ${p}@${x.versions.join(", ")} (${x.why[0]})`).join("; ") || (a.reasons ?? [])[0]}</span>
+                  {a.blame && <span className="text-faint">· {a.blame}</span>}</li>))}</ol>
+            </div>)}
           {!g.verified && <ReadinessCard r={ready} />}
           {g.reasons?.length > 0 && <ul className="list-disc pl-5 text-[12px] text-muted">{g.reasons.slice(0, 4).map((r: string) => <li key={r}>{r}</li>)}
             {g.reasons.length > 4 && <li className="text-faint">+{g.reasons.length - 4} more (later stages could not run)</li>}</ul>}

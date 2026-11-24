@@ -1,3 +1,7 @@
+# READING GUIDE
+# Turns an existing scored finding into a short AI explanation; it does not recalculate the score.
+# Limits the model to a score card, checks returned text, labels interpretation as inferred and caches explanations.
+#
 """Plain-English explanation of one scored finding, written by Gemini and checked by rules.
 
 The model sees only the score card (factors, SSVC path, floor, counterfactuals, evidence pointers).
@@ -48,6 +52,7 @@ CARD:
 TOKEN = re.compile(r"(?:CVE|GHSA|MAL|OSV)-[\w-]+|\b\d+(?:\.\d+)+\b|\b\d+\b")
 
 
+# Select the already-computed facts the explanation is allowed to refer to.
 def _card(f: dict) -> dict:
     c = {k: f.get(k) for k in ("title", "kind", "component", "label", "decision", "level", "score", "ssvc", "floor",
                                "contributions", "counterfactuals", "evidence")}
@@ -62,6 +67,7 @@ def _allowed(card: dict) -> list[str]:
     return base
 
 
+# Check explanation values/citations and guard output; retain accepted sentences as AI inference.
 def check(result: dict, card: dict) -> dict:
     allowed, blob = set(_allowed(card)), json.dumps(card)
     out, rejected = [], []
@@ -125,6 +131,7 @@ CARDS:
 """
 
 
+# Request explanations for a batch of score cards, with checked output per card.
 def explain_batch(findings: list[dict]) -> int:
     """One model call for many findings (instead of one call each). Results are checked and cached per card."""
     cards = [_card(f) for f in findings]
@@ -144,6 +151,7 @@ def explain_batch(findings: list[dict]) -> int:
     return n
 
 
+# Prepare a limited set of cached explanations for likely dashboard selections.
 def warm(findings: list[dict], limit: int = 12) -> None:
     """Pre-generate explanations for what a reviewer looks at first: everything introduced, then the top scores."""
     picked = [f for f in findings if f["label"] == "introduced"]
@@ -161,6 +169,7 @@ def warm(findings: list[dict], limit: int = 12) -> None:
         explain(f)
 
 
+# Return one checked explanation, reusing its cache when possible.
 def explain(finding: dict, force: bool = False) -> dict:
     import os
 

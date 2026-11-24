@@ -1,3 +1,7 @@
+# READING GUIDE
+# Evidence preparation: saved scan + scores + Git changes become cases for the Investigator.
+# Reads package content as data, stores evidence IDs, and marks third-party text as untrusted; no package code runs here.
+#
 """Evidence packet: everything an investigator needs about one case, collected by code (no AI, nothing executed).
 
 A case = the introduced findings of one component (a package or a changed file). Each piece of evidence is stored in
@@ -29,26 +33,31 @@ FENCE_ROOM = 250  # fence tags + truncation note: a fenced item always ends with
 _RANK = {"critical": 0, "high": 1, "medium": 2, "low": 3, "info": 4, None: 9}  # highest level of a case, not its first
 
 
+# Read Git output for evidence; a failed read contributes an empty result rather than executing project code.
 def _git(repo: str, *args: str) -> str:
     r = subprocess.run(["git", "-C", repo, *args], capture_output=True, text=True)
     return r.stdout if r.returncode == 0 else ""
 
 
+# Keep each excerpt bounded while leaving room for its closing untrusted-data marker.
 def _fenced(text: str, source: str, limit: int = MAX_CHARS - FENCE_ROOM) -> str:
     return guard.fence(text, source, limit=limit)
 
 
+# Separate a package component into its name and version for package-specific evidence reads.
 def _split(component: str) -> tuple[str, str]:
     name, _, version = component.rpartition("@")
     return name, version
 
 
+# Select the scan fields needed for investigation; keep free-form summaries behind a trust boundary.
 def _finding_view(f: dict) -> str:
     keep = {k: f.get(k) for k in ("id", "kind", "type", "label", "level", "severity", "decision", "floor", "evidence")}
     facts = json.dumps(keep, sort_keys=True)[:MAX_CHARS - 300 - FENCE_ROOM - 20]
     return facts + "\nsummary:\n" + _fenced(str(f.get("summary") or ""), "advisory_summary", limit=300)
 
 
+# Compare relevant base/head lock entries to show the package source, version and integrity changes.
 def _lock_entries(repo: str, base: str, head: str, name: str, version: str) -> list[dict]:
     out = []
     changed = _git(repo, "diff", "--name-only", base, head).split()
@@ -64,6 +73,7 @@ def _lock_entries(repo: str, base: str, head: str, name: str, version: str) -> l
     return out
 
 
+# Inspect cached package archive metadata and hook text without running the hooks.
 def _package_scripts(tarballs: Path, name: str, version: str) -> tuple[dict, dict[str, str]] | None:
     """Lifecycle scripts from an already-downloaded tarball, plus the local files those scripts run
     (e.g. "node setup.js"). Read in memory only: never extracted to disk, never executed."""
@@ -84,6 +94,7 @@ def _package_scripts(tarballs: Path, name: str, version: str) -> tuple[dict, dic
     return scripts, run
 
 
+# Convert detected instruction-like content into code-authored evidence that an Investigator can cite.
 def _signals(raw: list[tuple[str, str | None, str]]) -> list[dict]:
     """guard.scan() over each piece of third-party text (deterministic order; quoted matches are cleaned)."""
     out, seen = [], set()
@@ -96,6 +107,7 @@ def _signals(raw: list[tuple[str, str | None, str]]) -> list[dict]:
     return out
 
 
+# Entry point: load this run's files, group introduced findings and persist the evidence used in each case.
 def build_packets(out: Path, tarballs: Path | None = None) -> dict:
     out = Path(out)
     latest = json.loads((out / "latest.json").read_text())

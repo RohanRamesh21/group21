@@ -1,3 +1,7 @@
+# READING GUIDE
+# Prepared demonstration facts for replay and tests; these are deliberately fixed examples.
+# Does not scan an arbitrary repository. RealFacts in realworld.py is the real evidence source for that loop.
+#
 """Canned facts for Stage A (AGENTIC_CORE §11: "run the full agent loop on fake tools").
 
 Models scenario S3 + S9 on Uptime Kuma 2.5.12: a commit titled "fix typo" adds the look-alike
@@ -16,6 +20,7 @@ KUMA = "pkg:npm/kuma-helper@1.0.1"
 COMMIT = "a1b2c3d"
 
 
+# Create fixture evidence and tool answers in the same shape expected by ToolRegistry.
 def build(store: EvidenceStore) -> dict:
     def tool(name: str, content, path: str | None = None, kind: str = "tool_output") -> str:
         return store.add(content, kind=kind, source=f"{name} (canned, stage A)", path=path).id
@@ -98,6 +103,7 @@ def build(store: EvidenceStore) -> dict:
     return world
 
 
+# Format fixture facts for readable tool output; it does not fetch live repository data.
 def pretty(store: EvidenceStore, eid: str) -> str:
     data = store.content(eid)
     try:

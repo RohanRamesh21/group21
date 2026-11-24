@@ -1,3 +1,7 @@
+# READING GUIDE
+# Combines saved artifacts into one run model used by the dashboard and HTML/JSON reports.
+# Reads findings, AI investigation, fixes, approvals and validation; missing stages are represented rather than invented.
+#
 """Guardian report (GUARDIAN_FINAL_PLAN.md §14.4): one run folder → report.json (machines) + report.html (people).
 
 Everything comes from files the run produced (scan report, scores, fix plan, approvals, validation, audit log).
@@ -59,6 +63,7 @@ def _capability(h: dict, plan: dict | None, validation: dict | None) -> str:
     return "L2" if h.get("base_sha") else "L1"
 
 
+# Read this run's artifacts into sections shared by API/dashboard/report without rerunning an investigation.
 def build(out: Path) -> dict:
     out = Path(out)
     latest = json.loads((out / "latest.json").read_text())
@@ -216,6 +221,7 @@ def to_html(rep: dict) -> str:
             f" · schema {_e(rep['schema_version'])} · machine-readable twin: report.json</p>{body}</body></html>")
 
 
+# Persist the combined JSON and escaped HTML representations for sharing or inspection.
 def write(out: Path) -> dict:
     rep = build(out)
     j, h = Path(out) / "report.json", Path(out) / "report.html"

@@ -1,3 +1,8 @@
+# READING GUIDE
+# Read-only fact source used by the older tool-using loop: Git snapshots, lockfiles, registry data and advisories.
+# Tools read files and permitted network sources; package installation scripts are inspected as text, not executed.
+# Has the same fact interface as fakeworld.py so orchestration can use real evidence or a controlled fixture.
+#
 """Real fact tools for Stage B: git, the lockfile, the npm registry, OSV and the policy file.
 
 Same interface as the canned world (answer / detector / coverage_required), so the agents,
@@ -29,7 +34,9 @@ POPULAR = ["axios", "express", "lodash", "react", "request", "chalk", "commander
            "colors", "cross-env", "electron", "nodemon", "body-parser", "jsonwebtoken", "bcrypt", "sharp", "esbuild"]
 
 
+# Expose repository evidence through a small fact API, keeping network and archive reads behind helpers.
 class RealFacts:
+    # Read base/head views and package data once; later fact requests use these fixed snapshots.
     def __init__(self, repo: Path, base: str, head: str, store: EvidenceStore, policy_path: Path,
                  cache: Path, human_policy: str = "simulated"):
         self.repo, self.base, self.head, self.store = Path(repo), base, head, store
@@ -52,6 +59,7 @@ class RealFacts:
     def _ev(self, tool: str, content, path: str | None = None, kind: str = "tool_output") -> str:
         return self.store.add(content, kind=kind, source=f"{tool} (real)", path=path).id
 
+    # Apply the configured fetch-host policy before requesting remote evidence.
     def _get(self, url: str, **kw):
         host = urlparse(url).netloc
         if host not in self.policy["registries"]["fetch_hosts"]:
@@ -101,6 +109,7 @@ class RealFacts:
                 "dockerfiles_changed": [f for f in files if "dockerfile" in f.lower()],
                 "commits": [{"sha": c["sha"], "subject_evidence": "use commit_metadata"} for c in commits]}
 
+    # Describe what this change requires the older agent loop to examine.
     def coverage_required(self) -> set[str]:
         req = set()
         for item in self.diff["packages_added"]:
@@ -116,6 +125,7 @@ class RealFacts:
         req |= {f"commit:{c['sha']}" for c in self.diff["commits"]}
         return req
 
+    # Translate a checked surface into the same key used by coverage requirements.
     def coverage_key(self, cov: str) -> str:
         """Agents may cite a full or short commit sha; map it to the key used in coverage_required."""
         if cov.startswith("commit:"):
@@ -126,6 +136,7 @@ class RealFacts:
         return cov
 
     # --- fact tools (return evidence id) -------------------------------------
+    # Dispatch a named fact query and reuse memoized evidence IDs when available.
     def answer(self, tool: str, arg: str) -> str | None:
         key = (tool, arg)
         if key in self._memo:
@@ -244,6 +255,7 @@ class RealFacts:
         })
 
     # --- detectors (deterministic signals) -----------------------------------
+    # Run the supported rule checks on these snapshots and return evidence-linked signals.
     def detector(self, det: str) -> list[dict]:
         out = []
         changed = {(p.name, p.version) for p in self.head_pkgs.values()} - {(p.name, p.version) for p in self.base_pkgs.values()}
@@ -313,6 +325,7 @@ class RealFacts:
                                 "hard_signal": bool(mal), "floor": "critical" if mal else "medium"})
         return out
 
+    # Supply the configured demonstration/policy answer; the dashboard can override the callback.
     def human(self, question: str, options: list[str]) -> str:
         """Day 1 CLI: simulated human answer derived from policy (the dashboard asks a real person)."""
         if "registry" in question.lower():
@@ -321,6 +334,7 @@ class RealFacts:
         return f"(simulated) {options[-1] if options else 'No'}"
 
 
+# Represent package identity as an npm package URL for fact lookup.
 def _purl(name: str, version: str) -> str:
     if name.startswith("@"):
         scope, pkg = name[1:].split("/", 1)
@@ -328,6 +342,7 @@ def _purl(name: str, version: str) -> str:
     return f"pkg:npm/{name}@{version}"
 
 
+# Recover package name/version from the package URL supplied to a fact tool.
 def _parse_purl(purl: str) -> tuple[str, str | None]:
     s = purl.replace("pkg:npm/", "").replace("%40", "@")
     if s.count("@") >= (2 if s.startswith("@") else 1):

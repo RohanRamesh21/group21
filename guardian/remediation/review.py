@@ -1,3 +1,8 @@
+# READING GUIDE
+# AI Fixer/Verifier commentary on rule-generated candidates: explain changes and raise concerns in bounded batches.
+# AI output is checked against each candidate; failures keep the original rule rationale and explicit review coverage.
+# This is an advisory review, not patch editing or human approval.
+#
 """Fixer + Verifier review of a computed fix plan (M4 agent part).
 
 The model explains each candidate (Fixer) and raises concerns (Verifier). Code then checks it: candidate IDs must
@@ -49,6 +54,7 @@ Candidates:
 """
 
 
+# Check each model explanation/challenge against its actual candidate and reject unsupported output.
 def _check(items: list[dict], cands: dict, text_key: str, rejected: list) -> list[dict]:
     out = []
     for it in items if isinstance(items, list) else []:
@@ -84,6 +90,7 @@ def _view(c: dict) -> dict:
     return v
 
 
+# Review a bounded batch and split eligible failed batches within the retry-depth limit.
 def _attempt(batch: list[dict], run_id: str, depth: int = 0) -> tuple[list, list, int]:
     """(ok results, failures, retries) for one batch; a refused batch is split in half and retried."""
     prompt = PROMPT.format(candidates=json.dumps([_view(c) for c in batch], indent=1))
@@ -101,6 +108,7 @@ def _attempt(batch: list[dict], run_id: str, depth: int = 0) -> tuple[list, list
         return [], [{"candidate_id": c["id"], "reason": f"AI review not available: {str(e)[:160]}"} for c in batch], 0
 
 
+# Review actionable candidates up to the cap and report coverage and failures honestly.
 def review(plan: dict) -> dict:
     cands = {c["id"]: c for c in plan.get("candidates", [])}
     sha = (plan.get("patch") or {}).get("patch_sha256") or "none"

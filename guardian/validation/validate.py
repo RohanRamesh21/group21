@@ -1,3 +1,8 @@
+# READING GUIDE
+# Validation coordinator: check exact approval first, prepare baseline/candidate, run profiles, rescan and evaluate gate.
+# Tracks timings, optional generated tests and before/after results. The model never converts a failed stage into passed.
+# The source comparison uses the original base versus the repaired PR so the fix's own reverts are not treated as new attacks.
+#
 """Validate an approved fix plan: approval check → baseline + candidate runs → source and artifact rescans → gate.
 
 Order matters: the approval contract is checked first, and if it doesn't match exactly, nothing is executed.
@@ -37,6 +42,7 @@ SRC_EXT = (".js", ".cjs", ".mjs", ".ts", ".vue", ".jsx", ".tsx")
 SKIP_DIRS = {"node_modules", ".git", "dist", "build", ".guardian", ".guardian-tests"}
 
 
+# Estimate which upgraded dependencies are reached by project test imports for supplementary test selection.
 def test_exposure(tree: Path, packages: list[str]) -> dict:
     """Which changed packages the app code and the test files import (static, by module name). Tests that pass say
     nothing about a package no test reaches (Hejderup & Gousios, JSS 2022: tests detect ~47% of faults in direct and
@@ -65,6 +71,7 @@ def test_exposure(tree: Path, packages: list[str]) -> dict:
     return found
 
 
+# Keep progress for each parallel lane so a later message does not hide another lane still running.
 def progress_update(progress: dict, msg: str) -> dict:
     """Fold one progress message into a per-lane view (both sandboxes and the rescan run at the same time, so the
     latest single message is not enough for the dashboard)."""
@@ -117,6 +124,7 @@ def _artifact_components(tree: Path, out: Path) -> tuple[set[str], str | None]:
     return {f"{c.get('name')}@{c.get('version')}" for c in doc.get("components", []) if c.get("type") == "library"}, None
 
 
+# Ask what the fixed PR still introduces relative to the original base, using the same scan engine.
 def _source_rescan(repo: Path, base_sha: str | None, head_sha: str, patch: Path, out: Path, app: str) -> dict:
     """Two-commit repo scanned by the same engine: BASE, then the candidate (PR head + approved patch).
     This asks the original question again: what does the PR still introduce once fixed? (Comparing PR head → candidate
@@ -144,6 +152,7 @@ def _source_rescan(repo: Path, base_sha: str | None, head_sha: str, patch: Path,
     return {"report": rep, "scores": scores, "complete": bool(rep["headline"].get("complete")) and bool(latest.get("scores"))}
 
 
+# Top-level validation sequence; the approval check precedes tree execution and container work.
 def validate(out: Path, profile: str = "uptime-kuma", log=print, chat=None) -> dict:
     out = Path(out)
     plan = json.loads((out / "fix-plan.json").read_text())
@@ -155,6 +164,7 @@ def validate(out: Path, profile: str = "uptime-kuma", log=print, chat=None) -> d
     try:
         if rec is None:
             raise ap.ApprovalInvalid("no approval has been given for this plan")
+        # This authorizes only the current commits, patch, policy and profile; changed inputs require a new approval.
         ap.check(rec, plan, policy_sha256=pol_sha, profile_sha256=prof_sha)
     except ap.ApprovalInvalid as e:
         result["gate"] = vr.gate(approval_ok=False, approval_error=str(e), baseline=[], candidate=[], targets_resolved=[],

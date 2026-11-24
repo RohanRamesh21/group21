@@ -87,3 +87,7 @@ def test_the_gate_fails_on_an_ai_test_regression_and_ignores_unreliable_ones():
     assert vr.gate(**common)["verified"] is True
     g = vr.gate(**common, generated=[{"package": "minimist", "reason": "passes with 1.2.5 and fails with 1.2.6"}])
     assert g["verified"] is False and g["validation"] == "failed" and any("AI-written" in r for r in g["reasons"])
+
+
+def test_mentioning_http_in_a_test_of_an_http_library_is_fine():
+    assert gt.check_body('test("keeps maxRedirects", () => { assert.equal(typeof lib.http, "object"); });') is None

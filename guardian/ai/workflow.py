@@ -1,3 +1,9 @@
+# READING GUIDE
+# Normal dashboard investigation: prepare cases -> plan work -> Investigators -> Verifier -> checked results.
+# Code controls case selection, concurrency, retries and stopping. The model receives evidence rather than tool access.
+# Detailed calls and batched triage have limits; retries mean the actual call count can exceed cases + one.
+# Outputs include checked claims, rejected text, coverage, usage and agents/verdict.json. The rules verdict is preserved.
+#
 """Single-shot investigation workflow (replaces the open-ended agent loop by default).
 
     code builds evidence packets  →  Investigator: 1 JSON call per case, in parallel  →  Verifier: 1 JSON call
@@ -70,10 +76,12 @@ TRIAGE_CAP = 30                    # high/critical cases beyond deep + triage ar
 VERIFY_CAP = 12                    # the Verifier challenges the most severe investigated cases
 
 
+# Control signal for user cancellation; it is distinct from a provider error that may be retried.
 class Stopped(Exception):
     """The user pressed Stop: no further model call is made."""
 
 
+# Check citation membership and selected literal values. Passing is not a proof of full semantic correctness.
 def _check_text(text: str, ids: list, evidence: dict[str, dict], require_ids: bool = True) -> str | None:
     """Return a rejection reason, or None when the text passes."""
     ids = [i for i in ids or [] if isinstance(i, str)]
@@ -89,15 +97,18 @@ def _check_text(text: str, ids: list, evidence: dict[str, dict], require_ids: bo
     return None
 
 
+# Build the allowed-text context used when checking links and other generated output.
 def _evidence_text(evidence: list[dict]) -> str:
     return "\n".join(str(e.get("content", "")) for e in evidence)
 
 
+# Treat unexpected model field shapes as empty instead of iterating an arbitrary string or object.
 def _texts(value, limit: int) -> list:
     """A list field from a model reply: anything else (string, dict, number) counts as empty."""
     return value[:limit] if isinstance(value, list) else []
 
 
+# Process each claim independently so rejected claims are recorded without discarding all usable results.
 def _accept(case: dict, raw: dict, meta: dict, depth: str) -> dict:
     """Check one Investigator answer against the case's own evidence: unsupported claims are rejected, not shown.
     The reply is untrusted too: a wrong shape yields no claims, and text that could exfiltrate or steer the reader
@@ -141,11 +152,13 @@ def _accept(case: dict, raw: dict, meta: dict, depth: str) -> dict:
             "cached": bool(meta.get("cached"))}
 
 
+# Create an honest result for a failed, cancelled, unexamined or rules-only case; never fabricate claims.
 def _blank(case: dict, status: str, error: str, depth: str) -> dict:
     return {"case_id": case["case_id"], "component": case["component"], "finding_ids": case["finding_ids"],
             "claims": [], "rejected": [], "open_questions": [], "status": status, "error": error, "depth": depth}
 
 
+# One detailed evidence-bounded call, with a transient-error retry; Stop and budget exhaustion do not retry.
 def _investigate_case(case: dict, chat: Callable, run_id: str) -> dict:
     view = {"case_id": case["case_id"], "component": case["component"], "finding_ids": case["finding_ids"],
             "evidence": [{k: e[k] for k in ("id", "source", "path", "content")} for e in case["evidence"]]}
@@ -164,6 +177,7 @@ def _investigate_case(case: dict, chat: Callable, run_id: str) -> dict:
     return _blank(case, "failed", f"{type(last).__name__}: {last}"[:300], "deep")
 
 
+# Batch short investigations; split failed requests within the depth limit and preserve per-case failures.
 def _triage(batch: list[dict], chat: Callable, run_id: str, depth: int = 0) -> tuple[list[dict], int]:
     """Several high/critical cases in one call; a failed batch is split in half and retried (at most twice)."""
     view = [{"case_id": c["case_id"], "component": c["component"], "finding_ids": c["finding_ids"],
@@ -191,11 +205,13 @@ def _triage(batch: list[dict], chat: Callable, run_id: str, depth: int = 0) -> t
         return [_blank(c, "failed", f"{type(e).__name__}: {e}"[:300], "triage") for c in batch], 0
 
 
+# Find which evidence needs full text in the Verifier request rather than just a short excerpt.
 def _cited(case: dict) -> set[str]:
     """Evidence the claims rest on: the Verifier gets its full text (trimmed excerpts caused false disputes)."""
     return {i for cl in case["claims"] for i in cl["evidence_ids"]}
 
 
+# Review a bounded set of completed cases; challenges are checked too and cannot change the rules verdict.
 def _verify(cases: list[dict], packet: dict, chat: Callable, run_id: str) -> dict:
     done = [c for c in cases if c["status"] == "done"][:VERIFY_CAP]  # cases arrive ordered by severity
     if not done:
@@ -242,6 +258,7 @@ def _verify(cases: list[dict], packet: dict, chat: Callable, run_id: str) -> dic
     return out
 
 
+# Main normal-workflow coordinator. The local chat wrapper checks Stop before every new model request.
 def investigate(out: Path, chat: Callable | None = None, max_cases: int = 6, workers: int = 3,
                 on_event: Callable[[dict], None] | None = None, should_stop: Callable[[], bool] | None = None) -> dict:
     out = Path(out)
@@ -258,6 +275,7 @@ def investigate(out: Path, chat: Callable | None = None, max_cases: int = 6, wor
         return data, meta
     emit = on_event or (lambda e: None)
     t0 = time.time()
+    # Step 1: snapshot the evidence for this run before any Investigator call.
     packet = build_packets(out)
     # The run budget is per investigation run; the cache (keyed on the request itself) still makes repeats free.
     run_id = f"inv-{packet['sha256'][:8]}-{time.strftime('%H%M%S')}{int(time.time() * 1000) % 1000:03d}"
@@ -266,10 +284,12 @@ def investigate(out: Path, chat: Callable | None = None, max_cases: int = 6, wor
     # rule findings and their evidence (labelled as such, never reported as a failure).
     # Rank by the stronger of the Guardian level and the advisory's own severity: a "low" level (nothing exploits it
     # yet) on a high-severity advisory still deserves an Investigator before a plain medium.
+    # Step 2: use the stronger of Guardian level and advisory severity when ordering work.
     eff = lambda c: min(RANK.get(c.get("max_level"), 9), RANK.get(c.get("max_severity"), 9))  # noqa: E731
     ordered = sorted(packet["cases"], key=lambda c: (eff(c), c["component"]))
     # The first `max_cases` cases are always investigated, whatever their level: a small PR is examined in full.
     # Beyond them, more high/critical cases go to batched triage; only the remaining medium/low tail is rule-covered.
+    # The detailed slots also cover small low-risk PRs; only overflow uses the severity-based triage split.
     todo, rest = ordered[:max_cases], ordered[max_cases:]
     severe = [c for c in rest if eff(c) <= RANK["high"]]
     triage, beyond = severe[:TRIAGE_CAP], severe[TRIAGE_CAP:]
@@ -292,6 +312,7 @@ def investigate(out: Path, chat: Callable | None = None, max_cases: int = 6, wor
                   "claims": len(x["claims"]), "rejected": len(x["rejected"]), "assessment": x.get("assessment")})
         return res, r
     retries = 0
+    # Step 3: detailed investigations run concurrently; after they complete, triage batches use the same pool.
     with ThreadPoolExecutor(max_workers=max(1, workers)) as pool:
         cases = list(pool.map(one, todo))
         for res, r in pool.map(tri, [triage[i:i + TRIAGE_BATCH] for i in range(0, len(triage), TRIAGE_BATCH)]):
@@ -301,6 +322,7 @@ def investigate(out: Path, chat: Callable | None = None, max_cases: int = 6, wor
     cases += [_blank(c, "not_investigated", f"beyond {max_cases} deep + {TRIAGE_CAP} triage slots for high/critical cases", "none") for c in beyond]
     cases += [_blank(c, "rules_only", f"{c.get('max_level') or 'low'} severity, beyond the {max_cases} investigated cases: "
                                       "the rule finding and its evidence stand", "rules") for c in rules]
+    # Step 4: do not start verification after Stop; cancellation must remain visible in the saved result.
     if stop():
         verifier = {"status": "cancelled", "error": "stopped by the user", "challenges": [], "missed_risks": [], "rejected": []}
     else:
@@ -310,6 +332,7 @@ def investigate(out: Path, chat: Callable | None = None, max_cases: int = 6, wor
           "missed_risks": len(verifier["missed_risks"])})
     kept = sum(len(c["claims"]) for c in cases) + len(verifier["challenges"]) + len(verifier["missed_risks"])
     rejected = sum(len(c["rejected"]) for c in cases) + len(verifier["rejected"])
+    # Rules-only coverage is intentional; a failed/unexamined AI case instead makes investigation partial.
     examined = [c for c in cases if c["status"] != "rules_only"]
     complete = all(c["status"] == "done" for c in examined) and verifier["status"] in ("done", "skipped")
     result = {
@@ -326,6 +349,7 @@ def investigate(out: Path, chat: Callable | None = None, max_cases: int = 6, wor
         "evidence_index": {e["id"]: {"sha256": e["sha256"], "source": e["source"], "path": e["path"]}
                            for c in packet["cases"] for e in c["evidence"]},
     }
+    # Step 5: persist results for the dashboard. This file records AI review, not a new merge authorization.
     (out / "agents").mkdir(parents=True, exist_ok=True)
     (out / "agents" / "verdict.json").write_text(json.dumps(result, indent=1))
     # Gatekeeper (rules, no AI): every claim was checked against stored evidence; report what passed.

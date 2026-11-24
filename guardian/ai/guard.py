@@ -1,3 +1,7 @@
+# READING GUIDE
+# Text safety helpers used before model input and before displaying model output.
+# Repository text and model replies are both untrusted. Pattern checks reduce risk; they do not prove a claim true.
+#
 """Prompt-injection guardrails shared by every model path (defence in depth; the model never decides anything).
 
 Input side (text written by third parties: package files, advisories, PR diffs, titles, READMEs):
@@ -41,6 +45,7 @@ HTML_TAG = re.compile(r"<\s*(?:img|script|iframe|a|svg|object|embed|link|meta|st
 DIRECTIVE = re.compile(r"\b(?:you should|please|we recommend|recommend(?:ed)?|go ahead and|it is safe to|safe to)\s+(?:approve|merge|allow|ship|accept|whitelist)\b|\b(?:approve|merge)\s+(?:this|the)\s+(?:pr|pull request|change|patch|fix)\b", re.I)
 
 
+# Normalize untrusted text before packaging it; remove spoofed delimiters without treating content as instructions.
 def clean(text: str, limit: int | None = None) -> str:
     """Untrusted text, safe to place inside a fence: no invisible characters, no fence tags, bounded size."""
     t = INVISIBLE.sub("", str(text or ""))
@@ -51,10 +56,12 @@ def clean(text: str, limit: int | None = None) -> str:
     return t
 
 
+# Derive a stable marker so identical evidence produces identical packet/cache identities.
 def boundary(text: str) -> str:
     return hashlib.sha256(("guardian-fence|" + text).encode()).hexdigest()[:12]
 
 
+# Make the trust boundary visible in a model request; this annotation is not an execution sandbox.
 def fence(text: str, source: str = "third-party", limit: int | None = None) -> str:
     """Wrap untrusted text: <untrusted-data source=.. boundary=..> … </untrusted-data boundary=..>."""
     body = clean(text, limit)
@@ -63,6 +70,7 @@ def fence(text: str, source: str = "third-party", limit: int | None = None) -> s
     return f'<untrusted-data source="{src}" boundary="{b}">\n{body}\n</untrusted-data boundary="{b}">'
 
 
+# Return named warning signals for reviewers; a pattern match alone does not establish malicious intent.
 def scan(text: str) -> list[dict]:
     """Injection attempts in third-party text: [{rule, match}] (empty when none)."""
     raw = str(text or "")
@@ -76,6 +84,7 @@ def scan(text: str) -> list[dict]:
     return hits
 
 
+# Return a rejection reason, or None; callers decide whether to omit and record the rejected text.
 def check_output(text: str, evidence_text: str = "") -> str | None:
     """Why this model text must not be shown or used (None when it is fine)."""
     t = str(text or "")

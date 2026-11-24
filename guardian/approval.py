@@ -1,3 +1,8 @@
+# READING GUIDE
+# Human decision contract: bind a named approval to commits, patch hash, policy hash, validation profile and expiry.
+# Validation rechecks this contract. A different patch or expired approval cannot reuse the old authorization.
+# Audit events are hash-linked to make accidental or partial modification detectable.
+#
 """Human approval contract and audit trail (GUARDIAN_FINAL_PLAN.md §12.3).
 
 approval = base_sha + head_sha + patch_sha256 + policy_sha256 + profile_sha256 + approver + time + expiry
@@ -36,6 +41,7 @@ def _audit(out: Path, kind: str, event: dict) -> None:
     (Path(out) / "audit.head").write_text(hashlib.sha256(line.encode()).hexdigest())
 
 
+# Check the linked audit records against their stored hash chain.
 def verify_audit(out: Path) -> tuple[bool, int]:
     log = Path(out) / "audit.jsonl"
     if not log.exists():
@@ -52,6 +58,7 @@ def verify_audit(out: Path) -> tuple[bool, int]:
     return True, len(lines)
 
 
+# Record the person's decision and the exact artifact/settings identities it covers.
 def decide(out: Path, plan: dict, decision: str, *, approver: str, reason: str, ttl_seconds: int, now: float | None = None,
            policy_sha256: str, profile_sha256: str, reviewed: bool = False) -> dict:
     if decision not in ("approve", "reject"):
@@ -70,6 +77,7 @@ def decide(out: Path, plan: dict, decision: str, *, approver: str, reason: str, 
     return rec
 
 
+# Refuse rejected, expired or mismatched approval before validation may execute the candidate.
 def check(rec: dict, plan: dict, *, now: float | None = None, policy_sha256: str, profile_sha256: str) -> None:
     """Raise ApprovalInvalid unless this approval authorises exactly this plan under this policy and profile."""
     now = time.time() if now is None else now

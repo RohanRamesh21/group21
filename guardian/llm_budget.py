@@ -1,3 +1,8 @@
+# READING GUIDE
+# Usage control: per-run and rolling 30-day token limits, reservations for concurrent calls, ledger and request cache.
+# The pre-call estimate includes an output allowance; reservations prevent simultaneous calls each spending the same remaining budget.
+# The ledger tracks usage, not authorization. Human approval is a separate contract in approval.py.
+#
 """Token ledger, budget guard and response cache for every model call.
 
 * Ledger: one JSON line per call in .cache/llm_usage.jsonl (purpose, run, model, tokens, cached). Never the key or prompt.
@@ -32,11 +37,13 @@ def _cache_dir() -> Path:
     return Path(os.environ.get("GUARDIAN_LLM_CACHE", ROOT / ".cache" / "llm"))
 
 
+# Read configured token caps, with code defaults when environment overrides are absent.
 def limits() -> dict:
     return {"run": int(os.environ.get("GUARDIAN_RUN_TOKEN_BUDGET", 25000)),
             "month": int(os.environ.get("GUARDIAN_MONTH_TOKEN_BUDGET", 300000))}
 
 
+# Conservatively estimate input, output and hidden-reasoning allowance before reserving tokens.
 def estimate(text: str, max_tokens: int) -> int:
     """Worst case for one call: ~3 characters per input token (conservative), the output cap, and an allowance for
     hidden reasoning tokens (measured: with reasoning_effort=medium the provider can exceed max_tokens)."""
@@ -60,6 +67,7 @@ def _total(rows) -> int:
     return sum(int(r.get("prompt_tokens", 0)) + int(r.get("completion_tokens", 0)) for r in rows)
 
 
+# Under one lock, count recorded usage plus calls in flight and refuse requests exceeding either cap.
 def reserve(run_id: str, est: int) -> None:
     lim = limits()
     with _lock:
@@ -73,11 +81,13 @@ def reserve(run_id: str, est: int) -> None:
         _reserved[run_id] = _reserved.get(run_id, 0) + est
 
 
+# Return the in-flight reservation after completion/failure; actual recorded usage remains charged.
 def release(run_id: str, est: int) -> None:
     with _lock:
         _reserved[run_id] = max(0, _reserved.get(run_id, 0) - est)
 
 
+# Append usage metadata; cached responses count as zero new provider tokens.
 def record(*, run_id: str, purpose: str, model: str, usage: dict | None, cached: bool, seconds: float = 0.0,
            finish_reason: str | None = None) -> None:
     u = usage or {}
@@ -92,6 +102,7 @@ def record(*, run_id: str, purpose: str, model: str, usage: dict | None, cached:
         f.write(json.dumps(row) + "\n")
 
 
+# Aggregate usage by run, rolling month and purpose for dashboard reporting.
 def summary(run_id: str | None = None) -> dict:
     rows = _rows()
     month = [r for r in rows if r.get("ts", 0) > time.time() - MONTH]
@@ -107,16 +118,19 @@ def summary(run_id: str | None = None) -> dict:
             "month_left": max(0, limits()["month"] - _total(month))}
 
 
+# Hash the request identity so different model/settings/messages do not share the same reply accidentally.
 def cache_key(body: dict) -> str:
     keep = {k: body.get(k) for k in ("model", "reasoning_effort", "messages", "max_tokens", "response_format")}
     return hashlib.sha256(json.dumps(keep, sort_keys=True).encode()).hexdigest()
 
 
+# Look up a previous reply before spending provider tokens again.
 def cache_get(key: str) -> dict | None:
     f = _cache_dir() / f"{key[:32]}.json"
     return json.loads(f.read_text()) if f.exists() else None
 
 
+# Persist a reusable response for an identical future request.
 def cache_put(key: str, value: dict) -> None:
     d = _cache_dir()
     d.mkdir(parents=True, exist_ok=True)

@@ -197,3 +197,10 @@ def test_install_and_build_failures_are_not_retried(tmp_path, monkeypatch):
     tree, folder, calls = _fake_profile_run(tmp_path, monkeypatch, {"install": [1, 0]})
     res = vr.run_profile(tree, PROF, folder, "candidate", log=lambda m: None)
     assert res["stages"][0]["status"] == "failed" and calls.count("install") == 1
+
+
+def test_a_failed_test_stage_does_not_stop_the_later_stages(tmp_path, monkeypatch):
+    tree, folder, calls = _fake_profile_run(tmp_path, monkeypatch, {"unit": [1, 1]})
+    res = vr.run_profile(tree, PROF, folder, "baseline", log=lambda m: None)
+    by = {s["id"]: s["status"] for s in res["stages"]}
+    assert by["unit"] == "failed" and by["integration"] == "passed"  # both sides stay comparable

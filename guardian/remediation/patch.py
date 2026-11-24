@@ -1,3 +1,8 @@
+# READING GUIDE
+# Builds the exact proposed changes in a private export of the PR head and writes a combined diff plus SHA-256.
+# Configuration restoration runs before npm operations. Lockfile-only npm commands disable lifecycle scripts.
+# Patch construction is separate from approval and isolated build/test execution.
+#
 """Build ONE combined patch from the chosen fix candidates (the thing a human approves).
 
 Safety:
@@ -57,6 +62,7 @@ def _spec_with_prefix(old_spec: str, version: str) -> str:
     return f"{m.group(1) if m else ''}{version}"
 
 
+# Apply one supported candidate in the scratch export, with explicit status for failure or unsupported actions.
 def _apply(work: Path, repo: Path, base: str, c: dict) -> dict:
     t = c["type"]
     if t == "revert_change":
@@ -92,6 +98,7 @@ def _apply(work: Path, repo: Path, base: str, c: dict) -> dict:
     return {"status": "applied" if r.returncode == 0 else "failed", "detail": (r.stderr or r.stdout)[-400:]}
 
 
+# Restore source/integrity fields from the base only when the package version matches.
 def _restore_lock_entry(work: Path, repo: Path, base: str, c: dict) -> dict:
     """Put back the base commit's resolved URL and integrity for every lockfile entry of this package at this version.
     Refused (nothing changed) when the base has no entry with the same version: then it is not a pure source swap."""
@@ -136,6 +143,7 @@ def _lock_entries_changed(work: Path) -> dict:
                               lock.read_text() if lock.exists() else "")
 
 
+# Apply ordered candidates in a private export, record their results, and hash the combined diff.
 def build_patch(repo: Path, base: str, head: str, candidates: list[dict], out: Path) -> dict:
     """Apply candidates to an export of `head`; return {patch_path, patch_sha256, files, results, lock_entries_changed}."""
     work = out / "fix-work"

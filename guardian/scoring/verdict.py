@@ -1,3 +1,7 @@
+# READING GUIDE
+# Shared normal-workflow merge gate: evaluate findings introduced by the change and report scan completeness separately.
+# An ALLOW verdict does not mean the whole repository is vulnerability-free; pre-existing findings remain visible.
+#
 """The one verdict function. Every path (CLI check, universal scan, dashboard, agents) uses this rule.
 
 Only findings introduced by the change can block it. Completeness is reported next to the decision:
@@ -11,6 +15,7 @@ RULE = ("block if the change introduces a critical finding or an SSVC 'Act' deci
         "even when exploitation data lowered its priority level; otherwise allow")
 
 
+# Use introduced findings for the merge recommendation while retaining completeness as a separate result.
 def decide(findings: list[dict], incomplete: list[str]) -> dict:
     intro = [f for f in findings if f.get("label") == "introduced"]
     block = [f for f in intro if f["level"] == "critical" or f["decision"] == "Act"]
@@ -26,6 +31,7 @@ def decide(findings: list[dict], incomplete: list[str]) -> dict:
             "rule": RULE}
 
 
+# Collect required-check failures that prevent presenting this scan as fully checked.
 def incomplete_reasons(report: dict) -> list[str]:
     """Required checks that did not run. The offline OSV copy covers npm, so an OSV API outage
     only makes an npm-only run incomplete if no other ecosystem is present."""

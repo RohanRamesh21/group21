@@ -1,3 +1,8 @@
+# READING GUIDE
+# Main deterministic engine used by project scans and guardian check: discover -> inventory -> detect -> compare -> score.
+# scan_tree() handles one exported commit; check_any() coordinates base/head comparison and writes report/score pointers.
+# Detection and scoring happen before AI investigation. External scanner failures are recorded rather than treated as clean results.
+#
 """Universal scan: the Day 1 pipeline for ANY repository, not only npm projects with a root lockfile.
 
     Repository -> components (every ecosystem) -> SBOM -> dependency graph -> vulnerabilities
@@ -696,6 +701,7 @@ def grype_all(sbom: Path) -> tuple[list[dict], str | None]:
     return out, None
 
 
+# Combine vulnerability sources and preserve scanner errors alongside the findings.
 def vulnerabilities(inventory: list[dict], sbom: Path, src: Path) -> dict:
     from guardian.vuln.scan import merge, run_osv
     errors = {}
@@ -770,6 +776,7 @@ def write_sbom(inv: list[dict], edges: list[dict], app: str, commit: str, out: P
 
 
 # ------------------------------------------------------------------ one snapshot
+# Scan one exported source tree and write inventory, graph edges, scanner findings and evidence artifacts.
 def scan_tree(src: Path, out: Path, app: str, commit: str, log=lambda m: None, with_vulns: bool = True) -> dict:
     out.mkdir(parents=True, exist_ok=True)
     policy = _policy()
@@ -880,6 +887,7 @@ def _key(f: dict) -> tuple:
     return (f["type"], re.sub(r"@[^@#]*$", "", f["component"]) if f["type"] in ("install_script", "untrusted_source", "non_registry_source") else f["component"])
 
 
+# Compare snapshots for changes whose risk cannot be identified from a single snapshot alone.
 def change_signals(base: dict, head: dict, files: list[str], policy: dict) -> list[dict]:
     out = []
     bidx = {}
@@ -958,6 +966,7 @@ def _pkg_diff(b_inv: list[dict], h_inv: list[dict]) -> dict:
             "updated": sorted(f"{n} {','.join(sorted(b[n]))} -> {','.join(sorted(h[n]))}" for n in h.keys() & b.keys() if h[n] != b[n])}
 
 
+# Main engine entry: scan head/base, label introduced/pre-existing/fixed findings and invoke contextual scoring.
 def check_any(repo: Path, base: str | None, head: str, out: Path, app: str, log=lambda m: None) -> dict:
     """Full Day 1 report for any git repository. base=None -> full scan of head (nothing is labelled 'introduced')."""
     repo, out = Path(repo).resolve(), Path(out).resolve()  # git -C <repo> would resolve relative output paths inside the repo

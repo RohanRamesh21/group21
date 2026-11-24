@@ -1,3 +1,7 @@
+# READING GUIDE
+# Data contracts for agent communication: message, task, finding and case shapes plus allowed routes.
+# Pydantic checks field types and limits. Constitution and tool code enforce evidence and permission rules separately.
+#
 """v4 agent protocol (AGENTIC_CORE.md §5): typed messages, tasks, findings and cases on a shared board."""
 from __future__ import annotations
 
@@ -28,6 +32,7 @@ ROUTING: dict[tuple[str, str], set[str]] = {
 }
 
 
+# Typed envelope connecting a claim to sender, recipient, task/case context and cited evidence.
 class AgentMessage(BaseModel):
     id: str
     run_id: str
@@ -46,6 +51,7 @@ class AgentMessage(BaseModel):
     in_reply_to: str | None = None
 
 
+# Specialist work order: goal, scope, depth, acceptance criteria, budget and lifecycle status.
 class Task(BaseModel):
     id: str
     assignee: Literal["hunter", "forensics", "fixer"]
@@ -57,6 +63,7 @@ class Task(BaseModel):
     status: Literal["open", "running", "done", "cancelled", "exhausted"] = "open"
 
 
+# A risk record with its evidence and minimum permitted level; agents cannot erase hard-signal floors.
 class BoardFinding(BaseModel):
     id: str
     type: str
@@ -71,6 +78,7 @@ class BoardFinding(BaseModel):
     opened_by: str = "system"  # detector id or agent name ("agent_discovered")
 
 
+# Groups findings into one explanation/root-cause review, with resolution state and evidence.
 class CaseState(BaseModel):
     id: str
     title: str
